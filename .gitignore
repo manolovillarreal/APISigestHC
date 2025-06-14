@@ -1,0 +1,61 @@
+## Archivos y carpetas de Visual Studio
+.vs/
+.vscode/
+
+## Carpetas de binarios y objetos compilados
+bin/
+obj/
+
+## Publicación
+publish/
+out/
+
+## Configuración de usuario
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Logs
+*.log
+
+## Archivos generados por el sistema operativo
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+## Archivos temporales
+*.tmp
+*.temp
+*.bak
+*.old
+
+## Archivos de lock de paquetes
+project.lock.json
+project.assets.json
+
+## Paquetes NuGet descargados localmente
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+
+## Archivos de configuración local
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+## Archivos de Rider/JetBrains (si algún colaborador usa ese IDE)
+.idea/
+*.sln.iml
+
+## Archivos de test coverage
+coverage/
+*.coverage
+*.coveragexml
+TestResults/
+
+## Archivos del sistema Mac/Linux
+.DS_Store
+*.swp
