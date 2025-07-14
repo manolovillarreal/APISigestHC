@@ -7,5 +7,6 @@
         public string? NumeroRelacion { get; set; } // Opcional según el tipoDocumento
         public IFormFile Archivo { get; set; }
         public DateTime Fecha { get; set; }
+        public string? Observacion { get; set; }
     }
 }

@@ -8,7 +8,8 @@ namespace ApiSigestHC.Servicios.IServicios
     {
         Task<ResultadoGuardadoArchivo> GuardarArchivoAsync(DocumentoCargarDto dto);
         Task<ResultadoGuardadoArchivo> ReemplazarArchivoAsync(Documento documento, IFormFile archivo);
-        Task<ResultadoGuardadoArchivo> RenombrarArchivoAsync(DocumentoEditarDto dto);
+        Task<ResultadoGuardadoArchivo> ActualizarNombreSiEsNecesarioAsync(DocumentoEditarDto dto);
+        Task EliminarArchivoAsync(Documento documento);
         Task<FileStreamResult?> DescargarDocumentoAsync(Documento doc);
         Task<FileStreamResult?> ObtenerArchivoParaVisualizacionAsync(Documento doc);
     }

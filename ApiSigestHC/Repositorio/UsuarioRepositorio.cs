@@ -23,23 +23,23 @@ namespace ApiSigestHC.Repositorio
         }
 
 
-        public Usuario GetUsuario(int usuarioId)
+        public async Task<Usuario> GetUsuarioAsync(int usuarioId)
         {
-           return _db.Usuarios
-                .Include(u=>u.Rol)
-                .FirstOrDefault(u=>u.Id == usuarioId);
-        }
-
-        public ICollection<Usuario> GetUsuarios()
-        {
-            return _db.Usuarios
+            return await _db.Usuarios
                 .Include(u => u.Rol)
-                .OrderBy(u=>u.NombreUsuario).ToList();
+                .FirstOrDefaultAsync(u => u.Id == usuarioId);
         }
 
-        public bool IsUniqueUser(string usuario)
+        public async Task<ICollection<Usuario>> GetUsuariosAsync()
         {
-            var usuarioBd = _db.Usuarios.FirstOrDefault(u=>u.NombreUsuario == usuario);
+            return await _db.Usuarios
+                .Include(u => u.Rol)
+                .OrderBy(u=>u.NombreUsuario).ToListAsync();
+        }
+
+        public async Task<bool> IsUniqueUser(string usuario)
+        {
+            var usuarioBd = await _db.Usuarios.FirstOrDefaultAsync(u=>u.NombreUsuario == usuario);
 
             return usuarioBd == null;
         }

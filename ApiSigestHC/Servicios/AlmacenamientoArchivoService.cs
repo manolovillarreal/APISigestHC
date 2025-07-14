@@ -35,40 +35,58 @@ namespace ApiSigestHC.Servicios
 
             // Validación básica
             if (archivo == null || archivo.Length == 0)
-                throw new ArgumentException("Archivo no válido.");
+                throw new ArgumentException("Archivo vacio no válido.");
+            if (atencion == null)
+                throw new ArgumentException($"Atencion con id {dto.AtencionId} no encontrada.");
+            if (tipoDocumento == null)
+                throw new ArgumentException($"Tipo de documento con id {dto.TipoDocumentoId} no encontrado.");
+            if (string.IsNullOrEmpty(atencion.PacienteId))
+                throw new ArgumentException($"No se encontro el id del pacinete en la atencion de id {dto.AtencionId}");
 
-            var fecha = atencion.FechaAtencion;
-            var year = fecha.Year.ToString();
-            var mes = fecha.Month.ToString("D2");
-            var nroDocumentoPaciente = atencion.PacienteId ?? "000000";
+            try
+            {          
 
-            var carpetaFinal = $"{atencion.Id}_{fecha:yyyyMMdd}";
-            var rutaCarpetaRelativa = Path.Combine("documentos", year, mes, nroDocumentoPaciente, carpetaFinal);
-            var rutaBase = _env.ContentRootPath;
-            var rutaCarpetaAbsoluta = Path.Combine(_env.ContentRootPath, rutaCarpetaRelativa);
+                var fecha = atencion.Fecha;
+                var year = fecha.Year.ToString();
+                var mes = fecha.Month.ToString("D2");
+                var nroDocumentoPaciente = atencion.PacienteId ?? "000000";
 
-            if (!Directory.Exists(rutaCarpetaAbsoluta))
-                Directory.CreateDirectory(rutaCarpetaAbsoluta);
+                var carpetaFinal = $"{atencion.Id}_{fecha:yyyyMMdd}";
+                var rutaCarpetaRelativa = Path.Combine("documentos", year, mes, nroDocumentoPaciente, carpetaFinal);
+                var rutaBase = _env.ContentRootPath;
+                var rutaCarpetaAbsoluta = Path.Combine(_env.ContentRootPath, rutaCarpetaRelativa);
 
-            // Consecutivo
-            int consecutivo = await _documentoRepo.ContarPorTipoYAtencionAsync(atencion.Id, tipoDocumento.Id) + 1;
+                if (!Directory.Exists(rutaCarpetaAbsoluta))
+                    Directory.CreateDirectory(rutaCarpetaAbsoluta);
 
-            string extension = Path.GetExtension(archivo.FileName).ToLowerInvariant();
-            string nombreArchivo = $"{tipoDocumento.Codigo}_{consecutivo}_{dto.Fecha:yyyyMMdd}{extension}";
-            string rutaCompleta = Path.Combine(rutaCarpetaAbsoluta, nombreArchivo);
+                // Consecutivo
 
-            using (var stream = new FileStream(rutaCompleta, FileMode.Create))
-            {
-                await archivo.CopyToAsync(stream);
+                string extension = Path.GetExtension(archivo.FileName).ToLowerInvariant();
+                string nombreArchivo = await GenerarNombreArchivo(tipoDocumento,new Documento {
+                                                                                        AtencionId = dto.AtencionId,
+                                                                                        Fecha = dto.Fecha,
+                                                                                        NumeroRelacion = dto.NumeroRelacion,
+                                                                                    } ,dto.Archivo.FileName);
+                string rutaCompleta = Path.Combine(rutaCarpetaAbsoluta, nombreArchivo);
+
+                using (var stream = new FileStream(rutaCompleta, FileMode.Create))
+                {
+                    await archivo.CopyToAsync(stream);
+                }
+
+                return new ResultadoGuardadoArchivo
+                {
+                    RutaBase = rutaBase.Replace("\\", "/"),
+                    RutaRelativa = rutaCarpetaRelativa.Replace("\\", "/"),
+                    NombreArchivo = nombreArchivo,
+                };
             }
-
-            return new ResultadoGuardadoArchivo
+            catch (Exception)
             {
-                RutaBase = rutaBase.Replace("\\", "/"),
-                RutaRelativa = rutaCarpetaRelativa.Replace("\\", "/"),
-                NombreArchivo = nombreArchivo,
-                Consecutivo = consecutivo
-            };
+
+                throw;
+            }
+           
         }
 
         public async Task<ResultadoGuardadoArchivo> ReemplazarArchivoAsync(Documento documento, IFormFile archivo)
@@ -100,6 +118,33 @@ namespace ApiSigestHC.Servicios
             };
         }
 
+        public async Task EliminarArchivoAsync(Documento documento)
+        {
+            if (documento == null)
+                throw new ArgumentNullException(nameof(documento));
+
+            var rutaCarpeta = Path.Combine(documento.RutaBase, documento.RutaRelativa);
+            var rutaCompleta = Path.Combine(rutaCarpeta, documento.NombreArchivo);
+
+            if (File.Exists(rutaCompleta))
+            {
+                try
+                {
+                    File.Delete(rutaCompleta);
+                    await Task.CompletedTask; // Solo para mantener la firma async
+                }
+                catch (IOException ex)
+                {
+                    throw new IOException($"Error al intentar eliminar el archivo: {rutaCompleta}", ex);
+                }
+            }
+            else
+            {
+                // Si el archivo no existe, puedes elegir lanzar excepción o simplemente ignorar
+                throw new FileNotFoundException("No se encontró el archivo para eliminar.", rutaCompleta);
+            }
+        }
+
         public async Task<FileStreamResult?> DescargarDocumentoAsync(Documento doc)
         {
 
@@ -114,7 +159,7 @@ namespace ApiSigestHC.Servicios
             var atencion =  doc.Atencion;
             return new FileStreamResult(stream, tipoMime)
             {
-                FileDownloadName = $"{atencion.Id}_{atencion.PacienteId}_{atencion.FechaAtencion:yyyyMMdd}_{doc.NombreArchivo}"
+                FileDownloadName = $"{atencion.Id}_{atencion.PacienteId}_{atencion.Fecha:yyyyMMdd}_{doc.NombreArchivo}"
             };
         }
 
@@ -133,20 +178,87 @@ namespace ApiSigestHC.Servicios
         }
 
 
-        public Task<ResultadoGuardadoArchivo> RenombrarArchivoAsync(DocumentoEditarDto dto)
+        public async Task<ResultadoGuardadoArchivo> ActualizarNombreSiEsNecesarioAsync(DocumentoEditarDto dto)
         {
-            throw new NotImplementedException();
+            // 1. Obtener el documento actual y su tipo
+            var documento = await _documentoRepo.ObtenerPorIdAsync(dto.Id)
+                ?? throw new ArgumentException($"Documento con id {dto.Id} no encontrado.");
+
+            var tipoDocumento = await _tipoDocumentoRepo.GetTipoDocumentoPorIdAsync(documento.TipoDocumentoId)
+                ?? throw new ArgumentException($"Tipo de documento con id {documento.TipoDocumentoId} no encontrado.");
+
+            // 2. Determinar nuevo nombre
+            var nuevoNombre = await GenerarNombreArchivo(tipoDocumento, documento, documento.NombreArchivo);
+
+            if (!string.Equals(documento.NombreArchivo, nuevoNombre, StringComparison.OrdinalIgnoreCase))
+            {
+                // 3. Renombrar físicamente el archivo
+                var carpeta = Path.Combine(documento.RutaBase, documento.RutaRelativa);
+                var rutaVieja = Path.Combine(carpeta, documento.NombreArchivo);
+                var rutaNueva = Path.Combine(carpeta, nuevoNombre);
+
+                if (!File.Exists(rutaVieja))
+                    throw new FileNotFoundException($"No existe el archivo físico: {rutaVieja}");
+
+                File.Move(rutaVieja, rutaNueva, overwrite: true);
+
+                documento.NombreArchivo = nuevoNombre;
+
+                if (!string.Equals(documento.NombreArchivo, nuevoNombre, StringComparison.OrdinalIgnoreCase))
+                {
+                    await _documentoRepo.ActualizarAsync(documento);
+                }
+            }
+
+            
+           
+            // 5. Devolver resultado
+            return new ResultadoGuardadoArchivo
+            {
+                NombreArchivo = nuevoNombre,
+            };
         }
+
+
+        /// <summary>
+        /// Genera el nombre de archivo según las reglas de negocio:
+        /// 1. Siempre incluye el código del tipo de documento.
+        /// 2. Si PermiteMultiples, antepone el consecutivo.
+        /// 3. Si RequiereNumeroRelacion y dto.NumeroRelacion no está vacío, usa ese número (prioritario sobre fecha).
+        /// 4. Si EsAsistencial, usa la fecha.
+        /// 5. Nunca fecha y número de relación juntos.
+        /// </summary>
+        private async Task<string> GenerarNombreArchivo(TipoDocumento tipoDoc, Documento dto ,string fileName)
+        {
+            var partes = new List<string>
+                {
+                    tipoDoc.Codigo
+                };
+
+            // 1. Consecutivo solo si permite múltiples
+            if (tipoDoc.PermiteMultiples)
+            {
+                int consecutivo = await _documentoRepo.ContarPorTipoYAtencionAsync(dto.AtencionId, tipoDoc.Id) + 1;
+                partes.Add(consecutivo.ToString());
+            }
+
+            // 2. Número de relación tiene prioridad sobre fecha
+            if (tipoDoc.RequiereNumeroRelacion && !string.IsNullOrWhiteSpace(dto.NumeroRelacion))
+            {
+                partes.Add(dto.NumeroRelacion.Trim());
+            }
+            else if (tipoDoc.EsAsistencial) // 3. fecha solo si es asistencial
+            {
+                partes.Add(dto.Fecha.ToString("yyyyMMdd"));
+            }
+
+            // 4. Extensión siempre al final
+            var extension = Path.GetExtension(fileName).ToLowerInvariant();
+
+            return string.Join("_", partes) + extension;
+        }
+
     }
 
-    public class ResultadoGuardadoArchivo
-    {
-
-        public string RutaBase { get; set; }
-        public string RutaRelativa { get; set; }
-        public string NombreArchivo { get; set; }
-        public int Consecutivo { get; set; }
-
-    }
 
 }

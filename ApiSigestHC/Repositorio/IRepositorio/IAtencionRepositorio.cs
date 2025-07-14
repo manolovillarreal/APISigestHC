@@ -6,7 +6,9 @@ namespace ApiSigestHC.Repositorio.IRepositorio
     {
         Task<ICollection<Atencion>> ObtenerAtencionesAsync();
         Task<Atencion> ObtenerAtencionPorIdAsync(int id);
-        Task<IEnumerable<Atencion>> GetAtencionesByStateAsync(int minState, int maxState);
+        Task<IEnumerable<Atencion>> GetAtencionesPorEstadoAsync(List<int> estados);
+        Task<IEnumerable<Atencion>> ObtenerPorFechasAsync(DateTime fechaInicio, DateTime fechaFin, int page, int pageSize);
+
         Task CrearAtencionAsync(Atencion atencion);
         Task EditarAtencionAsync(Atencion atencion);
         Task EliminarAtencionAsync(int id);

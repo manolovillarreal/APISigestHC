@@ -52,20 +52,19 @@ namespace ApiSigestHC.Repositorio
             await _db.SaveChangesAsync();
         }
 
-        public async Task ActualizarDocumentoAsync(Documento documento)
+        public async Task ActualizarAsync(Documento documento)
         {
             _db.Documentos.Update(documento);
             await _db.SaveChangesAsync();
         }
 
-        public async Task EliminarDocumentoAsync(int id)
+        public async Task EliminarAsync(Documento documento)
         {
-            var documento = await ObtenerPorIdAsync(id);
-            if (documento != null)
-            {
-                _db.Documentos.Remove(documento);
-                await _db.SaveChangesAsync();
-            }
+            if (documento == null)
+                throw new ArgumentNullException(nameof(documento));
+
+            _db.Documentos.Remove(documento);
+            await _db.SaveChangesAsync();
         }
 
         public async Task<bool> PuedeCargarDocumento(int rolId, int tipoDocumentoId)

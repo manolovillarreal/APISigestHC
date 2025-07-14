@@ -3,63 +3,75 @@ using ApiSigestHC.Modelos;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using ApiSigestHC.Repositorio.IRepositorio;
+using System.Net;
+using ApiSigestHC.Servicios.IServicios;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ApiSigestHC.Controllers
 {
+    [Authorize(Roles = "Admin")]
     [ApiController]
     [Route("api/[controller]")]
     public class TipoDocumentoRolController : ControllerBase
     {
-        private readonly ITipoDocumentoRolRepositorio _repo;
-        private readonly IMapper _mapper;
+        private readonly ITipoDocumentoRolService _service;
 
-        public TipoDocumentoRolController(ITipoDocumentoRolRepositorio repo, IMapper mapper)
+        public TipoDocumentoRolController(ITipoDocumentoRolService service)
         {
-            _repo = repo;
-            _mapper = mapper;
-        }        
-
-        // GET: api/TipoDocumentoRol?tipoDocumentoId=1
-        [HttpGet]
-        public async Task<IActionResult> GetPorTipoDocumento(int tipoDocumentoId)
-        {
-            var relaciones = await _repo.GetPorTipoDocumentoAsync(tipoDocumentoId);
-            var dto = _mapper.Map<IEnumerable<TipoDocumentoRolDto>>(relaciones);
-            return Ok(dto);
+            _service = service;
         }
 
-        // POST: api/TipoDocumentoRol
+        /// <summary>
+        /// Obtiene las relaciones de un tipo de documento con roles.
+        /// </summary>
+        [HttpGet]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetPorTipoDocumento([FromQuery] int tipoDocumentoId)
+        {
+            var respuesta = await _service.ObtenerPorTipoDocumentoAsync(tipoDocumentoId);
+            return StatusCode((int)respuesta.StatusCode, respuesta);
+        }
+
+        /// <summary>
+        /// Crea una nueva relación entre tipo de documento y rol.
+        /// </summary>
         [HttpPost]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Crear([FromBody] TipoDocumentoRolDto dto)
         {
-            var entidad = _mapper.Map<TipoDocumentoRol>(dto);
-            await _repo.CrearAsync(entidad);
-            return Ok();
+            var respuesta = await _service.CrearAsync(dto);
+            return StatusCode((int)respuesta.StatusCode, respuesta);
         }
 
-        // PUT: api/TipoDocumentoRol
+        /// <summary>
+        /// Actualiza una relación existente entre tipo de documento y rol.
+        /// </summary>
         [HttpPut]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Actualizar([FromBody] TipoDocumentoRolDto dto)
         {
-            var entidad = await _repo.GetPorIdsAsync(dto.TipoDocumentoId, dto.RolId);
-            if (entidad == null) return NotFound();
-
-            _mapper.Map(dto, entidad); // reverse map
-            await _repo.ActualizarAsync(entidad);
-
-            return NoContent();
+            var respuesta = await _service.ActualizarAsync(dto);
+            return StatusCode((int)respuesta.StatusCode, respuesta);
         }
 
-        // DELETE: api/TipoDocumentoRol?tipoDocumentoId=1&rolId=2
+        /// <summary>
+        /// Elimina una relación entre tipo de documento y rol.
+        /// </summary>
         [HttpDelete]
-        public async Task<IActionResult> Eliminar(int tipoDocumentoId, int rolId)
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> Eliminar([FromQuery] int tipoDocumentoId, [FromQuery] int rolId)
         {
-            var entidad = await _repo.GetPorIdsAsync(tipoDocumentoId, rolId);
-            if (entidad == null) return NotFound();
-
-            await _repo.EliminarAsync(entidad);
-            return NoContent();
+            var respuesta = await _service.EliminarAsync(tipoDocumentoId, rolId);
+            return StatusCode((int)respuesta.StatusCode, respuesta);
         }
     }
+
+
 
 }

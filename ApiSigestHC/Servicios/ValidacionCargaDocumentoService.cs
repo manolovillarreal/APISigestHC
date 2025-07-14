@@ -80,7 +80,7 @@ namespace ApiSigestHC.Servicios
             if (!puedeCargar)
                 return Error("No tiene permiso para cargar este tipo de documento.", HttpStatusCode.Forbidden);
 
-            if (!PuedeCargarSegunEstado(rolNombre, atencion.EstadoAtencion))
+            if (!PuedeCargarSegunEstado(rolNombre, atencion.EstadoAtencionId))
                 return Error("No puede cargar documentos en el estado actual de la atención.", HttpStatusCode.Forbidden);
 
             var ext = Path.GetExtension(archivo.FileName).TrimStart('.').ToLowerInvariant();

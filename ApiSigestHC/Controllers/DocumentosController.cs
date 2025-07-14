@@ -18,234 +18,116 @@ namespace ApiSigestHC.Controllers
     [ApiController]
     public class DocumentosController : ControllerBase
     {
-        private readonly IAtencionRepositorio _atencionRepo;
-        private readonly IDocumentoRepositorio _documentoRepo;
-        private readonly ISolicitudCorreccionRepositorio _solicitudCorreccionRepo;
+        private readonly IDocumentoService _documentoService;
 
-        private readonly IUsuarioContextService _usuarioContextService;
-        private readonly IValidacionCargaDocumentoService _validacionCargaDocumentoService;
-
-
-
-
-        private readonly IMapper _mapper;
-        private IAlmacenamientoArchivoService _almacenamientoArchivoService;
-
-        public DocumentosController(IAtencionRepositorio atencionRepo,
-                                    IDocumentoRepositorio documentoRepo, 
-                                    ISolicitudCorreccionRepositorio solicitudCorreccionRepo,
-                                    IAlmacenamientoArchivoService almacenamientoArchivoService,
-                                    IUsuarioContextService usuarioContextService,
-                                    IMapper mapper)
+        public DocumentosController(IDocumentoService documentoService)
         {
-            _atencionRepo = atencionRepo;
-            _documentoRepo = documentoRepo;
-            _solicitudCorreccionRepo = solicitudCorreccionRepo;
-            _almacenamientoArchivoService = almacenamientoArchivoService;
-            _usuarioContextService = usuarioContextService;
-            _mapper = mapper;
+            _documentoService = documentoService;
         }
-        //[HttpGet("{id}")]
-        //public async Task<IActionResult> ObtenerDocumentoPorId(int id)
-        //{
-        //    try
-        //    {
-        //        int rolId = _usuarioContextService.ObtenerRolId(); // del servicio creado anteriormente
 
-        //        var documento = await _documentoRepo.ObtenerPorIdAsync(id);
-
-        //        var documentoDto = _mapper.Map<DocumentoDto>(documento);
-
-        //        return Ok(documentoDto);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(new RespuestaAPI { IsSuccess = false, ErrorMessages = new List<string> { ex.Message } });
-        //    }
-        //}
 
         [HttpGet("por-atencion/{atencionId}")]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> ObtenerDocumentosPorAtencion(int atencionId)
         {
-            try
-            {
-                int rolId = _usuarioContextService.ObtenerRolId(); // del servicio creado anteriormente
-
-                var documentos = await _documentoRepo.ObtenerPermitidosParaCargar(atencionId, rolId);
-
-                var documentosDto = _mapper.Map<IEnumerable<DocumentoDto>>(documentos);
-
-                return Ok(documentosDto);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new RespuestaAPI { IsSuccess = false, ErrorMessages = new List<string> { ex.Message } });
-            }
+            var respuesta = await _documentoService.ObtenerDocumentosPorAtencionAsync(atencionId);
+            return StatusCode((int)respuesta.StatusCode, respuesta);
         }
 
+
         [HttpPost("cargar")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RespuestaAPI))] // Documento cargado exitosamente
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(RespuestaAPI))] // Datos inválidos o validación fallida
+        [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(RespuestaAPI))] // Usuario no autorizado para cargar ese documento
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(RespuestaAPI))] // Atención o tipo de documento no encontrados
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))] // Error del sistema al guardar archivo
+
         public async Task<IActionResult> CargarDocumento([FromForm] DocumentoCargarDto dto)
         {
+            var respuesta = await _documentoService.CargarDocumentoAsync(dto);
+            return StatusCode((int)respuesta.StatusCode, respuesta);
+        }
 
-            var validacion = await _validacionCargaDocumentoService.ValidarCargaDocumentoAsync(dto);
 
-            if (!validacion.IsSuccess)
-                return StatusCode((int)validacion.StatusCode, validacion);
-
-            try
-            {
-                
-                var resultado = await _almacenamientoArchivoService.GuardarArchivoAsync(dto);
-                return Ok(resultado);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new RespuestaAPI
-                {
-                    IsSuccess = false,
-                    ErrorMessages = new List<string> { "Error al cargar el documento.", ex.Message }
-                });
-            }
+        [HttpPut("editar")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
+        public async Task<IActionResult> EditarDocumento([FromBody] DocumentoEditarDto dto)
+        {
+            var resultado = await _documentoService.EditarDocumentoAsync(dto);
+            return StatusCode((int)resultado.StatusCode, resultado);
         }
 
 
         [HttpPost("reemplazar")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
         public async Task<IActionResult> ReemplazarDocumento([FromForm] DocumentoReemplazarDto dto)
         {
-            var validacion = await _validacionCargaDocumentoService.ValidarReemplazoDocumentoAsync(dto);
-
-            if (!validacion.IsSuccess)
-                return StatusCode((int)validacion.StatusCode, validacion);
-
-            try
-            {
-                var documento = await _documentoRepo.ObtenerPorIdAsync(dto.Id);
-                await _almacenamientoArchivoService.ReemplazarArchivoAsync(documento, dto.Archivo);
-                documento.FechaCarga = DateTime.Now;
-                documento.UsuarioId = _usuarioContextService.ObtenerUsuarioId();
-                await _documentoRepo.ActualizarDocumentoAsync(documento);
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new RespuestaAPI
-                {
-                    IsSuccess = false,
-                    ErrorMessages = new List<string> { "Error al reemplazar el documento.", ex.Message }
-                });
-            }
+            var resultado = await _documentoService.ReemplazarDocumentoAsync(dto);
+            return StatusCode((int)resultado.StatusCode, resultado);
         }
+
+
 
         [HttpPost("corregir")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
         public async Task<IActionResult> CorregirDocumento([FromForm] DocumentoReemplazarDto dto)
         {
-            // 1. Verificar si hay una corrección pendiente para este documento
-            var correccion = await _solicitudCorreccionRepo.ObtenerPendientePorDocumentoIdAsync(dto.Id);
-            if (correccion == null)
-            {
-                return StatusCode((int)HttpStatusCode.BadRequest, new RespuestaAPI
-                {
-                    IsSuccess = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    ErrorMessages = new List<string> { "Este documento no tiene una solicitud de corrección pendiente." }
-                });
-            }
-
-            // 2. Validar reemplazo (permite reemplazar aunque el estado sea auditoría, si hay corrección)
-            var validacion = await _validacionCargaDocumentoService.ValidarReemplazoDocumentoAsync(dto);
-            if (!validacion.IsSuccess)
-                return StatusCode((int)validacion.StatusCode, validacion);
-
-            try
-            {
-                // 3. Obtener documento original
-                var documento = await _documentoRepo.ObtenerPorIdAsync(dto.Id);
-
-                // 4. Reemplazar archivo físico
-                await _almacenamientoArchivoService.ReemplazarArchivoAsync(documento, dto.Archivo);
-
-                // 5. Actualizar datos
-                documento.FechaCarga = DateTime.Now;
-                documento.UsuarioId = _usuarioContextService.ObtenerUsuarioId();
-                await _documentoRepo.ActualizarDocumentoAsync(documento);
-
-                // 6. Marcar corrección como aplicada
-                correccion.Pendiente = false;
-                correccion.FechaCorrige = DateTime.Now;
-                correccion.UsuarioCorrigeId = _usuarioContextService.ObtenerUsuarioId();
-                await _solicitudCorreccionRepo.ActualizarAsync(correccion);
-
-                return Ok(new RespuestaAPI { IsSuccess = true });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new RespuestaAPI
-                {
-                    IsSuccess = false,
-                    StatusCode = HttpStatusCode.InternalServerError,
-                    ErrorMessages = new List<string> { "Ocurrió un error al corregir el documento.", ex.Message }
-                });
-            }
+            var resultado = await _documentoService.CorregirDocumentoAsync(dto);
+            return StatusCode((int)resultado.StatusCode, resultado);
         }
+
 
 
         [HttpGet("descargar/{documentoId}")]
-        public async  Task<IActionResult> DescargarDocumento(int documentoId)
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
+        [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(RespuestaAPI))]
+        public async Task<IActionResult> DescargarDocumento(int documentoId)
         {
-            try
-            {
-                var rolId = _usuarioContextService.ObtenerRolId();
-
-                var doc = await _documentoRepo.ObtenerPorIdAsync(documentoId);
-
-                if (doc == null) return NotFound();
-
-                var puededescargarTipo = await _documentoRepo.PuedeVerDocumento(rolId, doc.TipoDocumentoId);
-
-                if (!puededescargarTipo) return Forbid();
-
-
-                FileStreamResult archivo = await _almacenamientoArchivoService.DescargarDocumentoAsync(doc);
-                if (archivo == null) return NotFound();
-
-                return archivo;
-            }
-            catch (Exception ex)
-            {
-
-                return BadRequest(new RespuestaAPI { IsSuccess = false, ErrorMessages = new List<string> { ex.Message } });
-            }
-            
+            return await _documentoService.DescargarDocumentoAsync(documentoId);
         }
+
 
         [HttpGet("ver/{documentoId}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> VerDocumento(int documentoId)
         {
-            try
-            {
-                var rolId = _usuarioContextService.ObtenerRolId();
-
-                var doc = await _documentoRepo.ObtenerPorIdAsync(documentoId);
-                if (doc == null) return NotFound();
-
-                var puedeVerTipo = await _documentoRepo.PuedeVerDocumento(rolId, doc.TipoDocumentoId);
-                if (!puedeVerTipo) return Forbid();
-
-                var resultado = await _almacenamientoArchivoService.ObtenerArchivoParaVisualizacionAsync(doc);
-                if (resultado == null) return NotFound();
-
-                return resultado;
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new RespuestaAPI
-                {
-                    IsSuccess = false,
-                    ErrorMessages = new List<string> { ex.Message }
-                });
-            }
+            return await _documentoService.VerDocumentoAsync(documentoId);
         }
 
-       
+        [HttpDelete("{documentoId}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
+        public async Task<IActionResult> EliminarDocumento(int documentoId)
+        {
+            var resultado = await _documentoService.EliminarDocumentoAsync(documentoId);
+
+            if (!resultado.IsSuccess)
+                return StatusCode((int)resultado.StatusCode, resultado);
+
+            return Ok(resultado);
+        }
+
+
     }
 }

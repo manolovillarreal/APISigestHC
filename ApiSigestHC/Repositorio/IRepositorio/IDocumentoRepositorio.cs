@@ -9,8 +9,8 @@ namespace ApiSigestHC.Repositorio.IRepositorio
         Task<IEnumerable<Documento>> ObtenerPermitidosParaCargar(int atencionId, int rolId);
         Task<Documento> ObtenerPorIdAsync(int id);
         Task GuardarAsync(Documento documento);
-        Task ActualizarDocumentoAsync(Documento documento);
-        Task EliminarDocumentoAsync(int id);
+        Task ActualizarAsync(Documento documento);
+        Task EliminarAsync(Documento documento);
         Task<bool> PuedeCargarDocumento(int rol, int tipoDocumentoId);
         Task<bool> PuedeVerDocumento(int rol, int tipoDocumentoId);
         Task<bool> ExisteDocumentoAsync(int atencionId, int tipoDocumentoId);

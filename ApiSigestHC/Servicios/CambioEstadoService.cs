@@ -42,12 +42,12 @@ namespace ApiSigestHC.Servicios
             }
 
             //validamos que el rol pueda avanzar al siguiente estado
-            var nuevoEstado = ObtenerNuevoEstado(atencion.EstadoAtencion, rolNombre);
+            var nuevoEstado = ObtenerNuevoEstado(atencion.EstadoAtencionId, rolNombre);
             if (nuevoEstado == null)
             {
                 respuesta.IsSuccess = false;
                 respuesta.StatusCode = HttpStatusCode.Forbidden;
-                respuesta.ErrorMessages.Add($"El rol '{rolNombre}' no puede cambiar desde el estado {atencion.EstadoAtencion}");
+                respuesta.ErrorMessages.Add($"El rol '{rolNombre}' no puede cambiar desde el estado {atencion.EstadoAtencionId}");
                 return respuesta;
             }
 
@@ -62,11 +62,11 @@ namespace ApiSigestHC.Servicios
                 return respuesta;
             }
 
-            atencion.EstadoAtencion = nuevoEstado.Value;
+            atencion.EstadoAtencionId = nuevoEstado.Value;
             await _cambioEstadoRepo.RegistrarCambioAsync(new CambioEstado
             {
                 AtencionId = dto.AtencionId,
-                EstadoInicial = atencion.EstadoAtencion,
+                EstadoInicial = atencion.EstadoAtencionId,
                 EstadoNuevo = nuevoEstado.Value,
                 Fecha = DateTime.UtcNow,
                 UsuarioId = usuarioId,
@@ -77,7 +77,8 @@ namespace ApiSigestHC.Servicios
 
             respuesta.IsSuccess = true;
             respuesta.StatusCode = HttpStatusCode.OK;
-            respuesta.Result = $"Atención actualizada al estado {nuevoEstado.Value}";
+            respuesta.Message =  $"Atención actualizada al estado {nuevoEstado.Value}";
+            respuesta.Result = atencion;
             return respuesta;
         }
 

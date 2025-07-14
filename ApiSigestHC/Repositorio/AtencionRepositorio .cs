@@ -22,16 +22,31 @@ namespace ApiSigestHC.Repositorio
 
             return await _db.Atenciones
                 .Include(a => a.Paciente)
-                .OrderBy(a => a.FechaAtencion).ToListAsync();
+                .OrderBy(a => a.Fecha).ToListAsync();
                
         }
-        public async Task<IEnumerable<Atencion>> GetAtencionesByStateAsync(int minState,int maxState)
+        public async Task<IEnumerable<Atencion>> GetAtencionesPorEstadoAsync(List<int> estados)
+        {
+            if (estados == null || !estados.Any())
+                return Enumerable.Empty<Atencion>();
+
+            return await _db.Atenciones
+                 .Include(a => a.Paciente)
+                 .Where(a => estados.Contains(a.EstadoAtencionId))
+                 .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Atencion>> ObtenerPorFechasAsync(DateTime fechaInicio, DateTime fechaFin, int page, int pageSize)
         {
             return await _db.Atenciones
-                         .Include(a => a.Paciente)
-                         .Where(a => a.EstadoAtencion >= minState && a.EstadoAtencion <= maxState)
-                         .ToListAsync();
+                .Include(a => a.Paciente)
+                .Where(a => a.Fecha >= fechaInicio && a.Fecha <= fechaFin)
+                .OrderBy(a => a.Fecha)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
         }
+
 
         public async Task<Atencion> ObtenerAtencionPorIdAsync(int id)
         {
@@ -40,8 +55,8 @@ namespace ApiSigestHC.Repositorio
 
         public async Task CrearAtencionAsync(Atencion atencion)
         {
-            atencion.FechaAtencion = DateTime.Now;
-            atencion.EstadoAtencion = 1;
+            atencion.Fecha = DateTime.Now;
+            atencion.EstadoAtencionId = 1;
             atencion.UsuarioId = 1;
             await _db.Atenciones.AddAsync(atencion);
             await _db.SaveChangesAsync();

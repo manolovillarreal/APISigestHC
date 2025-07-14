@@ -22,29 +22,33 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddEndpointsApiExplorer();
 
-
+//Repositorios
 builder.Services.AddScoped<IAtencionRepositorio, AtencionRepositorio>();
-builder.Services.AddScoped<IPacienteRepositorio, PacienteRepositorio>();
+builder.Services.AddScoped<ICambioEstadoRepositorio,CambioEstadoRepositorio>();
 builder.Services.AddScoped<IDocumentoRepositorio,DocumentoRepositorio>();
+builder.Services.AddScoped<IDocumentoRequeridoRepositorio,DocumentoRequeridoRepositorio>();
+builder.Services.AddScoped<IEstadoAtencionRepositorio, EstadoAtencionRepositorio>();
+builder.Services.AddScoped<IPacienteRepositorio, PacienteRepositorio>();
+builder.Services.AddScoped<ISolicitudCorreccionRepositorio,SolicitudCorreccionRepositorio>();
 builder.Services.AddScoped<ITipoDocumentoRepositorio, TipoDocumentoRepositorio>();
 builder.Services.AddScoped<ITipoDocumentoRolRepositorio,TipoDocumentoRolRepositorio>();
-builder.Services.AddScoped<IDocumentoRequeridoRepositorio,DocumentoRequeridoRepositorio>();
-builder.Services.AddScoped<ICambioEstadoRepositorio,CambioEstadoRepositorio>();
-builder.Services.AddScoped<IEstadoAtencionRepositorio, EstadoAtencionRepositorio>();
-
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 
 //Servicios
 builder.Services.AddScoped<IAlmacenamientoArchivoService,AlmacenamientoArchivoService>();
+builder.Services.AddScoped<ICambioEstadoRepositorio,CambioEstadoRepositorio>();
+builder.Services.AddScoped<ICrearDocumentoRequeridoService,CrearDocumentoRequeridoService>();
+builder.Services.AddScoped<IDocumentoService,DocumentoService>();
+builder.Services.AddScoped<ITipoDocumentoService, TipoDocumentoService>();
+builder.Services.AddScoped<ITipoDocumentoRolService, TipoDocumentoRolService>();
 builder.Services.AddScoped<IUsuarioContextService,UsuarioContextService>();
+builder.Services.AddScoped<IUsuarioService,UsuarioService>();
+builder.Services.AddScoped<IValidacionCargaDocumentoService,ValidacionCargaDocumentoService>();
+builder.Services.AddScoped<IValidacionDocumentosObligatoriosService,ValidacionDocumentosObligatoriosService>();
+builder.Services.AddScoped<IVisualizacionEstadoService, VisualizacionEstadoService>();
+
 
 builder.Services.AddSwaggerGen();
-
-//Soporte para CORS
-//Se pueden habilitar: 1-Un dominio, 2-multiples dominios,
-//3-cualquier dominio (Tener en cuenta seguridad)
-//Usamos de ejemplo el dominio: http://localhost:3223, se debe cambiar por el correcto
-//Se usa (*) para todos los dominios
 builder.Services.AddCors(p => p.AddPolicy("PoliticaCors", build =>
 {
     build.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
