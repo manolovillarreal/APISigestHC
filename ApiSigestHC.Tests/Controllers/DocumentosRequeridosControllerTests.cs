@@ -62,7 +62,7 @@ namespace ApiSigestHC.Tests.Controllers
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(resultado);
             var respuesta = Assert.IsType<RespuestaAPI>(okResult.Value);
-            Assert.True(respuesta.IsSuccess);
+            Assert.True(respuesta.Ok);
             Assert.NotNull(respuesta.Result);
         }
 
@@ -99,7 +99,7 @@ namespace ApiSigestHC.Tests.Controllers
             var okResult = Assert.IsType<OkObjectResult>(resultado);
             var respuesta = Assert.IsType<RespuestaAPI>(okResult.Value);
 
-            Assert.True(respuesta.IsSuccess);
+            Assert.True(respuesta.Ok);
             Assert.NotNull(respuesta.Result);
         }
 
@@ -115,7 +115,7 @@ namespace ApiSigestHC.Tests.Controllers
 
             var respuestaExitosa = new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.Created,
                 Result = dto
             };
@@ -132,7 +132,7 @@ namespace ApiSigestHC.Tests.Controllers
             Assert.Equal((int)HttpStatusCode.Created, resultado.StatusCode);
 
             var respuesta = Assert.IsType<RespuestaAPI>(resultado.Value);
-            Assert.True(respuesta.IsSuccess);
+            Assert.True(respuesta.Ok);
             Assert.Equal(dto, respuesta.Result);
         }
 

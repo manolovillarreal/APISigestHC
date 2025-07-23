@@ -14,6 +14,7 @@ namespace ApiSigestHC.Servicios
         private readonly IValidacionCargaDocumentoService _validacionCargaDocumentoService;
         private readonly ISolicitudCorreccionRepositorio _solicitudCorreccionRepo;
         private readonly IDocumentoRepositorio _documentoRepo;
+        private readonly ITipoDocumentoRolRepositorio _tipoDocumentoRolRepo;
         private readonly IUsuarioContextService _usuarioContextService;
         private readonly IMapper _mapper;
 
@@ -22,6 +23,7 @@ namespace ApiSigestHC.Servicios
         ISolicitudCorreccionRepositorio solicitudCorreccionRepo,
         IValidacionCargaDocumentoService validacionCargaDocumentoService,
         IDocumentoRepositorio documentoRepo,
+        ITipoDocumentoRolRepositorio tipoDocumentoRepo,
         IUsuarioContextService usuarioContextService,
         IMapper mapper)
         {
@@ -29,6 +31,7 @@ namespace ApiSigestHC.Servicios
             _validacionCargaDocumentoService = validacionCargaDocumentoService;
             _solicitudCorreccionRepo = solicitudCorreccionRepo;
             _documentoRepo = documentoRepo;
+            _tipoDocumentoRolRepo = tipoDocumentoRepo;
             _usuarioContextService = usuarioContextService;
             _mapper = mapper;
         }
@@ -39,13 +42,16 @@ namespace ApiSigestHC.Servicios
             {
                 int rolId = _usuarioContextService.ObtenerRolId();
 
-                var documentos = await _documentoRepo.ObtenerPermitidosParaCargar(atencionId, rolId);
-
+                var documentos = await _documentoRepo.ObtenerPermitidosParaVer(atencionId, rolId);                       
                 var documentosDto = _mapper.Map<IEnumerable<DocumentoDto>>(documentos);
 
+                foreach (var doc in documentosDto)
+                {
+                    doc.puedeCargar = await _tipoDocumentoRolRepo.PuedeCargarTipoDocumento(rolId, doc.TipoDocumentoId);
+                }
                 return new RespuestaAPI
                 {
-                    IsSuccess = true,
+                    Ok = true,
                     StatusCode = HttpStatusCode.OK,
                     Result = documentosDto
                 };
@@ -54,7 +60,7 @@ namespace ApiSigestHC.Servicios
             {
                 return new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
                     ErrorMessages = new List<string> { "Error interno al obtener los documentos.", ex.Message }
                 };
@@ -64,7 +70,7 @@ namespace ApiSigestHC.Servicios
         public async Task<RespuestaAPI> CargarDocumentoAsync(DocumentoCargarDto dto)
         {
             var validacion = await _validacionCargaDocumentoService.ValidarCargaDocumentoAsync(dto);
-            if (!validacion.IsSuccess)
+            if (!validacion.Ok)
                 return validacion;
 
             try
@@ -91,7 +97,7 @@ namespace ApiSigestHC.Servicios
 
                 return new RespuestaAPI
                 {
-                    IsSuccess = true,
+                    Ok = true,
                     StatusCode = HttpStatusCode.OK,
                     Result = dtoResultado
                 };
@@ -101,7 +107,7 @@ namespace ApiSigestHC.Servicios
 
                 return new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
                     ErrorMessages = new List<string> { "Error interno al editar el documento.", ex.Message }
                 };
@@ -119,7 +125,7 @@ namespace ApiSigestHC.Servicios
                 {
                     return new RespuestaAPI
                     {
-                        IsSuccess = false,
+                        Ok = false,
                         StatusCode = HttpStatusCode.NotFound,
                         ErrorMessages = new List<string> { $"Documento con id {dto.Id} no encontrado." }
                     };
@@ -144,7 +150,7 @@ namespace ApiSigestHC.Servicios
                 // 5. Retornar respuesta
                 return new RespuestaAPI
                 {
-                    IsSuccess = true,
+                    Ok = true,
                     StatusCode = HttpStatusCode.OK,
                     Result = documentoDto
                 };
@@ -153,7 +159,7 @@ namespace ApiSigestHC.Servicios
             {
                 return new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
                     ErrorMessages = new List<string> { "Error interno al editar el documento.", ex.Message }
                 };
@@ -165,7 +171,7 @@ namespace ApiSigestHC.Servicios
             // 1. Validar si es posible reemplazar el documento
             var validacion = await _validacionCargaDocumentoService.ValidarReemplazoDocumentoAsync(dto);
 
-            if (!validacion.IsSuccess)
+            if (!validacion.Ok)
                 return validacion;
 
             try
@@ -176,7 +182,7 @@ namespace ApiSigestHC.Servicios
                 {
                     return new RespuestaAPI
                     {
-                        IsSuccess = false,
+                        Ok = false,
                         StatusCode = HttpStatusCode.NotFound,
                         ErrorMessages = new List<string> { $"Documento con id {dto.Id} no encontrado." }
                     };
@@ -194,7 +200,7 @@ namespace ApiSigestHC.Servicios
 
                 return new RespuestaAPI
                 {
-                    IsSuccess = true,
+                    Ok = true,
                     StatusCode = HttpStatusCode.OK,
                     Result = "Documento reemplazado exitosamente"
                 };
@@ -203,7 +209,7 @@ namespace ApiSigestHC.Servicios
             {
                 return new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.BadRequest,
                     ErrorMessages = new List<string> { ex.Message }
                 };
@@ -212,7 +218,7 @@ namespace ApiSigestHC.Servicios
             {
                 return new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
                     ErrorMessages = new List<string> { "Error al reemplazar el documento.", ex.Message }
                 };
@@ -227,7 +233,7 @@ namespace ApiSigestHC.Servicios
             {
                 return new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.BadRequest,
                     ErrorMessages = new List<string> { "Este documento no tiene una solicitud de corrección pendiente." }
                 };
@@ -235,7 +241,7 @@ namespace ApiSigestHC.Servicios
 
             // 2. Validar si es posible reemplazar (permite en estado auditoría si hay corrección pendiente)
             var validacion = await _validacionCargaDocumentoService.ValidarReemplazoDocumentoAsync(dto);
-            if (!validacion.IsSuccess)
+            if (!validacion.Ok)
                 return validacion;
 
             try
@@ -246,7 +252,7 @@ namespace ApiSigestHC.Servicios
                 {
                     return new RespuestaAPI
                     {
-                        IsSuccess = false,
+                        Ok = false,
                         StatusCode = HttpStatusCode.NotFound,
                         ErrorMessages = new List<string> { $"Documento con id {dto.Id} no encontrado." }
                     };
@@ -269,7 +275,7 @@ namespace ApiSigestHC.Servicios
 
                 return new RespuestaAPI
                 {
-                    IsSuccess = true,
+                    Ok = true,
                     StatusCode = HttpStatusCode.OK,
                     Result = "Corrección aplicada exitosamente."
                 };
@@ -278,7 +284,7 @@ namespace ApiSigestHC.Servicios
             {
                 return new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
                     ErrorMessages = new List<string> { "Ocurrió un error al corregir el documento.", ex.Message }
                 };
@@ -294,9 +300,20 @@ namespace ApiSigestHC.Servicios
                 var documento = await _documentoRepo.ObtenerPorIdAsync(documentoId);
                 if (documento == null)
                 {
-                    respuesta.IsSuccess = false;
+                    respuesta.Ok = false;
                     respuesta.StatusCode = HttpStatusCode.NotFound;
                     respuesta.ErrorMessages.Add($"No se encontró el documento con id {documentoId}");
+                    return respuesta;
+                }
+
+                var roleId = _usuarioContextService.ObtenerRolId();
+                var puedeEliminar = await _tipoDocumentoRolRepo.PuedeCargarTipoDocumento(roleId,documento.TipoDocumentoId);
+
+                if (!puedeEliminar)
+                {
+                    respuesta.Ok = false;
+                    respuesta.StatusCode = HttpStatusCode.Unauthorized;
+                    respuesta.ErrorMessages.Add($"No tiene pemisos para eliminar este documento ");
                     return respuesta;
                 }
 
@@ -304,14 +321,14 @@ namespace ApiSigestHC.Servicios
 
                 await _documentoRepo.EliminarAsync(documento);
 
-                respuesta.IsSuccess = true;
+                respuesta.Ok = true;
                 respuesta.StatusCode = HttpStatusCode.OK;
                 respuesta.Result = $"Documento con id {documentoId} eliminado correctamente";
                 return respuesta;
             }
             catch (Exception ex)
             {
-                respuesta.IsSuccess = false;
+                respuesta.Ok = false;
                 respuesta.StatusCode = HttpStatusCode.InternalServerError;
                 respuesta.ErrorMessages.Add("Error al eliminar el documento.");
                 respuesta.ErrorMessages.Add(ex.Message);
@@ -329,7 +346,7 @@ namespace ApiSigestHC.Servicios
                 {
                     return new NotFoundObjectResult(new RespuestaAPI
                     {
-                        IsSuccess = false,
+                        Ok = false,
                         StatusCode = HttpStatusCode.NotFound,
                         ErrorMessages = new List<string> { $"Documento con id {documentoId} no encontrado." }
                     });
@@ -340,7 +357,7 @@ namespace ApiSigestHC.Servicios
                 {
                     return new ObjectResult(new RespuestaAPI
                     {
-                        IsSuccess = false,
+                        Ok = false,
                         StatusCode = HttpStatusCode.Forbidden,
                         ErrorMessages = new List<string> { "No tiene permiso para ver este documento." }
                     })
@@ -354,7 +371,7 @@ namespace ApiSigestHC.Servicios
                 {
                     return new NotFoundObjectResult(new RespuestaAPI
                     {
-                        IsSuccess = false,
+                        Ok = false,
                         StatusCode = HttpStatusCode.NotFound,
                         ErrorMessages = new List<string> { "Archivo no encontrado físicamente." }
                     });
@@ -366,7 +383,7 @@ namespace ApiSigestHC.Servicios
             {
                 return new BadRequestObjectResult(new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.BadRequest,
                     ErrorMessages = new List<string> { "Ocurrió un error al intentar descargar el documento.", ex.Message }
                 });
@@ -384,7 +401,7 @@ namespace ApiSigestHC.Servicios
                 {
                     return new NotFoundObjectResult(new RespuestaAPI
                     {
-                        IsSuccess = false,
+                        Ok = false,
                         StatusCode = HttpStatusCode.NotFound,
                         ErrorMessages = new List<string> { "Documento no encontrado." }
                     });
@@ -395,7 +412,7 @@ namespace ApiSigestHC.Servicios
                 {
                     return new ObjectResult(new RespuestaAPI
                     {
-                        IsSuccess = false,
+                        Ok = false,
                         StatusCode = HttpStatusCode.Forbidden,
                         ErrorMessages = new List<string> { "No tienes permisos para ver este documento." }
                     })
@@ -409,7 +426,7 @@ namespace ApiSigestHC.Servicios
                 {
                     return new NotFoundObjectResult(new RespuestaAPI
                     {
-                        IsSuccess = false,
+                        Ok = false,
                         StatusCode = HttpStatusCode.NotFound,
                         ErrorMessages = new List<string> { "El archivo físico no fue encontrado." }
                     });
@@ -421,7 +438,7 @@ namespace ApiSigestHC.Servicios
             {
                 return new BadRequestObjectResult(new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.BadRequest,
                     ErrorMessages = new List<string> { "Error al intentar ver el documento.", ex.Message }
                 });

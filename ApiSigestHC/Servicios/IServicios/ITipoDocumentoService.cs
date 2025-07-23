@@ -10,5 +10,6 @@ namespace ApiSigestHC.Servicios.IServicios
         Task<RespuestaAPI> ObtenerPorIdAsync(int id);
         Task<RespuestaAPI> CrearAsync(TipoDocumentoCrearDto dto);
         Task<RespuestaAPI> EditarAsync(int id, TipoDocumentoCrearDto dto);
+        Task<RespuestaAPI> EliminarAsync(int id);
     }
 }

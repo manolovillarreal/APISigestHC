@@ -1,10 +1,14 @@
 ﻿using ApiSigestHC.Modelos;
 using ApiSigestHC.Modelos.Dtos;
+using ApiSigestHC.Repositorio;
 using ApiSigestHC.Repositorio.IRepositorio;
 using ApiSigestHC.Servicios.IServicios;
 using AutoMapper;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Security.Claims;
+using System.Text;
 
 namespace ApiSigestHC.Servicios
 {
@@ -12,14 +16,17 @@ namespace ApiSigestHC.Servicios
     {
         private readonly IUsuarioRepositorio _usuarioRepo;
         private readonly IUsuarioContextService _usuarioContextService;
+        private readonly IConfiguration _config;
         private readonly IMapper _mapper;
 
         public UsuarioService(IUsuarioRepositorio usuarioRepo,
                     IUsuarioContextService usuarioContextService,
+                    IConfiguration config,
                     IMapper mapper)
         {
             _usuarioRepo = usuarioRepo;
             _usuarioContextService = usuarioContextService;
+            _config = config;
             _mapper = mapper;
         }
 
@@ -32,7 +39,7 @@ namespace ApiSigestHC.Servicios
 
                 return new RespuestaAPI
                 {
-                    IsSuccess = true,
+                    Ok = true,
                     StatusCode = HttpStatusCode.OK,
                     Result = usuariosDto
                 };
@@ -41,7 +48,7 @@ namespace ApiSigestHC.Servicios
             {
                 return new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
                     ErrorMessages = new List<string> { "Error al obtener los usuarios.", ex.Message }
                 };
@@ -57,7 +64,7 @@ namespace ApiSigestHC.Servicios
                 {
                     return new RespuestaAPI
                     {
-                        IsSuccess = false,
+                        Ok = false,
                         StatusCode = HttpStatusCode.NotFound,
                         ErrorMessages = new List<string> { "Usuario no encontrado." }
                     };
@@ -66,7 +73,7 @@ namespace ApiSigestHC.Servicios
                 var usuarioDto = _mapper.Map<UsuarioDto>(usuario);
                 return new RespuestaAPI
                 {
-                    IsSuccess = true,
+                    Ok = true,
                     StatusCode = HttpStatusCode.OK,
                     Result = usuarioDto
                 };
@@ -75,7 +82,7 @@ namespace ApiSigestHC.Servicios
             {
                 return new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
                     ErrorMessages = new List<string> { "Error al obtener el usuario.", ex.Message }
                 };
@@ -91,7 +98,7 @@ namespace ApiSigestHC.Servicios
                 {
                     return new RespuestaAPI
                     {
-                        IsSuccess = false,
+                        Ok = false,
                         StatusCode = HttpStatusCode.BadRequest,
                         ErrorMessages = new List<string> { "El nombre de usuario ya existe." }
                     };
@@ -102,7 +109,7 @@ namespace ApiSigestHC.Servicios
                 {
                     return new RespuestaAPI
                     {
-                        IsSuccess = false,
+                        Ok = false,
                         StatusCode = HttpStatusCode.BadRequest,
                         ErrorMessages = new List<string> { "Error al registrar el usuario." }
                     };
@@ -110,7 +117,7 @@ namespace ApiSigestHC.Servicios
                 var usuarioDto = _mapper.Map<UsuarioDto>(usuario);
                 return new RespuestaAPI
                 {
-                    IsSuccess = true,
+                    Ok = true,
                     StatusCode = HttpStatusCode.Created,
                     Result = usuarioDto
                 };
@@ -119,7 +126,7 @@ namespace ApiSigestHC.Servicios
             {
                 return new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
                     ErrorMessages = new List<string> { "Error interno al crear el usuario.", ex.Message }
                 };
@@ -130,35 +137,47 @@ namespace ApiSigestHC.Servicios
         {
             try
             {
-                var resultadoLogin = await _usuarioRepo.Login(dto);
+                var usuario = await _usuarioRepo.ObtenerPorCredencialesAsync(dto.NombreUsuario, dto.Password);
 
-                if (resultadoLogin.Usuario == null || string.IsNullOrEmpty(resultadoLogin.Token))
+                if (usuario == null)
                 {
+
                     return new RespuestaAPI
                     {
-                        IsSuccess = false,
+                        Ok = false,
                         StatusCode = HttpStatusCode.BadRequest,
                         ErrorMessages = new List<string> { "Nombre de usuario o contraseña incorrectos." }
                     };
+
                 }
+
+                var token = GenerarToken(usuario); // método privado
+                return new RespuestaAPI
+                {
+                    Ok = true,
+                    StatusCode = HttpStatusCode.OK,
+                    Result = new UsuarioLoginRespuestaDto
+                    {
+                        Token = token,
+                        Usuario = _mapper.Map<UsuarioDto>(usuario)
+                    }
+                };
+            }
+            catch (Exception e)
+            {
 
                 return new RespuestaAPI
                 {
-                    IsSuccess = true,
-                    StatusCode = HttpStatusCode.OK,
-                    Result = resultadoLogin
-                };
-            }
-            catch (Exception ex)
-            {
-                return new RespuestaAPI
-                {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
-                    ErrorMessages = new List<string> { "Error durante el inicio de sesión.", ex.Message }
+                   ErrorMessages = new List<string> { "Error inesperado:  "+e.Message}
                 };
             }
+           
+
+           
         }
+
 
         public async Task<RespuestaAPI> ObtenerPerfilAsync()
         {
@@ -171,7 +190,7 @@ namespace ApiSigestHC.Servicios
                 {
                     return new RespuestaAPI
                     {
-                        IsSuccess = false,
+                        Ok = false,
                         StatusCode = HttpStatusCode.NotFound,
                         ErrorMessages = new List<string> { "Usuario no encontrado" }
                     };
@@ -181,7 +200,7 @@ namespace ApiSigestHC.Servicios
 
                 return new RespuestaAPI
                 {
-                    IsSuccess = true,
+                    Ok = true,
                     StatusCode = HttpStatusCode.OK,
                     Result = usuarioDto
                 };
@@ -190,11 +209,34 @@ namespace ApiSigestHC.Servicios
             {
                 return new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
                     ErrorMessages = new List<string> { "Error al obtener perfil", ex.Message }
                 };
             }
         }
+
+        private string GenerarToken(Usuario usuario)
+        {
+            var manejadorToken = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(_config.GetValue<string>("ApiSettings:Secret"));
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+            new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
+            new Claim(ClaimTypes.Name, usuario.NombreUsuario),
+            new Claim(ClaimTypes.Role, usuario.RolNombre),
+            new Claim("rol_id", usuario.RolId.ToString())
+        }),
+                Expires = DateTime.UtcNow.AddDays(7),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var token = manejadorToken.CreateToken(tokenDescriptor);
+            return manejadorToken.WriteToken(token);
+        }
+
     }
 }

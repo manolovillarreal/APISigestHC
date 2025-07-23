@@ -1,12 +1,14 @@
-﻿using ApiSigestHC.Modelos;
-using ApiSigestHC.Repositorio.IRepositorio;
-using Microsoft.EntityFrameworkCore;
-using ApiSigestHC.Data;
+﻿using ApiSigestHC.Data;
+using ApiSigestHC.Modelos;
 using ApiSigestHC.Modelos;
 using ApiSigestHC.Modelos.Dtos;
-using System.Net;
-using Microsoft.AspNetCore.Http;
+using ApiSigestHC.Repositorio.IRepositorio;
 using ApiSigestHC.Servicios.IServicios;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace ApiSigestHC.Repositorio
 {
@@ -24,17 +26,34 @@ namespace ApiSigestHC.Repositorio
         {
             return await _db.Documentos
                 .Where(d => d.AtencionId == atencionId)
+                .Include(d => d.Usuario)
+                    .ThenInclude(u=>u.Rol)
                 .ToListAsync();
         }
         public async Task<IEnumerable<Documento>> ObtenerPermitidosParaCargar(int atencionId, int rolId)
         {
             return await _db.Documentos
                 .Include(d => d.TipoDocumento)
+                .Include(d => d.Usuario)
+                    .ThenInclude(u => u.Rol)
                 .Where(d => d.AtencionId == atencionId &&
                             _db.TipoDocumentoRoles.Any(tdr =>
                                 tdr.TipoDocumentoId == d.TipoDocumentoId &&
                                 tdr.RolId == rolId &&
                                 tdr.PuedeCargar))
+                .ToListAsync();
+        }
+        public async Task<IEnumerable<Documento>> ObtenerPermitidosParaVer(int atencionId, int rolId)
+        {
+            return await _db.Documentos
+                .Include(d => d.TipoDocumento)
+                .Include(d => d.Usuario)
+                    .ThenInclude(u => u.Rol)
+                .Where(d => d.AtencionId == atencionId &&
+                            _db.TipoDocumentoRoles.Any(tdr =>
+                                tdr.TipoDocumentoId == d.TipoDocumentoId &&
+                                tdr.RolId == rolId &&
+                                tdr.PuedeVer))
                 .ToListAsync();
         }
 
@@ -43,6 +62,7 @@ namespace ApiSigestHC.Repositorio
             return await _db.Documentos
                 .Include(d => d.TipoDocumento)
                 .Include(d=>d.Atencion)
+                .Include(d => d.Usuario)
                 .FirstOrDefaultAsync(d=> d.Id == id);
         }
 
@@ -78,15 +98,20 @@ namespace ApiSigestHC.Repositorio
         public async Task<bool> PuedeVerDocumento(int rolId, int tipoDocumentoId)
         {
             return await _db.TipoDocumentoRoles
-        .AnyAsync(td =>
-            td.RolId == rolId &&
-            td.TipoDocumentoId == tipoDocumentoId &&
-            td.PuedeVer);
+            .AnyAsync(td =>
+                td.RolId == rolId &&
+                td.TipoDocumentoId == tipoDocumentoId &&
+                td.PuedeVer);
         }
         public async Task<bool> ExisteDocumentoAsync(int atencionId, int tipoDocumentoId)
         {
             return await _db.Documentos.AnyAsync(d =>
                 d.AtencionId == atencionId &&
+                d.TipoDocumentoId == tipoDocumentoId);
+        }
+        public async Task<bool> ExistenDelTipoAsync(int tipoDocumentoId)
+        {
+            return await _db.Documentos.AnyAsync(d =>
                 d.TipoDocumentoId == tipoDocumentoId);
         }
         public async Task<int> ContarPorTipoYAtencionAsync(int atencionId, int tipoDocumentoId)
@@ -95,5 +120,6 @@ namespace ApiSigestHC.Repositorio
                 .CountAsync(d => d.AtencionId == atencionId && d.TipoDocumentoId == tipoDocumentoId);
         }
 
+      
     }
 }

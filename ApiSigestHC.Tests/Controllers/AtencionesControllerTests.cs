@@ -70,7 +70,7 @@ namespace ApiSigestHC.Tests.Controllers
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<RespuestaAPI>(okResult.Value);
-            Assert.True(response.IsSuccess);
+            Assert.True(response.Ok);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.Equal(atencionesDto, response.Result);
         }
@@ -99,7 +99,7 @@ namespace ApiSigestHC.Tests.Controllers
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(resultado);
             var respuesta = Assert.IsType<RespuestaAPI>(okResult.Value);
-            Assert.True(respuesta.IsSuccess);
+            Assert.True(respuesta.Ok);
             Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
             Assert.Equal(atenciones, respuesta.Result);
         }
@@ -136,7 +136,7 @@ namespace ApiSigestHC.Tests.Controllers
             Assert.Equal(nameof(_controller.CrearAtencion), createdResult.ActionName);
 
             var respuesta = Assert.IsType<RespuestaAPI>(createdResult.Value);
-            Assert.True(respuesta.IsSuccess);
+            Assert.True(respuesta.Ok);
             Assert.Equal(HttpStatusCode.Created, respuesta.StatusCode);
             Assert.Equal(atencionMapeada, respuesta.Result);
 
@@ -175,7 +175,7 @@ namespace ApiSigestHC.Tests.Controllers
             Assert.Equal((int)HttpStatusCode.OK, okResult.StatusCode);
 
             var respuesta = Assert.IsType<RespuestaAPI>(okResult.Value);
-            Assert.True(respuesta.IsSuccess);
+            Assert.True(respuesta.Ok);
             Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
             Assert.Equal(atencionModificada, respuesta.Result);
 
@@ -195,7 +195,7 @@ namespace ApiSigestHC.Tests.Controllers
 
             var respuestaEsperada = new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.OK,
                 Result = "Cambio realizado correctamente"
             };
@@ -211,7 +211,7 @@ namespace ApiSigestHC.Tests.Controllers
             var okResult = Assert.IsType<ObjectResult>(resultado);
             var respuesta = Assert.IsType<RespuestaAPI>(okResult.Value);
 
-            Assert.True(respuesta.IsSuccess);
+            Assert.True(respuesta.Ok);
             Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
             Assert.Equal(respuestaEsperada.Result, respuesta.Result);
 

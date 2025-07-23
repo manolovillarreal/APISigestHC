@@ -10,7 +10,8 @@ namespace ApiSigestHC.Servicios
     public class TipoDocumentoService : ITipoDocumentoService
     {
         private readonly ITipoDocumentoRepositorio _repository;
-        private readonly ITipoDocumentoRolRepositorio _rolRepositorio;
+        private readonly ITipoDocumentoRolRepositorio _tipoDocumentoRolRepositorio;
+        private readonly IDocumentoRepositorio _documentoRepositorio;
         private readonly IUsuarioContextService _usuarioContextService;
 
         private readonly IMapper _mapper;
@@ -19,11 +20,13 @@ namespace ApiSigestHC.Servicios
             ITipoDocumentoRepositorio repository,
             ITipoDocumentoRolRepositorio rolRepositorio,
             IUsuarioContextService usuarioContextService,
+            IDocumentoRepositorio documentoRepositorio,
             IMapper mapper)
         {
             _repository = repository;
-            _rolRepositorio = rolRepositorio;
+            _tipoDocumentoRolRepositorio = rolRepositorio;
             _usuarioContextService = usuarioContextService;
+            _documentoRepositorio = documentoRepositorio;
             _mapper = mapper;
         }
 
@@ -32,17 +35,17 @@ namespace ApiSigestHC.Servicios
             try
             {
                 var rolId = _usuarioContextService.ObtenerRolId();
-                var relaciones = await _rolRepositorio.ObtenerPorRolAsync(rolId);
+                var relaciones = await _tipoDocumentoRolRepositorio.ObtenerPorRolAsync(rolId);
                 var tipos = relaciones.Select(r => r.TipoDocumento).Distinct();
                 var dto = _mapper.Map<IEnumerable<TipoDocumentoDto>>(tipos);
 
-                return new RespuestaAPI { IsSuccess = true, StatusCode = HttpStatusCode.OK, Result = dto };
+                return new RespuestaAPI { Ok = true, StatusCode = HttpStatusCode.OK, Result = dto };
             }
             catch (Exception ex)
             {
                 return new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
                     ErrorMessages = new List<string> { "Error al obtener tipos autorizados.", ex.Message }
                 };
@@ -55,13 +58,13 @@ namespace ApiSigestHC.Servicios
             {
                 var tipos = await _repository.GetTiposDocumentoAsync();
                 var dto = _mapper.Map<IEnumerable<TipoDocumentoDto>>(tipos);
-                return new RespuestaAPI { IsSuccess = true, StatusCode = HttpStatusCode.OK, Result = dto };
+                return new RespuestaAPI { Ok = true, StatusCode = HttpStatusCode.OK, Result = dto };
             }
             catch (Exception ex)
             {
                 return new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
                     ErrorMessages = new List<string> { "Error al obtener todos los tipos.", ex.Message }
                 };
@@ -74,16 +77,16 @@ namespace ApiSigestHC.Servicios
             {
                 var tipo = await _repository.GetTipoDocumentoPorIdAsync(id);
                 if (tipo == null)
-                    return new RespuestaAPI { IsSuccess = false, StatusCode = HttpStatusCode.NotFound, ErrorMessages = ["No encontrado"] };
+                    return new RespuestaAPI { Ok = false, StatusCode = HttpStatusCode.NotFound, ErrorMessages = ["No encontrado"] };
 
                 var dto = _mapper.Map<TipoDocumentoDto>(tipo);
-                return new RespuestaAPI { IsSuccess = true, StatusCode = HttpStatusCode.OK, Result = dto };
+                return new RespuestaAPI { Ok = true, StatusCode = HttpStatusCode.OK, Result = dto };
             }
             catch (Exception ex)
             {
                 return new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
                     ErrorMessages = ["Error al obtener tipo por id", ex.Message]
                 };
@@ -95,19 +98,19 @@ namespace ApiSigestHC.Servicios
             try
             {
                 if (await _repository.ExisteTipoDocumentoPorCodigoAsync(dto.Codigo))
-                    return new RespuestaAPI { IsSuccess = false, StatusCode = HttpStatusCode.Conflict, ErrorMessages = ["Código duplicado"] };
+                    return new RespuestaAPI { Ok = false, StatusCode = HttpStatusCode.Conflict, ErrorMessages = ["Código duplicado"] };
 
                 var tipo = _mapper.Map<TipoDocumento>(dto);
                 await _repository.CrearTipoDocumentoAsync(tipo);
                 var resultDto = _mapper.Map<TipoDocumentoDto>(tipo);
 
-                return new RespuestaAPI { IsSuccess = true, StatusCode = HttpStatusCode.Created, Result = resultDto };
+                return new RespuestaAPI { Ok = true, StatusCode = HttpStatusCode.Created, Result = resultDto };
             }
             catch (Exception ex)
             {
                 return new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
                     ErrorMessages = ["Error al crear tipo", ex.Message]
                 };
@@ -120,28 +123,58 @@ namespace ApiSigestHC.Servicios
             {
                 var existente = await _repository.GetTipoDocumentoPorIdAsync(id);
                 if (existente == null)
-                    return new RespuestaAPI { IsSuccess = false, StatusCode = HttpStatusCode.NotFound, ErrorMessages = ["No encontrado"] };
+                    return new RespuestaAPI { Ok = false, StatusCode = HttpStatusCode.NotFound, ErrorMessages = ["No encontrado"] };
 
-                existente.Codigo = dto.Codigo;
-                existente.Nombre = dto.Nombre;
-                existente.Descripcion = dto.Descripcion;
+                _mapper.Map(dto, existente); 
 
-                await _repository.ActualizarTipoDocumentoAsync(existente);
+                await _repository.ActualizarAsync(existente);
 
-                return new RespuestaAPI { IsSuccess = true, StatusCode = HttpStatusCode.NoContent };
+                return new RespuestaAPI { Ok = true, StatusCode = HttpStatusCode.NoContent };
             }
             catch (Exception ex)
             {
                 return new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
+                    StatusCode = HttpStatusCode.InternalServerError,
+                    ErrorMessages = ["Error al editar tipo", ex.Message]
+                };
+            }
+        }
+        public async Task<RespuestaAPI> EliminarAsync(int id)
+        {
+            try
+            {
+                var existente = await _repository.GetTipoDocumentoPorIdAsync(id);
+                if (existente == null)
+                    return new RespuestaAPI { Ok = false, StatusCode = HttpStatusCode.NotFound, ErrorMessages = ["No encontrado"] };
+                string message = "";
+                if((await _documentoRepositorio.ExistenDelTipoAsync(id)))
+                {
+                    return new RespuestaAPI { 
+                        Ok = false, 
+                        StatusCode = HttpStatusCode.BadRequest, 
+                        ErrorMessages = new List<string> {
+                            "No se puede eliminar el Tipo de Documento ya que existen documentos asociados a este" } 
+                    };
+                    
+                }
+                await _repository.EliminarAsync(existente);
+
+                return new RespuestaAPI { Ok = true, StatusCode = HttpStatusCode.NoContent, Message=message };
+            }
+            catch (Exception ex)
+            {
+                return new RespuestaAPI
+                {
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
                     ErrorMessages = ["Error al editar tipo", ex.Message]
                 };
             }
         }
 
-        
+
 
     }
 }

@@ -49,7 +49,7 @@ namespace ApiSigestHC.Tests.Controllers
             var okResult = resultado.Should().BeOfType<OkObjectResult>().Subject;
             var respuesta = okResult.Value.Should().BeOfType<RespuestaAPI>().Subject;
 
-            respuesta.IsSuccess.Should().BeTrue();
+            respuesta.Ok.Should().BeTrue();
             respuesta.StatusCode.Should().Be(HttpStatusCode.OK);
             (respuesta.Result as List<CambioEstado>).Should().HaveCount(2);
         }
@@ -68,7 +68,7 @@ namespace ApiSigestHC.Tests.Controllers
             var notFound = resultado.Should().BeOfType<NotFoundObjectResult>().Subject;
             var respuesta = notFound.Value.Should().BeOfType<RespuestaAPI>().Subject;
 
-            respuesta.IsSuccess.Should().BeFalse();
+            respuesta.Ok.Should().BeFalse();
             respuesta.StatusCode.Should().Be(HttpStatusCode.NotFound);
             respuesta.ErrorMessages.Should().Contain("No se encontró historial para la atención solicitada.");
         }

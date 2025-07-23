@@ -41,7 +41,7 @@ namespace ApiSigestHC.Controllers
 
                 return Ok(new RespuestaAPI
                 {
-                    IsSuccess = true,
+                    Ok = true,
                     StatusCode = HttpStatusCode.OK,
                     Result = docsDto
                 });
@@ -50,7 +50,7 @@ namespace ApiSigestHC.Controllers
             {
                 return StatusCode(500, new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
                     ErrorMessages = new List<string> { "Error al obtener los documentos requeridos.", ex.Message }
                 });
@@ -69,7 +69,7 @@ namespace ApiSigestHC.Controllers
 
                 return Ok(new RespuestaAPI
                 {
-                    IsSuccess = true,
+                    Ok = true,
                     StatusCode = HttpStatusCode.OK,
                     Result = docsDto
                 });
@@ -78,7 +78,7 @@ namespace ApiSigestHC.Controllers
             {
                 return StatusCode(500, new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
                     ErrorMessages = new List<string> { "Error al obtener documentos por estado.", ex.Message }
                 });

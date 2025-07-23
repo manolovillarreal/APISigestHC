@@ -24,10 +24,11 @@ namespace ApiSigestHC.Controllers
         /// <summary>
         /// Obtiene las relaciones de un tipo de documento con roles.
         /// </summary>
-        [HttpGet]
+        /// 
+        [HttpGet("por-tipo/{tipoDocumentoId}")]
         [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetPorTipoDocumento([FromQuery] int tipoDocumentoId)
+        public async Task<IActionResult> GetPorTipoDocumento(int tipoDocumentoId)
         {
             var respuesta = await _service.ObtenerPorTipoDocumentoAsync(tipoDocumentoId);
             return StatusCode((int)respuesta.StatusCode, respuesta);

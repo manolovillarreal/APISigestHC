@@ -31,7 +31,7 @@ namespace ApiSigestHC.Tests.Controllers
             // Arrange
             var respuesta = new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.OK,
                 Result = new List<TipoDocumentoDto> { new TipoDocumentoDto { Id = 1, Codigo = "COD", Nombre = "Nombre" } }
             };
@@ -55,7 +55,7 @@ namespace ApiSigestHC.Tests.Controllers
             var id = 1;
             var respuesta = new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.OK,
                 Result = new TipoDocumentoDto { Id = id, Codigo = "X", Nombre = "Test" }
             };
@@ -78,7 +78,7 @@ namespace ApiSigestHC.Tests.Controllers
             // Arrange
             var respuesta = new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.OK,
                 Result = new List<TipoDocumentoDto>()
             };
@@ -103,7 +103,7 @@ namespace ApiSigestHC.Tests.Controllers
 
             var respuesta = new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.Created,
                 Result = new TipoDocumentoDto { Id = 1, Codigo = "NUEVO", Nombre = "Nombre" }
             };
@@ -129,7 +129,7 @@ namespace ApiSigestHC.Tests.Controllers
 
             var respuesta = new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.NoContent
             };
 

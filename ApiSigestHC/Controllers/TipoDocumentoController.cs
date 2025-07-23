@@ -70,6 +70,16 @@ namespace ApiSigestHC.Controllers
         [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Crear([FromBody] TipoDocumentoCrearDto dto)
         {
+            if (!ModelState.IsValid || dto == null)
+            {
+                return BadRequest(new RespuestaAPI
+                {
+                    Ok = false,
+                    StatusCode = HttpStatusCode.BadRequest,
+                    ErrorMessages = new List<string> { "Datos inválidos para crear el tipoDocumento." }
+                });
+            }
+
             var respuesta = await _tipoDocumentoService.CrearAsync(dto);
             return StatusCode((int)respuesta.StatusCode, respuesta);
         }
@@ -83,6 +93,18 @@ namespace ApiSigestHC.Controllers
         public async Task<IActionResult> Editar(int id, [FromBody] TipoDocumentoCrearDto dto)
         {
             var respuesta = await _tipoDocumentoService.EditarAsync(id, dto);
+            return StatusCode((int)respuesta.StatusCode, respuesta);
+        }
+
+        // PUT: api/TipoDocumento/{id}
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("{id}")]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> Eliminar(int id)
+        {
+            var respuesta = await _tipoDocumentoService.EliminarAsync(id);
             return StatusCode((int)respuesta.StatusCode, respuesta);
         }
     }

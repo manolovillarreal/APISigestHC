@@ -16,10 +16,9 @@ namespace ApiSigestHC.Repositorio
         private readonly ApplicationDbContext _db;
         private string claveSecreta;
 
-        public UsuarioRepositorio(ApplicationDbContext db,IConfiguration config)
+        public UsuarioRepositorio(ApplicationDbContext db)
         {
             _db = db;
-            claveSecreta = config.GetValue<string>("ApiSettings:Secret");
         }
 
 
@@ -44,52 +43,16 @@ namespace ApiSigestHC.Repositorio
             return usuarioBd == null;
         }
 
-        public async Task<UsuarioLoginRespuestaDto> Login(UsuarioLoginDto usuarioLoginDto)
+
+        public async Task<Usuario?> ObtenerPorCredencialesAsync(string username, string password)
         {
-            var passwordEcriptado = obtenerMD5(usuarioLoginDto.Password);
-            var usuario = _db.Usuarios
-                 .Include(u => u.Rol) // Incluye la tabla de rol
-                .FirstOrDefault(
-                u => u.NombreUsuario.ToLower() == usuarioLoginDto.NombreUsuario.ToLower()
-                && u.Contraseña == passwordEcriptado
-                );
-            
-            if (usuario == null) {
-                return new UsuarioLoginRespuestaDto()
-                {
-                    Token = "",
-                    Usuario = null
-                };              
-            }
-            //Aqui existe el usuario entonces podemos procesar el login
-            var manejadorToken = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(claveSecreta);
-
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(new Claim[]
-                {
-                    new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
-                    new Claim(ClaimTypes.Name,usuario.NombreUsuario),
-                    new Claim(ClaimTypes.Role,usuario.RolNombre),
-                    new Claim("rol_id", usuario.RolId.ToString())
-                }),
-                Expires = DateTime.UtcNow.AddDays(7),
-                SigningCredentials = new (new SymmetricSecurityKey(key),SecurityAlgorithms.HmacSha256Signature)
-            };
-
-            var token = manejadorToken.CreateToken(tokenDescriptor);
-
-            UsuarioLoginRespuestaDto usuarioLoginRespuestaDto = new UsuarioLoginRespuestaDto()
-            {
-                Token = manejadorToken.WriteToken(token),
-                Usuario = usuario
-            };
-
-            return usuarioLoginRespuestaDto;
-
-
+            var passwordEncriptado = obtenerMD5(password);
+            return await _db.Usuarios
+                .Include(u => u.Rol)
+                .FirstOrDefaultAsync(u => u.NombreUsuario.ToLower() == username.ToLower()
+                                       && u.Contraseña == passwordEncriptado);
         }
+
 
         public async Task<Usuario> CrearUsuario(UsuarioCrearDto usuarioRegistroDto)
         {

@@ -1,5 +1,6 @@
-﻿using ApiSigestHC.Modelos.Dtos;
-using ApiSigestHC.Modelos;
+﻿using ApiSigestHC.Modelos;
+using ApiSigestHC.Modelos.Dtos;
+using ApiSigestHC.Repositorio;
 using ApiSigestHC.Repositorio.IRepositorio;
 using ApiSigestHC.Servicios;
 using ApiSigestHC.Servicios.IServicios;
@@ -16,6 +17,8 @@ namespace ApiSigestHC.Tests.Servicios
     public class CambiarEsadoServiceTests
     {
         private readonly Mock<IAtencionRepositorio> _atencionRepoMock;
+        private readonly Mock<IEstadoAtencionRepositorio> _estadoAtencionRepositorio;
+
         private readonly Mock<ICambioEstadoRepositorio> _cambioEstadoRepoMock;
         private readonly Mock<IUsuarioContextService> _usuarioContextMock;
         private readonly Mock<IValidacionDocumentosObligatoriosService> _validacionDocServiceMock;
@@ -24,12 +27,14 @@ namespace ApiSigestHC.Tests.Servicios
         public CambiarEsadoServiceTests()
         {
             _atencionRepoMock = new Mock<IAtencionRepositorio>();
+            _estadoAtencionRepositorio = new Mock<IEstadoAtencionRepositorio>();
             _cambioEstadoRepoMock = new Mock<ICambioEstadoRepositorio>();
             _usuarioContextMock = new Mock<IUsuarioContextService>();
             _validacionDocServiceMock = new Mock<IValidacionDocumentosObligatoriosService>();
 
             _service = new CambioEstadoService(
                 _atencionRepoMock.Object,
+                _estadoAtencionRepositorio.Object,
                 _cambioEstadoRepoMock.Object,
                 _validacionDocServiceMock.Object,
                 _usuarioContextMock.Object
@@ -50,7 +55,7 @@ namespace ApiSigestHC.Tests.Servicios
             var respuesta = await _service.CambiarEstadoAsync(dto);
 
             // Assert
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Equal(HttpStatusCode.NotFound, respuesta.StatusCode);
             Assert.Contains("La atención no existe", respuesta.ErrorMessages);
         }
@@ -72,7 +77,7 @@ namespace ApiSigestHC.Tests.Servicios
             var respuesta = await _service.CambiarEstadoAsync(dto);
 
             // Assert
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Equal(HttpStatusCode.Forbidden, respuesta.StatusCode);
             Assert.Contains("no puede cambiar desde el estado", respuesta.ErrorMessages[0]);
         }
@@ -98,7 +103,7 @@ namespace ApiSigestHC.Tests.Servicios
             var respuesta = await _service.CambiarEstadoAsync(dto);
 
             // Assert
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Contains("Faltan documentos requeridos", respuesta.ErrorMessages[0]);
             Assert.Contains("Historia Clínica", respuesta.ErrorMessages);
             Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
@@ -120,14 +125,14 @@ namespace ApiSigestHC.Tests.Servicios
             var dto = new AtencionCambioEstadoDto
             {
                 AtencionId = 1,
-                Obervaciones = "Todo en orden"
+                Obervacion = "Todo en orden"
             };
 
             // Act
             var respuesta = await _service.CambiarEstadoAsync(dto);
             atencion.EstadoAtencionId = 2; 
             // Assert
-            Assert.True(respuesta.IsSuccess);
+            Assert.True(respuesta.Ok);
             Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
             Assert.Equal(atencion, respuesta.Result);
 

@@ -77,7 +77,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await service.ValidarCargaDocumentoAsync(dto);
 
             // Assert
-            Assert.True(resultado.IsSuccess);
+            Assert.True(resultado.Ok);
         }
 
         [Fact]
@@ -99,7 +99,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             var resultado = await service.ValidarCargaDocumentoAsync(dto);
 
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.NotFound, resultado.StatusCode);
         }
 
@@ -122,7 +122,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             var resultado = await service.ValidarCargaDocumentoAsync(dto);
 
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.BadRequest, resultado.StatusCode);
         }
 
@@ -162,7 +162,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             var resultado = await service.ValidarCargaDocumentoAsync(dto);
 
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.BadRequest, resultado.StatusCode);
         }
 
@@ -202,7 +202,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             var resultado = await service.ValidarCargaDocumentoAsync(dto);
 
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.UnsupportedMediaType, resultado.StatusCode);
         }
 
@@ -242,7 +242,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             var resultado = await service.ValidarCargaDocumentoAsync(dto);
 
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.BadRequest, resultado.StatusCode);
         }
 
@@ -277,7 +277,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             var resultado = await service.ValidarCargaDocumentoAsync(dto);
 
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.Forbidden, resultado.StatusCode);
         }
 
@@ -319,7 +319,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             var resultado = await service.ValidarCargaDocumentoAsync(dto);
 
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.BadRequest, resultado.StatusCode);
         }
 
@@ -362,7 +362,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             var resultado = await service.ValidarCargaDocumentoAsync(dto);
 
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.BadRequest, resultado.StatusCode);
         }
 

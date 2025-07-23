@@ -30,10 +30,14 @@ namespace ApiSigestHC.Repositorio
             if (estados == null || !estados.Any())
                 return Enumerable.Empty<Atencion>();
 
-            return await _db.Atenciones
-                 .Include(a => a.Paciente)
-                 .Where(a => estados.Contains(a.EstadoAtencionId))
-                 .ToListAsync();
+            // Obtiene solo los datos necesarios primero
+            var atenciones = await _db.Atenciones
+                .Include(a => a.Paciente)
+                .Include(a => a.EstadoAtencion)
+                .Include(a=>a.Administradora)
+                .ToListAsync(); // Fuerza ejecución sin OPENJSON
+
+            return atenciones.Where(a => estados.Contains(a.EstadoAtencionId));
         }
 
         public async Task<IEnumerable<Atencion>> ObtenerPorFechasAsync(DateTime fechaInicio, DateTime fechaFin, int page, int pageSize)

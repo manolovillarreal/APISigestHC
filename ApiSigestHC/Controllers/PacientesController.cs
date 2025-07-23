@@ -33,7 +33,7 @@ namespace ApiSigestHC.Controllers
             {
                 return BadRequest(new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.BadRequest,
                     ErrorMessages = new List<string> { "El ID del paciente es obligatorio." }
                 });
@@ -46,7 +46,7 @@ namespace ApiSigestHC.Controllers
                 {
                     return NotFound(new RespuestaAPI
                     {
-                        IsSuccess = false,
+                        Ok = false,
                         StatusCode = HttpStatusCode.NotFound,
                         ErrorMessages = new List<string> { $"Paciente con ID {pacienteId} no encontrado." }
                     });
@@ -54,7 +54,7 @@ namespace ApiSigestHC.Controllers
 
                 return Ok(new RespuestaAPI
                 {
-                    IsSuccess = true,
+                    Ok = true,
                     StatusCode = HttpStatusCode.OK,
                     Result = paciente
                 });
@@ -63,13 +63,56 @@ namespace ApiSigestHC.Controllers
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
                     ErrorMessages = new List<string> { "Ocurrió un error al consultar el paciente.", ex.Message }
                 });
             }
         }
 
+        [HttpGet("ultimo")]
+        public async Task<IActionResult> GetUltimoPaciente()
+        {
+            Paciente paciente = await _repositorio.ObtenerUltimoPacienteIngresadoIdAsync();
+            return Ok(new RespuestaAPI
+            {
+                Ok = true,
+                StatusCode = HttpStatusCode.OK,
+                Result = paciente
+            });
+        }
+
+        [HttpGet("ingresos")]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ObtenerUltimosPacientesIngresados()
+        {
+            try
+            {
+                var pacientes = await _repositorio.ObtenerUltimosPacientesIngresadosAsync(15);
+                //var dto = _mapper.Map<List<Paciente>>(pacientes);
+
+                var respuesta = new RespuestaAPI
+                {
+                    Ok = true,
+                    StatusCode = HttpStatusCode.OK,
+                    Result = pacientes
+                };
+
+                return Ok(respuesta);
+            }
+            catch (Exception ex)
+            {
+                var respuesta = new RespuestaAPI
+                {
+                    Ok = false,
+                    StatusCode = HttpStatusCode.InternalServerError,
+                    ErrorMessages = new List<string> { "Error al obtener los pacientes ingresados", ex.Message }
+                };
+
+                return StatusCode((int)respuesta.StatusCode, respuesta);
+            }
+        }
 
 
     }

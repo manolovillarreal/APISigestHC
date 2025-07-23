@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ApiSigestHC.Data;
 using ApiSigestHC.Modelos;
 using ApiSigestHC.Repositorio.IRepositorio;
+using System.Linq;
 
 namespace ApiSigestHC.Repositorio
 {
@@ -21,12 +22,18 @@ namespace ApiSigestHC.Repositorio
             await _db.SaveChangesAsync();
         }
 
-         public async Task ActualizarTipoDocumentoAsync(TipoDocumento tipo)
+         public async Task ActualizarAsync(TipoDocumento tipo)
         {
             _db.TiposDocumento.Update(tipo);
             await _db.SaveChangesAsync();
         }
-      
+
+
+        public async Task EliminarAsync(TipoDocumento tipo)
+        {
+            _db.TiposDocumento.Remove(tipo);
+            await _db.SaveChangesAsync();
+        }
 
         public async Task<IEnumerable<TipoDocumento>> GetTiposDocumentoAsync()
         {
@@ -39,9 +46,10 @@ namespace ApiSigestHC.Repositorio
         }
         public async Task<IEnumerable<TipoDocumento>> ObtenerPorIdsAsync(IEnumerable<int> ids)
         {
-            return await _db.TiposDocumento
-                .Where(td => ids.Contains(td.Id))
+            var tipos = await  _db.TiposDocumento             
                 .ToListAsync();
+
+            return tipos.Where(td => ids.Contains(td.Id));
         }
 
         public async Task<bool> ExisteTipoDocumentoPorCodigoAsync(string codigo)
@@ -50,7 +58,6 @@ namespace ApiSigestHC.Repositorio
                 .AnyAsync(td => td.Codigo.ToLower() == codigo.ToLower());
         }
 
-
-
+        
     }
 }

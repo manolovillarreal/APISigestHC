@@ -122,7 +122,7 @@ namespace ApiSigestHC.Controllers
         {
             var resultado = await _documentoService.EliminarDocumentoAsync(documentoId);
 
-            if (!resultado.IsSuccess)
+            if (!resultado.Ok)
                 return StatusCode((int)resultado.StatusCode, resultado);
 
             return Ok(resultado);

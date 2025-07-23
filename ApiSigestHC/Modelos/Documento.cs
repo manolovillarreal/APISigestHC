@@ -8,7 +8,10 @@ namespace ApiSigestHC.Modelos
         public int Id { get; set; }
         [Column("atencion_id")]
         public int AtencionId { get; set; }
+
+
         [Column("usuario_id")]
+        [ForeignKey("SIG_EstadoAtencion")]
         public int UsuarioId { get; set; }
         [Column("tipoDocumento_id")]
         public int TipoDocumentoId { get; set; }
@@ -22,5 +25,6 @@ namespace ApiSigestHC.Modelos
 
         public TipoDocumento? TipoDocumento { get; set; }
         public Atencion? Atencion { get; set; }
+        public Usuario Usuario { get; set; }
     }
 }

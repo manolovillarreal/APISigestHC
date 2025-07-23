@@ -35,7 +35,7 @@ namespace ApiSigestHC.Controllers
             {
                 return NotFound(new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.NotFound,
                     ErrorMessages = new List<string> { "No se encontró historial para la atención solicitada." }
                 });
@@ -45,7 +45,7 @@ namespace ApiSigestHC.Controllers
 
             return Ok(new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.OK,
                 Result = cambiosDto
             });

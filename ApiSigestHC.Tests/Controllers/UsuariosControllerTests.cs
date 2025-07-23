@@ -31,7 +31,7 @@ namespace ApiSigestHC.Tests.Controllers
             // Arrange
             var respuesta = new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.OK,
                 Result = new List<UsuarioDto> { new UsuarioDto { Id = 1 } }
             };
@@ -54,7 +54,7 @@ namespace ApiSigestHC.Tests.Controllers
         {
             var respuesta = new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.OK,
                 Result = new UsuarioDto { Id = 1 }
             };
@@ -77,7 +77,7 @@ namespace ApiSigestHC.Tests.Controllers
 
             var respuesta = new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.Created
             };
 
@@ -98,7 +98,7 @@ namespace ApiSigestHC.Tests.Controllers
 
             var respuesta = new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.OK,
                 Result = new { Token = "abc123", Usuario = new UsuarioDto { Id = 1 } }
             };
@@ -126,7 +126,7 @@ namespace ApiSigestHC.Tests.Controllers
 
             var respuestaEsperada = new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.OK,
                 Result = usuarioDto
             };
@@ -143,7 +143,7 @@ namespace ApiSigestHC.Tests.Controllers
             Assert.Equal((int)HttpStatusCode.OK, okResult.StatusCode);
 
             var respuesta = Assert.IsType<RespuestaAPI>(okResult.Value);
-            Assert.True(respuesta.IsSuccess);
+            Assert.True(respuesta.Ok);
             Assert.Equal(usuarioDto, respuesta.Result);
         }
 

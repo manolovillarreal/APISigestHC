@@ -68,7 +68,7 @@ namespace ApiSigestHC.Tests.Servicios
             var respuesta = await _service.ObtenerTiposPermitidosPorRolAsync();
 
             // Assert
-            Assert.True(respuesta.IsSuccess);
+            Assert.True(respuesta.Ok);
             Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
             Assert.NotNull(respuesta.Result);
 
@@ -85,7 +85,7 @@ namespace ApiSigestHC.Tests.Servicios
             var respuesta = await _service.ObtenerTiposPermitidosPorRolAsync();
 
             // Assert
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Equal(HttpStatusCode.InternalServerError, respuesta.StatusCode);
             Assert.Contains("Error al obtener tipos autorizados.", respuesta.ErrorMessages);
             Assert.Contains("Error inesperado", respuesta.ErrorMessages.Last());
@@ -115,7 +115,7 @@ namespace ApiSigestHC.Tests.Servicios
             var respuesta = await _service.ObtenerTodosAsync();
 
             // Assert
-            Assert.True(respuesta.IsSuccess);
+            Assert.True(respuesta.Ok);
             Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
 
             var resultado = Assert.IsAssignableFrom<IEnumerable<TipoDocumentoDto>>(respuesta.Result);
@@ -132,7 +132,7 @@ namespace ApiSigestHC.Tests.Servicios
             var respuesta = await _service.ObtenerTodosAsync();
 
             // Assert
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Equal(HttpStatusCode.InternalServerError, respuesta.StatusCode);
             Assert.Contains("Error al obtener todos los tipos.", respuesta.ErrorMessages);
             Assert.Contains("Error inesperado", respuesta.ErrorMessages.Last());
@@ -156,7 +156,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.ObtenerPorIdAsync(id);
 
             // Assert
-            Assert.True(resultado.IsSuccess);
+            Assert.True(resultado.Ok);
             Assert.Equal(HttpStatusCode.OK, resultado.StatusCode);
             Assert.IsType<TipoDocumentoDto>(resultado.Result);
             Assert.Equal("Certificado", ((TipoDocumentoDto)resultado.Result).Nombre);
@@ -175,7 +175,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.ObtenerPorIdAsync(id);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.NotFound, resultado.StatusCode);
             Assert.Contains("No encontrado", resultado.ErrorMessages);
         }
@@ -193,7 +193,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.ObtenerPorIdAsync(id);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.InternalServerError, resultado.StatusCode);
             Assert.Contains("Error al obtener tipo por id", resultado.ErrorMessages);
             Assert.Contains("Falló la conexión", resultado.ErrorMessages.Last());
@@ -223,7 +223,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.CrearAsync(dto);
 
             // Assert
-            Assert.True(resultado.IsSuccess);
+            Assert.True(resultado.Ok);
             Assert.Equal(HttpStatusCode.Created, resultado.StatusCode);
             Assert.IsType<TipoDocumentoDto>(resultado.Result);
             Assert.Equal("Certificado", ((TipoDocumentoDto)resultado.Result).Nombre);
@@ -243,7 +243,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.CrearAsync(dto);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.Conflict, resultado.StatusCode);
             Assert.Contains("Código duplicado", resultado.ErrorMessages);
 
@@ -263,7 +263,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.CrearAsync(dto);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.InternalServerError, resultado.StatusCode);
             Assert.Contains("Error al crear tipo", resultado.ErrorMessages);
             Assert.Contains("Error en BD", resultado.ErrorMessages.Last());
@@ -299,11 +299,11 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.EditarAsync(id, dto);
 
             // Assert
-            Assert.True(resultado.IsSuccess);
+            Assert.True(resultado.Ok);
             Assert.Equal(HttpStatusCode.NoContent, resultado.StatusCode);
             Assert.Null(resultado.Result);
 
-            _tipoDocumentoRepositoryMock.Verify(r => r.ActualizarTipoDocumentoAsync(existente), Times.Once);
+            _tipoDocumentoRepositoryMock.Verify(r => r.ActualizarAsync(existente), Times.Once);
         }
         // 2. Prueba de error: tipo no encontrado
         [Fact]
@@ -320,11 +320,11 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.EditarAsync(id, dto);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.NotFound, resultado.StatusCode);
             Assert.Contains("No encontrado", resultado.ErrorMessages);
 
-            _tipoDocumentoRepositoryMock.Verify(r => r.ActualizarTipoDocumentoAsync(It.IsAny<TipoDocumento>()), Times.Never);
+            _tipoDocumentoRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<TipoDocumento>()), Times.Never);
         }
         // 3. Prueba de error interno: excepción
         [Fact]
@@ -341,7 +341,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.EditarAsync(id, dto);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.InternalServerError, resultado.StatusCode);
             Assert.Contains("Error al editar tipo", resultado.ErrorMessages);
             Assert.Contains("Falló la BD", resultado.ErrorMessages.Last());

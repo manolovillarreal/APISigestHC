@@ -52,6 +52,14 @@ namespace ApiSigestHC.Repositorio
             _db.TipoDocumentoRoles.Remove(entidad);
             await _db.SaveChangesAsync();
         }
+
+        public async Task<bool> PuedeCargarTipoDocumento(int rolId,int tipoDocumentoId)
+        {
+            return await _db.TipoDocumentoRoles
+            .AnyAsync(x => x.RolId == rolId
+                    && x.TipoDocumentoId == tipoDocumentoId
+                    && x.PuedeCargar);
+        }
     }
 
 }

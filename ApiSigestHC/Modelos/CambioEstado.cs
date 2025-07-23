@@ -24,8 +24,8 @@ namespace ApiSigestHC.Modelos
         [Column("usuario_id")]
         public int UsuarioId { get; set; }
 
-        [Column("observaciones")]
-        public string Observaciones { get; set; }
+        [Column("observacion")]
+        public string Observacion { get; set; }
     }
 
 }

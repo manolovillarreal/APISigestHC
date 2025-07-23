@@ -35,7 +35,7 @@ namespace ApiSigestHC.Servicios
                 {
                     return new RespuestaAPI
                     {
-                        IsSuccess = false,
+                        Ok = false,
                         StatusCode = HttpStatusCode.BadRequest,
                         ErrorMessages = new List<string> { "El estado de atención no existe." }
                     };
@@ -45,7 +45,7 @@ namespace ApiSigestHC.Servicios
                 {
                     return new RespuestaAPI
                     {
-                        IsSuccess = false,
+                        Ok = false,
                         StatusCode = HttpStatusCode.BadRequest,
                         ErrorMessages = new List<string> { "No se pueden registrar documentos requeridos para el estado inicial." }
                     };
@@ -56,7 +56,7 @@ namespace ApiSigestHC.Servicios
                 {
                     return new RespuestaAPI
                     {
-                        IsSuccess = false,
+                        Ok = false,
                         StatusCode = HttpStatusCode.BadRequest,
                         ErrorMessages = new List<string> { "El tipo de documento no existe." }
                     };
@@ -67,7 +67,7 @@ namespace ApiSigestHC.Servicios
                 {
                     return new RespuestaAPI
                     {
-                        IsSuccess = false,
+                        Ok = false,
                         StatusCode = HttpStatusCode.BadRequest,
                         ErrorMessages = new List<string> { "Este documento ya está registrado como requerido." }
                     };
@@ -80,7 +80,7 @@ namespace ApiSigestHC.Servicios
 
                 return new RespuestaAPI
                 {
-                    IsSuccess = true,
+                    Ok = true,
                     StatusCode = HttpStatusCode.Created,
                     Result = resultDto
                 };
@@ -89,7 +89,7 @@ namespace ApiSigestHC.Servicios
             {
                 return new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
                     ErrorMessages = new List<string>
                 {

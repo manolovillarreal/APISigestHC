@@ -43,7 +43,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.ObtenerPorTipoDocumentoAsync(tipoDocumentoId);
 
             // Assert
-            Assert.True(resultado.IsSuccess);
+            Assert.True(resultado.Ok);
             Assert.Equal(HttpStatusCode.OK, resultado.StatusCode);
             Assert.Equal(dtos, resultado.Result);
         }
@@ -63,7 +63,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.CrearAsync(dto);
 
             // Assert
-            Assert.True(resultado.IsSuccess);
+            Assert.True(resultado.Ok);
             Assert.Equal(HttpStatusCode.OK, resultado.StatusCode);
         }
 
@@ -83,7 +83,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.ActualizarAsync(dto);
 
             // Assert
-            Assert.True(resultado.IsSuccess);
+            Assert.True(resultado.Ok);
             Assert.Equal(HttpStatusCode.NoContent, resultado.StatusCode);
         }
 
@@ -103,7 +103,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.EliminarAsync(tipoDocumentoId, rolId);
 
             // Assert
-            Assert.True(resultado.IsSuccess);
+            Assert.True(resultado.Ok);
             Assert.Equal(HttpStatusCode.NoContent, resultado.StatusCode);
         }
 
@@ -122,7 +122,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.ActualizarAsync(dto);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.NotFound, resultado.StatusCode);
             Assert.Contains("no encontrada", resultado.ErrorMessages.First().ToLower());
         }
@@ -140,7 +140,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.EliminarAsync(tipoDocumentoId, rolId);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.NotFound, resultado.StatusCode);
             Assert.Contains("no encontrada", resultado.ErrorMessages.First().ToLower());
         }
@@ -158,7 +158,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.CrearAsync(dto);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.InternalServerError, resultado.StatusCode);
             Assert.Contains("error", resultado.ErrorMessages.First().ToLower());
         }
@@ -179,7 +179,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.ActualizarAsync(dto);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.InternalServerError, resultado.StatusCode);
             Assert.Contains("Falla simulada", string.Join(",", resultado.ErrorMessages));
         }
@@ -199,7 +199,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.EliminarAsync(tipoDocumentoId, rolId);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.InternalServerError, resultado.StatusCode);
             Assert.Contains("eliminar", string.Join(",", resultado.ErrorMessages).ToLower());
         }

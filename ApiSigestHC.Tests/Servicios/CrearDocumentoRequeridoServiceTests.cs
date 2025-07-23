@@ -58,7 +58,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.CrearAsync(dto);
 
             // Assert
-            Assert.True(resultado.IsSuccess);
+            Assert.True(resultado.Ok);
             Assert.Equal(HttpStatusCode.Created, resultado.StatusCode);
             Assert.Equal(dto, resultado.Result);
         }
@@ -77,7 +77,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.CrearAsync(dto);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.BadRequest, resultado.StatusCode);
             Assert.Contains("El estado de atención no existe.", resultado.ErrorMessages);
         }
@@ -98,7 +98,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.CrearAsync(dto);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.BadRequest, resultado.StatusCode);
             Assert.Contains("No se pueden registrar documentos requeridos para el estado inicial.", resultado.ErrorMessages);
         }
@@ -123,7 +123,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.CrearAsync(dto);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.BadRequest, resultado.StatusCode);
             Assert.Contains("El tipo de documento no existe.", resultado.ErrorMessages);
         }
@@ -153,7 +153,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.CrearAsync(dto);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.BadRequest, resultado.StatusCode);
             Assert.Contains("Este documento ya está registrado como requerido.", resultado.ErrorMessages);
         }
@@ -173,7 +173,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.CrearAsync(dto);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.InternalServerError, resultado.StatusCode);
             Assert.Contains("Ocurrió un error inesperado al registrar el documento requerido.", resultado.ErrorMessages);
             Assert.Contains("Error de base de datos", resultado.ErrorMessages);

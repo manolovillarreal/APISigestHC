@@ -22,6 +22,7 @@ namespace ApiSigestHC.Tests.Servicios
         private readonly Mock<ISolicitudCorreccionRepositorio> _solicitudCorreccionRepoMock;
         private readonly Mock<IValidacionCargaDocumentoService> _validacionCargaDocumentoServiceMock;
         private readonly Mock<IDocumentoRepositorio> _documentoRepoMock;
+        private readonly Mock<ITipoDocumentoRolRepositorio> _tipoDocumentoRolRepoMock;
         private readonly Mock<IUsuarioContextService> _usuarioContextServiceMock;
         private readonly Mock<IFormFile> _formFileMock;
 
@@ -35,6 +36,7 @@ namespace ApiSigestHC.Tests.Servicios
             _solicitudCorreccionRepoMock = new Mock<ISolicitudCorreccionRepositorio>();
             _validacionCargaDocumentoServiceMock = new Mock<IValidacionCargaDocumentoService>();
             _documentoRepoMock = new Mock<IDocumentoRepositorio>();
+            _tipoDocumentoRolRepoMock = new Mock<ITipoDocumentoRolRepositorio>();
             _usuarioContextServiceMock = new Mock<IUsuarioContextService>();
             _formFileMock = new Mock<IFormFile>();
             _mapperMock = new Mock<IMapper>();
@@ -44,6 +46,7 @@ namespace ApiSigestHC.Tests.Servicios
                 _solicitudCorreccionRepoMock.Object,
                 _validacionCargaDocumentoServiceMock.Object,
                 _documentoRepoMock.Object,
+                _tipoDocumentoRolRepoMock.Object,
                 _usuarioContextServiceMock.Object,
                 _mapperMock.Object
             );
@@ -77,7 +80,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _documentoService.ObtenerDocumentosPorAtencionAsync(atencionId);
 
             // Assert
-            Assert.True(resultado.IsSuccess);
+            Assert.True(resultado.Ok);
             Assert.Equal(HttpStatusCode.OK, resultado.StatusCode);
             Assert.Equal(documentosDto, resultado.Result);
         }
@@ -93,7 +96,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _documentoService.ObtenerDocumentosPorAtencionAsync(atencionId);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.InternalServerError, resultado.StatusCode);
             Assert.Contains("Error interno al obtener los documentos.", resultado.ErrorMessages);
             Assert.Contains("Fallo interno", resultado.ErrorMessages.Last());
@@ -137,7 +140,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             _validacionCargaDocumentoServiceMock
                 .Setup(v => v.ValidarCargaDocumentoAsync(dto))
-                .ReturnsAsync(new RespuestaAPI { IsSuccess = true });
+                .ReturnsAsync(new RespuestaAPI { Ok = true });
 
             _almacenamientoArchivoServiceMock
                 .Setup(s => s.GuardarArchivoAsync(dto))
@@ -155,7 +158,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _documentoService.CargarDocumentoAsync(dto);
 
             // Assert
-            Assert.True(resultado.IsSuccess);
+            Assert.True(resultado.Ok);
             Assert.Equal(HttpStatusCode.OK, resultado.StatusCode);
             Assert.Equal(documentoMapeado, resultado.Result);
 
@@ -186,7 +189,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             var respuestaError = new RespuestaAPI
             {
-                IsSuccess = false,
+                Ok = false,
                 StatusCode = HttpStatusCode.BadRequest,
                 ErrorMessages = new List<string> { "Falta el campo obligatorio: TipoDocumentoId" }
             };
@@ -199,7 +202,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _documentoService.CargarDocumentoAsync(dto);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.BadRequest, resultado.StatusCode);
             Assert.Contains("Falta el campo obligatorio", resultado.ErrorMessages.First());
 
@@ -224,7 +227,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             _validacionCargaDocumentoServiceMock
                 .Setup(v => v.ValidarCargaDocumentoAsync(dto))
-                .ReturnsAsync(new RespuestaAPI { IsSuccess = true });
+                .ReturnsAsync(new RespuestaAPI { Ok = true });
 
             _almacenamientoArchivoServiceMock
                 .Setup(a => a.GuardarArchivoAsync(dto))
@@ -235,7 +238,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             // Assert
             Assert.NotNull(respuesta);
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Equal(HttpStatusCode.InternalServerError, respuesta.StatusCode);
             Assert.Contains("Error interno al editar el documento.", respuesta.ErrorMessages);
             Assert.Contains("Fallo en el disco", respuesta.ErrorMessages);
@@ -296,7 +299,7 @@ namespace ApiSigestHC.Tests.Servicios
             var respuesta = await _documentoService.EditarDocumentoAsync(dto);
 
             // Assert
-            Assert.True(respuesta.IsSuccess);
+            Assert.True(respuesta.Ok);
             Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
             Assert.NotNull(respuesta.Result);
             var resultadoDto = Assert.IsType<DocumentoDto>(respuesta.Result);
@@ -327,7 +330,7 @@ namespace ApiSigestHC.Tests.Servicios
             var respuesta = await _documentoService.EditarDocumentoAsync(dto);
 
             // Assert
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Equal(HttpStatusCode.NotFound, respuesta.StatusCode);
             Assert.Contains("Documento con id", respuesta.ErrorMessages.First());
 
@@ -367,7 +370,7 @@ namespace ApiSigestHC.Tests.Servicios
             var respuesta = await _documentoService.EditarDocumentoAsync(dto);
 
             // Assert
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Equal(HttpStatusCode.InternalServerError, respuesta.StatusCode);
             Assert.Contains("Error interno al editar el documento.", respuesta.ErrorMessages.First());
 
@@ -401,7 +404,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             _validacionCargaDocumentoServiceMock
                 .Setup(v => v.ValidarReemplazoDocumentoAsync(dto))
-                .ReturnsAsync(new RespuestaAPI { IsSuccess = true });
+                .ReturnsAsync(new RespuestaAPI { Ok = true });
 
             _documentoRepoMock
                 .Setup(r => r.ObtenerPorIdAsync(dto.Id))
@@ -420,7 +423,7 @@ namespace ApiSigestHC.Tests.Servicios
             var respuesta = await _documentoService.ReemplazarDocumentoAsync(dto);
 
             // Assert
-            Assert.True(respuesta.IsSuccess);
+            Assert.True(respuesta.Ok);
             Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
 
             _documentoRepoMock.Verify(r => r.ObtenerPorIdAsync(dto.Id), Times.Once);
@@ -440,7 +443,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             _validacionCargaDocumentoServiceMock
                 .Setup(v => v.ValidarReemplazoDocumentoAsync(dto))
-                .ReturnsAsync(new RespuestaAPI { IsSuccess = true });
+                .ReturnsAsync(new RespuestaAPI { Ok = true });
 
             _documentoRepoMock
                 .Setup(r => r.ObtenerPorIdAsync(dto.Id))
@@ -450,7 +453,7 @@ namespace ApiSigestHC.Tests.Servicios
             var respuesta = await _documentoService.ReemplazarDocumentoAsync(dto);
 
             // Assert
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Equal(HttpStatusCode.NotFound, respuesta.StatusCode);
             Assert.Contains("no encontrado", respuesta.ErrorMessages.First().ToLower());
             _almacenamientoArchivoServiceMock.Verify(a => a.ReemplazarArchivoAsync((Documento)null, dto.Archivo), Times.Never);
@@ -465,7 +468,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             var respuestaError = new RespuestaAPI
             {
-                IsSuccess = false,
+                Ok = false,
                 StatusCode = HttpStatusCode.BadRequest,
                 ErrorMessages = new List<string> { "Archivo inválido" }
             };
@@ -478,7 +481,7 @@ namespace ApiSigestHC.Tests.Servicios
             var respuesta = await _documentoService.ReemplazarDocumentoAsync(dto);
 
             // Assert
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
             Assert.Contains("archivo inválido", respuesta.ErrorMessages.First().ToLower());
         }
@@ -492,7 +495,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             _validacionCargaDocumentoServiceMock
                 .Setup(v => v.ValidarReemplazoDocumentoAsync(dto))
-                .ReturnsAsync(new RespuestaAPI { IsSuccess = true });
+                .ReturnsAsync(new RespuestaAPI { Ok = true });
 
             _documentoRepoMock
                 .Setup(r => r.ObtenerPorIdAsync(dto.Id))
@@ -506,7 +509,7 @@ namespace ApiSigestHC.Tests.Servicios
             var respuesta = await _documentoService.ReemplazarDocumentoAsync(dto);
 
             // Assert
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
             Assert.Contains("Archivo no válido", respuesta.ErrorMessages.First());
         }
@@ -522,7 +525,7 @@ namespace ApiSigestHC.Tests.Servicios
             };
 
             _validacionCargaDocumentoServiceMock.Setup(s => s.ValidarReemplazoDocumentoAsync(dto))
-                .ReturnsAsync(new RespuestaAPI { IsSuccess = true });
+                .ReturnsAsync(new RespuestaAPI { Ok = true });
 
             _documentoRepoMock.Setup(r => r.ObtenerPorIdAsync(dto.Id))
                 .ReturnsAsync(new Documento());
@@ -534,7 +537,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _documentoService.ReemplazarDocumentoAsync(dto);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.InternalServerError, resultado.StatusCode);
             Assert.Contains("Error al reemplazar el documento.", resultado.ErrorMessages);
             //Assert.Contains("Fallo inesperado", resultado.ErrorMessages[1]);
@@ -565,7 +568,7 @@ namespace ApiSigestHC.Tests.Servicios
                 .ReturnsAsync(correccion);
 
             _validacionCargaDocumentoServiceMock.Setup(s => s.ValidarReemplazoDocumentoAsync(dto))
-                .ReturnsAsync(new RespuestaAPI { IsSuccess = true });
+                .ReturnsAsync(new RespuestaAPI { Ok = true });
 
             _documentoRepoMock.Setup(r => r.ObtenerPorIdAsync(dto.Id))
                 .ReturnsAsync(documento);
@@ -579,7 +582,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _documentoService.CorregirDocumentoAsync(dto);
 
             // Assert
-            Assert.True(resultado.IsSuccess);
+            Assert.True(resultado.Ok);
             Assert.Equal(HttpStatusCode.OK, resultado.StatusCode);
             Assert.Equal("Corrección aplicada exitosamente.", resultado.Result);
         }
@@ -598,7 +601,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _documentoService.CorregirDocumentoAsync(dto);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.BadRequest, resultado.StatusCode);
             Assert.Contains("solicitud de corrección pendiente", resultado.ErrorMessages.First());
         }
@@ -618,7 +621,7 @@ namespace ApiSigestHC.Tests.Servicios
                 .Setup(s => s.ValidarReemplazoDocumentoAsync(dto))
                 .ReturnsAsync(new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.BadRequest,
                     ErrorMessages = new List<string> { "No puede reemplazar en este estado." }
                 });
@@ -627,7 +630,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _documentoService.CorregirDocumentoAsync(dto);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.BadRequest, resultado.StatusCode);
             Assert.Contains("No puede reemplazar en este estado.", resultado.ErrorMessages);
         }
@@ -643,7 +646,7 @@ namespace ApiSigestHC.Tests.Servicios
                 .ReturnsAsync(correccion);
 
             _validacionCargaDocumentoServiceMock.Setup(s => s.ValidarReemplazoDocumentoAsync(dto))
-                .ReturnsAsync(new RespuestaAPI { IsSuccess = true });
+                .ReturnsAsync(new RespuestaAPI { Ok = true });
 
             _documentoRepoMock.Setup(r => r.ObtenerPorIdAsync(dto.Id))
                 .ReturnsAsync((Documento)null);
@@ -652,7 +655,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _documentoService.CorregirDocumentoAsync(dto);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.NotFound, resultado.StatusCode);
             Assert.Contains("Documento con id 1 no encontrado.", resultado.ErrorMessages.First());
         }
@@ -675,7 +678,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _documentoService.EliminarDocumentoAsync(documentoId);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.NotFound, resultado.StatusCode);
             Assert.Contains($"No se encontró el documento con id {documentoId}", resultado.ErrorMessages);
         }
@@ -703,7 +706,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _documentoService.EliminarDocumentoAsync(documentoId);
 
             // Assert
-            Assert.True(resultado.IsSuccess);
+            Assert.True(resultado.Ok);
             Assert.Equal(HttpStatusCode.OK, resultado.StatusCode);
             Assert.Equal($"Documento con id {documentoId} eliminado correctamente", resultado.Result);
         }
@@ -727,7 +730,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _documentoService.EliminarDocumentoAsync(documentoId);
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.InternalServerError, resultado.StatusCode);
             Assert.Contains("Error al eliminar el documento.", resultado.ErrorMessages);
             Assert.Contains("Error crítico al eliminar archivo", resultado.ErrorMessages[1]);
@@ -752,7 +755,7 @@ namespace ApiSigestHC.Tests.Servicios
             // Assert
             var objeto = Assert.IsType<NotFoundObjectResult>(resultado);
             var respuesta = Assert.IsType<RespuestaAPI>(objeto.Value);
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Equal(HttpStatusCode.NotFound, respuesta.StatusCode);
         }
 
@@ -777,7 +780,7 @@ namespace ApiSigestHC.Tests.Servicios
             var forbidden = Assert.IsType<ObjectResult>(resultado);
             Assert.Equal(StatusCodes.Status403Forbidden, forbidden.StatusCode);
             var respuesta = Assert.IsType<RespuestaAPI>(forbidden.Value);
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Equal(HttpStatusCode.Forbidden, respuesta.StatusCode);
         }
 
@@ -805,7 +808,7 @@ namespace ApiSigestHC.Tests.Servicios
             // Assert
             var notFound = Assert.IsType<NotFoundObjectResult>(resultado);
             var respuesta = Assert.IsType<RespuestaAPI>(notFound.Value);
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Equal(HttpStatusCode.NotFound, respuesta.StatusCode);
         }
 
@@ -852,7 +855,7 @@ namespace ApiSigestHC.Tests.Servicios
             // Assert
             var badRequest = Assert.IsType<BadRequestObjectResult>(resultado);
             var respuesta = Assert.IsType<RespuestaAPI>(badRequest.Value);
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
             Assert.Contains("Ocurrió un error al intentar descargar el documento.", respuesta.ErrorMessages[0]);
         }
@@ -876,7 +879,7 @@ namespace ApiSigestHC.Tests.Servicios
             // Assert
             var notFound = Assert.IsType<NotFoundObjectResult>(resultado);
             var respuesta = Assert.IsType<RespuestaAPI>(notFound.Value);
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Equal(HttpStatusCode.NotFound, respuesta.StatusCode);
             Assert.Contains("Documento no encontrado", respuesta.ErrorMessages.First());
         }
@@ -899,7 +902,7 @@ namespace ApiSigestHC.Tests.Servicios
             var forbidden = Assert.IsType<ObjectResult>(resultado);
             Assert.Equal(StatusCodes.Status403Forbidden, forbidden.StatusCode);
             var respuesta = Assert.IsType<RespuestaAPI>(forbidden.Value);
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Equal(HttpStatusCode.Forbidden, respuesta.StatusCode);
         }
 
@@ -921,7 +924,7 @@ namespace ApiSigestHC.Tests.Servicios
             // Assert
             var notFound = Assert.IsType<NotFoundObjectResult>(resultado);
             var respuesta = Assert.IsType<RespuestaAPI>(notFound.Value);
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Equal(HttpStatusCode.NotFound, respuesta.StatusCode);
             Assert.Contains("El archivo físico no fue encontrado", respuesta.ErrorMessages.First());
         }
@@ -962,7 +965,7 @@ namespace ApiSigestHC.Tests.Servicios
             // Assert
             var badRequest = Assert.IsType<BadRequestObjectResult>(resultado);
             var respuesta = Assert.IsType<RespuestaAPI>(badRequest.Value);
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
             Assert.Contains("Error al intentar ver el documento", respuesta.ErrorMessages.First());
         }

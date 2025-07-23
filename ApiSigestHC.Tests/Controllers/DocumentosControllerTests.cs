@@ -41,7 +41,7 @@ namespace ApiSigestHC.Tests.Controllers
             int atencionId = 1;
             var respuestaEsperada = new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.OK,
                 Result = new List<DocumentoDto> { new DocumentoDto { Id = 1 } }
             };
@@ -57,7 +57,7 @@ namespace ApiSigestHC.Tests.Controllers
             var objectResult = Assert.IsType<ObjectResult>(resultado);
             Assert.Equal((int)HttpStatusCode.OK, objectResult.StatusCode);
             var respuesta = Assert.IsType<RespuestaAPI>(objectResult.Value);
-            Assert.True(respuesta.IsSuccess);
+            Assert.True(respuesta.Ok);
             Assert.NotNull(respuesta.Result);
         }
 
@@ -68,7 +68,7 @@ namespace ApiSigestHC.Tests.Controllers
             int atencionId = 1;
             var respuestaFallida = new RespuestaAPI
             {
-                IsSuccess = false,
+                Ok = false,
                 StatusCode = HttpStatusCode.InternalServerError,
                 ErrorMessages = new List<string> { "Error interno" }
             };
@@ -84,7 +84,7 @@ namespace ApiSigestHC.Tests.Controllers
             var objectResult = Assert.IsType<ObjectResult>(resultado);
             Assert.Equal((int)HttpStatusCode.InternalServerError, objectResult.StatusCode);
             var respuesta = Assert.IsType<RespuestaAPI>(objectResult.Value);
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Contains("Error interno", respuesta.ErrorMessages);
         }
 
@@ -101,7 +101,7 @@ namespace ApiSigestHC.Tests.Controllers
 
             var respuestaEsperada = new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.OK,
                 Result = new DocumentoDto { Id = 10 }
             };
@@ -117,7 +117,7 @@ namespace ApiSigestHC.Tests.Controllers
             var objectResult = Assert.IsType<ObjectResult>(resultado);
             Assert.Equal((int)HttpStatusCode.OK, objectResult.StatusCode);
             var respuesta = Assert.IsType<RespuestaAPI>(objectResult.Value);
-            Assert.True(respuesta.IsSuccess);
+            Assert.True(respuesta.Ok);
             Assert.IsType<DocumentoDto>(respuesta.Result);
         }
 
@@ -135,7 +135,7 @@ namespace ApiSigestHC.Tests.Controllers
 
             var respuestaEsperada = new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.OK,
                 Result = new DocumentoDto { Id = 5 }
             };
@@ -151,7 +151,7 @@ namespace ApiSigestHC.Tests.Controllers
             var objectResult = Assert.IsType<ObjectResult>(resultado);
             Assert.Equal((int)HttpStatusCode.OK, objectResult.StatusCode);
             var respuesta = Assert.IsType<RespuestaAPI>(objectResult.Value);
-            Assert.True(respuesta.IsSuccess);
+            Assert.True(respuesta.Ok);
             Assert.IsType<DocumentoDto>(respuesta.Result);
         }
 
@@ -167,7 +167,7 @@ namespace ApiSigestHC.Tests.Controllers
 
             var respuestaEsperada = new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.OK,
                 Result = "Documento reemplazado exitosamente"
             };
@@ -183,7 +183,7 @@ namespace ApiSigestHC.Tests.Controllers
             var objectResult = Assert.IsType<ObjectResult>(resultado);
             Assert.Equal((int)HttpStatusCode.OK, objectResult.StatusCode);
             var respuesta = Assert.IsType<RespuestaAPI>(objectResult.Value);
-            Assert.True(respuesta.IsSuccess);
+            Assert.True(respuesta.Ok);
             Assert.Equal("Documento reemplazado exitosamente", respuesta.Result);
         }
 
@@ -199,7 +199,7 @@ namespace ApiSigestHC.Tests.Controllers
 
             var respuestaEsperada = new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.OK,
                 Result = "Corrección aplicada exitosamente."
             };
@@ -215,7 +215,7 @@ namespace ApiSigestHC.Tests.Controllers
             var objectResult = Assert.IsType<ObjectResult>(resultado);
             Assert.Equal((int)HttpStatusCode.OK, objectResult.StatusCode);
             var respuesta = Assert.IsType<RespuestaAPI>(objectResult.Value);
-            Assert.True(respuesta.IsSuccess);
+            Assert.True(respuesta.Ok);
             Assert.Equal("Corrección aplicada exitosamente.", respuesta.Result);
         }
 
@@ -273,7 +273,7 @@ namespace ApiSigestHC.Tests.Controllers
 
             var respuesta = new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.OK,
                 Result = $"Documento con id {documentoId} eliminado correctamente"
             };
@@ -288,7 +288,7 @@ namespace ApiSigestHC.Tests.Controllers
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(resultado);
             var respuestaAPI = Assert.IsType<RespuestaAPI>(okResult.Value);
-            Assert.True(respuestaAPI.IsSuccess);
+            Assert.True(respuestaAPI.Ok);
             Assert.Equal($"Documento con id {documentoId} eliminado correctamente", respuestaAPI.Result);
         }
 

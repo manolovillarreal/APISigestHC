@@ -36,7 +36,7 @@ builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 
 //Servicios
 builder.Services.AddScoped<IAlmacenamientoArchivoService,AlmacenamientoArchivoService>();
-builder.Services.AddScoped<ICambioEstadoRepositorio,CambioEstadoRepositorio>();
+builder.Services.AddScoped<ICambioEstadoService,CambioEstadoService>();
 builder.Services.AddScoped<ICrearDocumentoRequeridoService,CrearDocumentoRequeridoService>();
 builder.Services.AddScoped<IDocumentoService,DocumentoService>();
 builder.Services.AddScoped<ITipoDocumentoService, TipoDocumentoService>();
@@ -51,8 +51,12 @@ builder.Services.AddScoped<IVisualizacionEstadoService, VisualizacionEstadoServi
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors(p => p.AddPolicy("PoliticaCors", build =>
 {
-    build.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
+    build.WithOrigins("*")
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .WithExposedHeaders("Content-Disposition");
 }));
+
 
 var key = builder.Configuration.GetValue<string>("ApiSettings:Secret");
 

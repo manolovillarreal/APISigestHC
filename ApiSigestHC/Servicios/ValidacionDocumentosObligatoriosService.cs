@@ -25,7 +25,7 @@ namespace ApiSigestHC.Servicios
         public async Task<ResultadoValidacionDto> ValidarDocumentosObligatoriosAsync(Atencion atencion)
         {
             // Obtener documentos requeridos para el estado destino
-            var requeridos = await _documentoRequeridoRepo.ObtenerPorEstadoAsync(atencion.Id);
+            var requeridos = await _documentoRequeridoRepo.ObtenerPorEstadoAsync(atencion.EstadoAtencionId);
             var requeridosIds = requeridos.Select(r => r.TipoDocumentoId).ToList();
 
             // Obtener tipos de documento ya cargados para esta atención

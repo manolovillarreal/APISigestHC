@@ -12,7 +12,7 @@ namespace ApiSigestHC.Servicios
         private readonly ITipoDocumentoRolRepositorio _repo;
         private readonly IMapper _mapper;
 
-        #region Casos de Exito
+
         public TipoDocumentoRolService(ITipoDocumentoRolRepositorio repo, IMapper mapper)
         {
             _repo = repo;
@@ -27,7 +27,7 @@ namespace ApiSigestHC.Servicios
                 var dto = _mapper.Map<IEnumerable<TipoDocumentoRolDto>>(relaciones);
                 return new RespuestaAPI
                 {
-                    IsSuccess = true,
+                    Ok = true,
                     StatusCode = HttpStatusCode.OK,
                     Result = dto
                 };
@@ -36,7 +36,7 @@ namespace ApiSigestHC.Servicios
             {
                 return new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
                     ErrorMessages = ["Error al obtener relaciones", ex.Message]
                 };
@@ -52,7 +52,7 @@ namespace ApiSigestHC.Servicios
 
                 return new RespuestaAPI
                 {
-                    IsSuccess = true,
+                    Ok = true,
                     StatusCode = HttpStatusCode.OK,
                     Result = "Relación creada exitosamente"
                 };
@@ -61,7 +61,7 @@ namespace ApiSigestHC.Servicios
             {
                 return new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
                     ErrorMessages = ["Error al crear relación", ex.Message]
                 };
@@ -77,7 +77,7 @@ namespace ApiSigestHC.Servicios
                 {
                     return new RespuestaAPI
                     {
-                        IsSuccess = false,
+                        Ok = false,
                         StatusCode = HttpStatusCode.NotFound,
                         ErrorMessages = ["Relación no encontrada"]
                     };
@@ -88,7 +88,7 @@ namespace ApiSigestHC.Servicios
 
                 return new RespuestaAPI
                 {
-                    IsSuccess = true,
+                    Ok = true,
                     StatusCode = HttpStatusCode.NoContent
                 };
             }
@@ -96,7 +96,7 @@ namespace ApiSigestHC.Servicios
             {
                 return new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
                     ErrorMessages = ["Error al actualizar relación", ex.Message]
                 };
@@ -112,7 +112,7 @@ namespace ApiSigestHC.Servicios
                 {
                     return new RespuestaAPI
                     {
-                        IsSuccess = false,
+                        Ok = false,
                         StatusCode = HttpStatusCode.NotFound,
                         ErrorMessages = ["Relación no encontrada"]
                     };
@@ -122,7 +122,7 @@ namespace ApiSigestHC.Servicios
 
                 return new RespuestaAPI
                 {
-                    IsSuccess = true,
+                    Ok = true,
                     StatusCode = HttpStatusCode.NoContent
                 };
             }
@@ -130,13 +130,13 @@ namespace ApiSigestHC.Servicios
             {
                 return new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
                     ErrorMessages = ["Error al eliminar relación", ex.Message]
                 };
             }
         }
-        #endregion
+
 
        
     }

@@ -8,18 +8,21 @@ namespace ApiSigestHC.Modelos
         public int Id { get; set; }
 
         [Column("paciente_id")]
+        [ForeignKey("PACIENTES")]
         public string PacienteId { get; set; }
 
         [Column("tercero_id")]
+        [ForeignKey("EPS")]
         public string TerceroId { get; set; }
 
         [Column(TypeName = "datetime")]
         public DateTime Fecha { get; set; }
 
         [Column(TypeName = "datetime")]
-        public DateTime FechaFinaliza { get; set; }
+        public DateTime? FechaFinaliza { get; set; }
 
         [Column("estadoAtencion_id")]
+        [ForeignKey("SIG_EstadoAtencion")]
         public int EstadoAtencionId { get; set; }
         
         [Column("usuario_id")]
@@ -27,6 +30,7 @@ namespace ApiSigestHC.Modelos
         public int UsuarioId { get; set; }
 
         public Paciente? Paciente { get; set; }
+        public Administradora? Administradora { get; set; }
         public EstadoAtencion? EstadoAtencion { get; set; }
     }
 }

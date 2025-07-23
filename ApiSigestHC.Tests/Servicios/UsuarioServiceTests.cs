@@ -11,6 +11,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using ApiSigestHC.Servicios.IServicios;
+using Microsoft.Extensions.Configuration;
 
 namespace ApiSigestHC.Tests.Servicios
 {
@@ -18,6 +19,7 @@ namespace ApiSigestHC.Tests.Servicios
     {
         private readonly Mock<IUsuarioRepositorio> _usuarioRepoMock;
         private readonly Mock<IUsuarioContextService> _usuarioContextServiceMock;
+        private readonly Mock<IConfiguration> _configMock;
         private readonly Mock<IMapper> _mapperMock;
         private readonly UsuarioService _service;
 
@@ -26,7 +28,7 @@ namespace ApiSigestHC.Tests.Servicios
             _usuarioRepoMock = new Mock<IUsuarioRepositorio>();
             _usuarioContextServiceMock = new Mock<IUsuarioContextService>();
             _mapperMock = new Mock<IMapper>();
-            _service = new UsuarioService(_usuarioRepoMock.Object,_usuarioContextServiceMock.Object ,_mapperMock.Object);
+            _service = new UsuarioService(_usuarioRepoMock.Object,_usuarioContextServiceMock.Object,_configMock.Object ,_mapperMock.Object);
         }
 
         //1. Prueba para ObtenerUsuariosAsync (éxito)
@@ -45,7 +47,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.ObtenerUsuariosAsync();
 
             // Assert
-            Assert.True(resultado.IsSuccess);
+            Assert.True(resultado.Ok);
             Assert.Equal(HttpStatusCode.OK, resultado.StatusCode);
             Assert.Equal(usuariosDto, resultado.Result);
         }
@@ -62,7 +64,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             var resultado = await _service.ObtenerUsuarioPorIdAsync(1);
 
-            Assert.True(resultado.IsSuccess);
+            Assert.True(resultado.Ok);
             Assert.Equal(HttpStatusCode.OK, resultado.StatusCode);
             Assert.Equal(usuarioDto, resultado.Result);
         }
@@ -74,7 +76,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             var resultado = await _service.ObtenerUsuarioPorIdAsync(1);
 
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.NotFound, resultado.StatusCode);
         }
 
@@ -92,7 +94,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             var resultado = await _service.CrearUsuarioAsync(dto);
 
-            Assert.True(resultado.IsSuccess);
+            Assert.True(resultado.Ok);
             Assert.Equal(HttpStatusCode.Created, resultado.StatusCode);
             Assert.Equal(usuarioDto, resultado.Result);
         }
@@ -106,7 +108,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             var resultado = await _service.CrearUsuarioAsync(dto);
 
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.BadRequest, resultado.StatusCode);
             Assert.Contains("ya existe", resultado.ErrorMessages[0]);
         }
@@ -117,16 +119,16 @@ namespace ApiSigestHC.Tests.Servicios
         public async Task LoginAsync_CredencialesValidas_DeberiaRetornarTokenYUsuario()
         {
             var dto = new UsuarioLoginDto { NombreUsuario = "admin", Password = "123" };
-            var usuario = new Usuario { Id = 1 };
+            var usuario = new UsuarioDto { Id = 1 };
             var respuestaLogin = new UsuarioLoginRespuestaDto { Usuario = usuario, Token = "abc123" };
             var usuarioDto = new UsuarioDto { Id = 1 };
 
-            _usuarioRepoMock.Setup(r => r.Login(dto)).ReturnsAsync(respuestaLogin);
+            //_usuarioRepoMock.Setup(r => r.ObtenerPorCredencialesAsync(dto.NombreUsuario,dto.Password)).ReturnsAsync(usuario);
             _mapperMock.Setup(m => m.Map<UsuarioDto>(usuario)).Returns(usuarioDto);
 
             var resultado = await _service.LoginAsync(dto);
 
-            Assert.True(resultado.IsSuccess);
+            Assert.True(resultado.Ok);
             Assert.Equal(HttpStatusCode.OK, resultado.StatusCode);
 
             UsuarioLoginRespuestaDto resultObj = (UsuarioLoginRespuestaDto)resultado.Result!;
@@ -140,11 +142,11 @@ namespace ApiSigestHC.Tests.Servicios
             var dto = new UsuarioLoginDto { NombreUsuario = "admin", Password = "wrong" };
             var respuestaLogin = new UsuarioLoginRespuestaDto { Usuario = null, Token = "" };
 
-            _usuarioRepoMock.Setup(r => r.Login(dto)).ReturnsAsync(respuestaLogin);
+            //_usuarioRepoMock.Setup(r => r.Login(dto)).ReturnsAsync(respuestaLogin);
 
             var resultado = await _service.LoginAsync(dto);
 
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.BadRequest, resultado.StatusCode);
             Assert.Contains("incorrectos", resultado.ErrorMessages[0]);
         }
@@ -166,7 +168,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.ObtenerPerfilAsync();
 
             // Assert
-            Assert.True(resultado.IsSuccess);
+            Assert.True(resultado.Ok);
             Assert.Equal(HttpStatusCode.OK, resultado.StatusCode);
             Assert.Equal(usuarioDto, resultado.Result);
         }
@@ -182,7 +184,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.ObtenerPerfilAsync();
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.NotFound, resultado.StatusCode);
             Assert.Contains("Usuario no encontrado", resultado.ErrorMessages);
         }
@@ -196,7 +198,7 @@ namespace ApiSigestHC.Tests.Servicios
             var resultado = await _service.ObtenerPerfilAsync();
 
             // Assert
-            Assert.False(resultado.IsSuccess);
+            Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.InternalServerError, resultado.StatusCode);
             Assert.Contains("Error al obtener perfil", resultado.ErrorMessages);
         }

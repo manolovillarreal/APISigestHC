@@ -15,14 +15,15 @@ namespace ApiSigestHC.Modelos.Dtos
         public DateTime FechaFinaliza { get; set; }
 
 
-        public int EstadoAtencionID { get; set; }
 
-        [Column("usuario_id")]
-        [ForeignKey("SIG_Usuario")]
+        public int EstadoAtencionId { get; set; }
+
         public int UsuarioId { get; set; }
 
 
         public Paciente? Paciente { get; set; }
+        public Administradora? Administradora { get; set; }
+
         public EstadoAtencion? EstadoAtencion { get; set; }
 
     }

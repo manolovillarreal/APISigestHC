@@ -60,7 +60,7 @@ namespace ApiSigestHC.Controllers
 
             return Ok(new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.OK,
                 Result = atencionesDto
             });
@@ -77,7 +77,7 @@ namespace ApiSigestHC.Controllers
             if (fechaInicio > fechaFin)
                 return BadRequest(new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.BadRequest,
                     ErrorMessages = new List<string> { "La fecha inicial no puede ser mayor que la final" }
                 });
@@ -86,7 +86,7 @@ namespace ApiSigestHC.Controllers
 
             return Ok(new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.OK,
                 Result = atenciones
             });
@@ -103,7 +103,7 @@ namespace ApiSigestHC.Controllers
             {
                 return BadRequest(new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.BadRequest,
                     ErrorMessages = new List<string> { "Datos inválidos para crear la atención." }
                 });
@@ -113,7 +113,7 @@ namespace ApiSigestHC.Controllers
             await _atencionRepo.CrearAtencionAsync(atencion);
             return CreatedAtAction(nameof(CrearAtencion), new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.Created,
                 Result = atencion
             });
@@ -131,7 +131,7 @@ namespace ApiSigestHC.Controllers
             {
                 return BadRequest(new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.BadRequest,
                     ErrorMessages = new List<string> { "Datos inválidos para editar la atención." }
                 });
@@ -143,7 +143,7 @@ namespace ApiSigestHC.Controllers
             {
                 return NotFound(new RespuestaAPI
                 {
-                    IsSuccess = false,
+                    Ok = false,
                     StatusCode = HttpStatusCode.NotFound,
                     ErrorMessages = new List<string> { "Atención no encontrada" }
                 });
@@ -156,7 +156,7 @@ namespace ApiSigestHC.Controllers
 
             return Ok(new RespuestaAPI
             {
-                IsSuccess = true,
+                Ok = true,
                 StatusCode = HttpStatusCode.OK,
                 Message = $"Atención {atencionDto.AtencionId} actualizada correctamente",
                 Result = atencionExistente,
@@ -172,17 +172,9 @@ namespace ApiSigestHC.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
         public async Task<IActionResult> CambiarEstado([FromBody] AtencionCambioEstadoDto dto)
         {
-            var resultado = await _cambioEstadoService.CambiarEstadoAsync(dto);
+            var resultado = await _cambioEstadoService.CambiarEstadoAsync(dto);         
 
-            var respuesta = new RespuestaAPI
-            {
-                IsSuccess = resultado.IsSuccess,
-                StatusCode = resultado.StatusCode,
-                ErrorMessages = resultado.ErrorMessages,
-                Result = resultado.IsSuccess ? resultado.Result : null
-            };
-
-            return StatusCode((int)resultado.StatusCode, respuesta);
+            return StatusCode((int)resultado.StatusCode, resultado);
         }
 
 

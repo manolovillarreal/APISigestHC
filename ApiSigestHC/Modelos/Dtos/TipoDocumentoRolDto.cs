@@ -7,5 +7,10 @@
         public bool PuedeVer { get; set; }
         public bool PuedeCargar { get; set; }
         public bool Activo { get; set; }
+
+
+        public RolDto Rol { get; set; }
+
+
     }
 }

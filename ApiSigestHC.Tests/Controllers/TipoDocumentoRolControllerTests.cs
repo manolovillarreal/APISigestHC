@@ -28,7 +28,7 @@ namespace ApiSigestHC.Tests.Controllers
         {
             // Arrange
             var dto = new TipoDocumentoRolDto { TipoDocumentoId = 1, RolId = 2 };
-            var respuesta = new RespuestaAPI { IsSuccess = true, StatusCode = HttpStatusCode.NoContent };
+            var respuesta = new RespuestaAPI { Ok = true, StatusCode = HttpStatusCode.NoContent };
 
             _serviceMock.Setup(s => s.ActualizarAsync(dto)).ReturnsAsync(respuesta);
 
@@ -47,7 +47,7 @@ namespace ApiSigestHC.Tests.Controllers
             // Arrange
             var tipoId = 1;
             var lista = new List<TipoDocumentoRolDto> { new TipoDocumentoRolDto { TipoDocumentoId = tipoId, RolId = 2 } };
-            var respuesta = new RespuestaAPI { IsSuccess = true, StatusCode = HttpStatusCode.OK, Result = lista };
+            var respuesta = new RespuestaAPI { Ok = true, StatusCode = HttpStatusCode.OK, Result = lista };
 
             _serviceMock.Setup(s => s.ObtenerPorTipoDocumentoAsync(tipoId)).ReturnsAsync(respuesta);
 
@@ -57,7 +57,7 @@ namespace ApiSigestHC.Tests.Controllers
             // Assert
             var okResult = Assert.IsType<ObjectResult>(result);
             Assert.Equal((int)HttpStatusCode.OK, okResult.StatusCode);
-            Assert.True(((RespuestaAPI)okResult.Value!).IsSuccess);
+            Assert.True(((RespuestaAPI)okResult.Value!).Ok);
         }
 
         [Fact]
@@ -65,7 +65,7 @@ namespace ApiSigestHC.Tests.Controllers
         {
             // Arrange
             var dto = new TipoDocumentoRolDto { TipoDocumentoId = 1, RolId = 2 };
-            var respuesta = new RespuestaAPI { IsSuccess = true, StatusCode = HttpStatusCode.OK };
+            var respuesta = new RespuestaAPI { Ok = true, StatusCode = HttpStatusCode.OK };
 
             _serviceMock.Setup(s => s.CrearAsync(dto)).ReturnsAsync(respuesta);
 
@@ -83,7 +83,7 @@ namespace ApiSigestHC.Tests.Controllers
         {
             // Arrange
             int tipoId = 1, rolId = 2;
-            var respuesta = new RespuestaAPI { IsSuccess = true, StatusCode = HttpStatusCode.NoContent };
+            var respuesta = new RespuestaAPI { Ok = true, StatusCode = HttpStatusCode.NoContent };
 
             _serviceMock.Setup(s => s.EliminarAsync(tipoId, rolId)).ReturnsAsync(respuesta);
 

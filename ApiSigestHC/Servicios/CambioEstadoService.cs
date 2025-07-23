@@ -9,17 +9,20 @@ namespace ApiSigestHC.Servicios
     public class CambioEstadoService : ICambioEstadoService
     {
         private readonly IAtencionRepositorio _atencionRepo;
+        private readonly IEstadoAtencionRepositorio _estadoRepo;
         private readonly ICambioEstadoRepositorio _cambioEstadoRepo;
         private readonly IValidacionDocumentosObligatoriosService _validacionDocService;
         private readonly IUsuarioContextService _usuarioContext;
 
         public CambioEstadoService(
              IAtencionRepositorio atencionRepo,
+             IEstadoAtencionRepositorio estadoRepo,
              ICambioEstadoRepositorio cambioEstadoRepo,
              IValidacionDocumentosObligatoriosService validacionDocService,
              IUsuarioContextService usuarioContext)
         {
             _atencionRepo = atencionRepo;
+            _estadoRepo = estadoRepo;
             _cambioEstadoRepo = cambioEstadoRepo;
             _validacionDocService = validacionDocService;
             _usuarioContext = usuarioContext;
@@ -35,7 +38,7 @@ namespace ApiSigestHC.Servicios
             var atencion = await _atencionRepo.ObtenerAtencionPorIdAsync(dto.AtencionId);
             if (atencion == null)
             {
-                respuesta.IsSuccess = false;
+                respuesta.Ok = false;
                 respuesta.StatusCode = HttpStatusCode.NotFound;
                 respuesta.ErrorMessages.Add("La atención no existe");
                 return respuesta;
@@ -45,7 +48,7 @@ namespace ApiSigestHC.Servicios
             var nuevoEstado = ObtenerNuevoEstado(atencion.EstadoAtencionId, rolNombre);
             if (nuevoEstado == null)
             {
-                respuesta.IsSuccess = false;
+                respuesta.Ok = false;
                 respuesta.StatusCode = HttpStatusCode.Forbidden;
                 respuesta.ErrorMessages.Add($"El rol '{rolNombre}' no puede cambiar desde el estado {atencion.EstadoAtencionId}");
                 return respuesta;
@@ -55,14 +58,14 @@ namespace ApiSigestHC.Servicios
             var validacion = await _validacionDocService.ValidarDocumentosObligatoriosAsync(atencion);
             if (!validacion.EsValido)
             {
-                respuesta.IsSuccess = false;
+                respuesta.Ok = false;
                 respuesta.StatusCode = HttpStatusCode.BadRequest;
                 respuesta.ErrorMessages.Add("Faltan documentos requeridos para el cambio:");
                 respuesta.ErrorMessages.AddRange(validacion.DocumentosFaltantes);
                 return respuesta;
             }
 
-            atencion.EstadoAtencionId = nuevoEstado.Value;
+           
             await _cambioEstadoRepo.RegistrarCambioAsync(new CambioEstado
             {
                 AtencionId = dto.AtencionId,
@@ -70,12 +73,13 @@ namespace ApiSigestHC.Servicios
                 EstadoNuevo = nuevoEstado.Value,
                 Fecha = DateTime.UtcNow,
                 UsuarioId = usuarioId,
-                Observaciones = dto.Obervaciones,
+                Observacion = dto.Obervacion,
             });
-
+            atencion.EstadoAtencionId = nuevoEstado.Value;
+            atencion.EstadoAtencion = await _estadoRepo.ObtenerPorIdAsync(nuevoEstado.Value);
             await _atencionRepo.EditarAtencionAsync(atencion);
 
-            respuesta.IsSuccess = true;
+            respuesta.Ok = true;
             respuesta.StatusCode = HttpStatusCode.OK;
             respuesta.Message =  $"Atención actualizada al estado {nuevoEstado.Value}";
             respuesta.Result = atencion;

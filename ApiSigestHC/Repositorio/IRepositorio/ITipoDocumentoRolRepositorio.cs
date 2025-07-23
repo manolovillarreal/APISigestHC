@@ -10,5 +10,6 @@ namespace ApiSigestHC.Repositorio.IRepositorio
         Task ActualizarAsync(TipoDocumentoRol entidad);
         Task EliminarAsync(TipoDocumentoRol entidad);
         Task<IEnumerable<TipoDocumentoRol>> ObtenerPorRolAsync(int rolId);
+        Task <bool> PuedeCargarTipoDocumento(int rolId, int tipoDocumentoId);
     }
 }

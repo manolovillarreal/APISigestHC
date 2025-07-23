@@ -4,6 +4,7 @@ using ApiSigestHC.Repositorio.IRepositorio;
 using ApiSigestHC.Servicios.IServicios;
 using System.Net;
 using ApiSigestHC.Repositorio;
+using PdfSharp.Pdf.IO;
 
 namespace ApiSigestHC.Servicios
 {
@@ -40,7 +41,7 @@ namespace ApiSigestHC.Servicios
                 return Error("Atencion no encontrada.", HttpStatusCode.NotFound);
 
             var validacionArchivo = await ValidarArchivoAsync(dto.Archivo, atencion, tipoDoc);
-            if (!validacionArchivo.IsSuccess)
+            if (!validacionArchivo.Ok)
                 return validacionArchivo;
 
             if (!tipoDoc.PermiteMultiples)
@@ -53,7 +54,7 @@ namespace ApiSigestHC.Servicios
             if (tipoDoc.RequiereNumeroRelacion && string.IsNullOrWhiteSpace(dto.NumeroRelacion))
                 return Error("Este tipo de documento requiere un número de relación.", HttpStatusCode.BadRequest);
 
-            return new RespuestaAPI { IsSuccess = true };
+            return new RespuestaAPI { Ok = true };
         }
 
         public async Task<RespuestaAPI> ValidarReemplazoDocumentoAsync(DocumentoReemplazarDto dto)
@@ -88,17 +89,52 @@ namespace ApiSigestHC.Servicios
             if (!permitidas.Any(e => e.Equals(ext, StringComparison.OrdinalIgnoreCase)))
                 return Error($"Solo se permiten archivos con extensión: {tipoDoc.ExtensionPermitida}.", HttpStatusCode.UnsupportedMediaType);
 
-            if (archivo.Length > 10 * 1024 * 1024)
-                return Error("El archivo excede el tamaño máximo permitido (10 MB).", HttpStatusCode.BadRequest);
+         
+            if (ext == "pdf")
+            {
+                int numeroPaginas;
 
-            return new RespuestaAPI { IsSuccess = true };
+                try
+                {
+                    using var stream = archivo.OpenReadStream();
+                    var document = PdfReader.Open(stream, PdfDocumentOpenMode.Import);
+                    numeroPaginas = document.PageCount;
+                }
+                catch
+                {
+                    return Error("No se pudo leer el archivo PDF. Verifique que el archivo no esté dañado.", HttpStatusCode.BadRequest);
+                }
+
+                // Validar límite de hojas si está definido
+                if (tipoDoc.LimiteDePaginas > 0 && numeroPaginas > tipoDoc.LimiteDePaginas)
+                {
+                    return Error($"El documento tiene {numeroPaginas} páginas, excede el límite permitido de {tipoDoc.LimiteDePaginas} para {tipoDoc.Nombre}.", HttpStatusCode.BadRequest);
+                }
+
+                // Validar tamaño máximo por página
+                var maxTamanioPermitido = tipoDoc.PesoPorPagina * 1024 * numeroPaginas;
+                if (archivo.Length > maxTamanioPermitido)
+                {
+                    return Error($"El archivo excede el límite de tamaño permitido: {tipoDoc.PesoPorPagina}Kb  por pagina.", HttpStatusCode.BadRequest);
+                }
+            }
+            else
+            {
+                // Validación clásica para otros formatos
+                if (archivo.Length > 2 * 1024 * 1024)
+                    return Error("El archivo excede el tamaño máximo permitido (2 MB).", HttpStatusCode.BadRequest);
+            }
+
+
+
+            return new RespuestaAPI { Ok = true };
         }
 
         private RespuestaAPI Error(string mensaje, HttpStatusCode code)
         {
             return new RespuestaAPI
             {
-                IsSuccess = false,
+                Ok = false,
                 StatusCode = code,
                 ErrorMessages = new List<string> { mensaje },
             };

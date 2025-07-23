@@ -8,6 +8,7 @@ namespace ApiSigestHC.Mappers
     {
         public AutoMapperProfile()
         {
+            CreateMap<Atencion, AtencionDto>().ReverseMap();
             CreateMap<Atencion,AtencionCrearDto>().ReverseMap();
 
             CreateMap<Usuario, UsuarioDto>().ReverseMap();

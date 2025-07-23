@@ -48,7 +48,7 @@ namespace ApiSigestHC.Tests.Controllers
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(resultado);
             var respuesta = Assert.IsType<RespuestaAPI>(okResult.Value);
-            Assert.True(respuesta.IsSuccess);
+            Assert.True(respuesta.Ok);
             Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
             Assert.Equal(paciente, respuesta.Result);
         }
@@ -67,7 +67,7 @@ namespace ApiSigestHC.Tests.Controllers
             // Assert
             var notFoundResult = Assert.IsType<NotFoundObjectResult>(resultado);
             var respuesta = Assert.IsType<RespuestaAPI>(notFoundResult.Value);
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Equal(HttpStatusCode.NotFound, respuesta.StatusCode);
         }
 
@@ -86,7 +86,7 @@ namespace ApiSigestHC.Tests.Controllers
             // Assert
             var errorResult = Assert.IsType<ObjectResult>(resultado);
             var respuesta = Assert.IsType<RespuestaAPI>(errorResult.Value);
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Equal(HttpStatusCode.InternalServerError, respuesta.StatusCode);
             Assert.Contains("Fallo de prueba", respuesta.ErrorMessages[1]);
         }
@@ -102,7 +102,7 @@ namespace ApiSigestHC.Tests.Controllers
             // Assert
             var badRequest = Assert.IsType<BadRequestObjectResult>(resultado);
             var respuesta = Assert.IsType<RespuestaAPI>(badRequest.Value);
-            Assert.False(respuesta.IsSuccess);
+            Assert.False(respuesta.Ok);
             Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
             Assert.Contains("El ID del paciente es obligatorio", respuesta.ErrorMessages[0]);
         }

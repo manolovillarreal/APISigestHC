@@ -19,6 +19,7 @@ namespace ApiSigestHC.Data
         public DbSet<Paciente> Pacientes { get; set; }
         public DbSet<Administradora> Administradoras { get; set; }
         public DbSet<RelacionPacienteAdministradora> RelacionPacienteAdministradoras { get; set; }
+        public DbSet<MotivoAnulacionAtencion> MotivosAnulacionAtencion { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -31,6 +32,16 @@ namespace ApiSigestHC.Data
                   .HasForeignKey(a => a.PacienteId);
 
             modelBuilder.Entity<Atencion>()
+                 .HasOne(a => a.EstadoAtencion)
+                 .WithMany()
+                 .HasForeignKey(a => a.EstadoAtencionId);
+
+            modelBuilder.Entity<Atencion>()
+                .HasOne(a => a.Administradora)
+                .WithMany()
+                .HasForeignKey(a => a.TerceroId);
+
+            modelBuilder.Entity<Atencion>()
                 .Property(a => a.PacienteId)
                 .HasColumnType("varchar(20)");
 
@@ -38,6 +49,12 @@ namespace ApiSigestHC.Data
                 .Property(p => p.Id)
                 .HasColumnType("varchar(20)");
 
+            modelBuilder.Entity<Documento>()
+                 .HasOne(d => d.Usuario)
+                 .WithMany()
+                 .HasForeignKey(d => d.UsuarioId);
+
+            modelBuilder.Entity<Paciente>().HasKey(p => p.Id);
 
             modelBuilder.Entity<TipoDocumentoRol>()
        .HasKey(tdr => new { tdr.TipoDocumentoId, tdr.RolId });

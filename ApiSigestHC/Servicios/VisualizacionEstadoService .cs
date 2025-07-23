@@ -13,10 +13,10 @@ namespace ApiSigestHC.Servicios
         private static readonly Dictionary<string, List<int>> EstadosPorRol = new()
             {
                 { "Admisiones", new List<int> { 1, 2, 3, 4 } },
-                { "Médico", new List<int> { 1, 2, 3 } },
-                { "Enfermería", new List<int> { 3 } },
-                { "Auditoría", new List<int> { 4, 5, 6 } },
-                { "Facturación", new List<int> { 5, 6 } },
+                { "Medico", new List<int> { 1, 2, 3 } },
+                { "Enfermeria", new List<int> { 3 } },
+                { "Auditoria", new List<int> { 4, 5, 6 } },
+                { "Facturacion", new List<int> { 5, 6 } },
                 { "Archivo", new List<int> { 7 } },
                 { "Admin", new List<int> { 1, 2, 3, 4, 5, 6, 7 } }
             };
@@ -27,11 +27,10 @@ namespace ApiSigestHC.Servicios
 
             if (string.IsNullOrWhiteSpace(rolNombre))
                 throw new UnauthorizedAccessException("No se pudo determinar el rol del usuario");
-
-            if (EstadosPorRol.TryGetValue(rolNombre, out var estados))
+            var estados = EstadosPorRol[rolNombre];
+            if (estados!=null )
                 return estados;
 
-            // Por defecto, si el rol no está reconocido, no se permite acceso
             return new List<int>();
         }
     }
