@@ -3,14 +3,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ApiSigestHC.Modelos.Dtos
 {
-    public class UsuarioCrearDto
+    public class UsuarioEditarDto
     {
-        [Required(ErrorMessage ="El usuario es obligatorio")]
+        [Required(ErrorMessage = "El usuario es obligatorio")]
         public string NombreUsuario { get; set; }
         [Required(ErrorMessage = "El correo es obligatorio")]
         public string Correo { get; set; }
-        [Required(ErrorMessage = "El password es obligatorio")]
-        public string Contraseña { get; set; }
+
+        public string? Contraseña { get; set; }
         [Required(ErrorMessage = "El nombre es obligatorio")]
         public string Nombre { get; set; }
         [Required(ErrorMessage = "Los apellidos es obligatorio")]
@@ -22,5 +22,6 @@ namespace ApiSigestHC.Modelos.Dtos
         [Column("rol_id")]
         public int RolId { get; set; }
 
+        public bool EstaActivo { get; set; }
     }
 }

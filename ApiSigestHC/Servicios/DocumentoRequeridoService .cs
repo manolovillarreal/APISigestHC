@@ -7,14 +7,14 @@ using System.Net;
 
 namespace ApiSigestHC.Servicios
 {
-    public class CrearDocumentoRequeridoService : ICrearDocumentoRequeridoService
+    public class DocumentoRequeridoService : IDocumentoRequeridoService
     {
         private readonly IDocumentoRequeridoRepositorio _documentoRequeridoRepo;
         private readonly IEstadoAtencionRepositorio _estadoAtencionRepo;
         private readonly ITipoDocumentoRepositorio _tipoDocumentoRepo;
         private readonly IMapper _mapper;
 
-        public CrearDocumentoRequeridoService(
+        public DocumentoRequeridoService(
             IDocumentoRequeridoRepositorio documentoRequeridoRepo,
             IEstadoAtencionRepositorio estadoAtencionRepo,
             ITipoDocumentoRepositorio tipoDocumentoRepo,
@@ -26,7 +26,7 @@ namespace ApiSigestHC.Servicios
             _mapper = mapper;
         }
 
-        public async Task<RespuestaAPI> CrearAsync(DocumentoRequeridoDto dto)
+        public async Task<RespuestaAPI> CrearAsync(DocumentoRequeridoCrearDto dto)
         {
             try
             {
@@ -41,15 +41,7 @@ namespace ApiSigestHC.Servicios
                     };
                 }
 
-                if (estado.Orden <= 1)
-                {
-                    return new RespuestaAPI
-                    {
-                        Ok = false,
-                        StatusCode = HttpStatusCode.BadRequest,
-                        ErrorMessages = new List<string> { "No se pueden registrar documentos requeridos para el estado inicial." }
-                    };
-                }
+               
 
                 var tipoDocumento = await _tipoDocumentoRepo.GetTipoDocumentoPorIdAsync(dto.TipoDocumentoId);
                 if (tipoDocumento == null)
@@ -62,21 +54,21 @@ namespace ApiSigestHC.Servicios
                     };
                 }
 
-                var yaExiste = await _documentoRequeridoRepo.ExisteAsync(dto.EstadoAtencionId, dto.TipoDocumentoId);
+                var yaExiste = await _documentoRequeridoRepo.ExistePorTipoAsync(dto.TipoDocumentoId);
                 if (yaExiste)
                 {
                     return new RespuestaAPI
                     {
                         Ok = false,
                         StatusCode = HttpStatusCode.BadRequest,
-                        ErrorMessages = new List<string> { "Este documento ya está registrado como requerido." }
+                        ErrorMessages = new List<string> { "Este documento ya está registrado como requerido en otro estado." }
                     };
                 }
 
                 var nuevo = _mapper.Map<DocumentoRequerido>(dto);
                 await _documentoRequeridoRepo.AgregarAsync(nuevo);
 
-                var resultDto = _mapper.Map<DocumentoRequeridoDto>(nuevo);
+                var resultDto = _mapper.Map<DocumentoRequeridoCrearDto>(nuevo);
 
                 return new RespuestaAPI
                 {
@@ -98,6 +90,40 @@ namespace ApiSigestHC.Servicios
                 }
                 };
             }
+        }
+
+        public async Task<RespuestaAPI> EliminarAsync(int tipoDocumentoId)
+        {
+            var tipoDocumento = await _tipoDocumentoRepo.GetTipoDocumentoPorIdAsync(tipoDocumentoId);
+            if (tipoDocumento == null)
+            {
+                return new RespuestaAPI
+                {
+                    Ok = false,
+                    StatusCode = HttpStatusCode.BadRequest,
+                    ErrorMessages = new List<string> { "El tipo de documento no existe." }
+                };
+            }
+
+            var yaExiste = await _documentoRequeridoRepo.ExistePorTipoAsync(tipoDocumentoId);
+            if (!yaExiste)
+            {
+                return new RespuestaAPI
+                {
+                    Ok = false,
+                    StatusCode = HttpStatusCode.BadRequest,
+                    ErrorMessages = new List<string> { "Este documento no está registrado como requerido en ningun estado." }
+                };
+            }
+
+            await _documentoRequeridoRepo.EliminarAsync(tipoDocumentoId);
+
+            return new RespuestaAPI
+            {
+                Ok = true,
+                StatusCode = HttpStatusCode.OK,
+                Result = "Documento requerido eliminado"
+            };
         }
     }
 }

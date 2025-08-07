@@ -14,7 +14,6 @@ namespace ApiSigestHC.Modelos
 
         public bool PuedeVer { get; set; }
         public bool PuedeCargar { get; set; }
-        public bool Activo { get; set; }
 
         // Relaciones de navegación
         public TipoDocumento TipoDocumento { get; set; }

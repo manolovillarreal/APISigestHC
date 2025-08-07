@@ -42,8 +42,30 @@ namespace ApiSigestHC.Servicios
                 };
             }
         }
-
-        public async Task<RespuestaAPI> CrearAsync(TipoDocumentoRolDto dto)
+        public async Task<RespuestaAPI> ObtenerPorRolAsync(int rolId)
+        {
+             try
+            {
+                var relaciones = await _repo.GetByRolAsync(rolId);
+                var dto = _mapper.Map<IEnumerable<TipoDocumentoRolDto>>(relaciones);
+                return new RespuestaAPI
+                {
+                    Ok = true,
+                    StatusCode = HttpStatusCode.OK,
+                    Result = dto
+                };
+            }
+            catch (Exception ex)
+            {
+                return new RespuestaAPI
+                {
+                    Ok = false,
+                    StatusCode = HttpStatusCode.InternalServerError,
+                    ErrorMessages = ["Error al obtener relaciones", ex.Message]
+                };
+            }
+        }
+        public async Task<RespuestaAPI> CrearAsync(TipoDocumentoRolCrearDto dto)
         {
             try
             {
@@ -68,7 +90,7 @@ namespace ApiSigestHC.Servicios
             }
         }
 
-        public async Task<RespuestaAPI> ActualizarAsync(TipoDocumentoRolDto dto)
+        public async Task<RespuestaAPI> ActualizarAsync(TipoDocumentoRolCrearDto dto)
         {
             try
             {
@@ -136,7 +158,6 @@ namespace ApiSigestHC.Servicios
                 };
             }
         }
-
 
        
     }

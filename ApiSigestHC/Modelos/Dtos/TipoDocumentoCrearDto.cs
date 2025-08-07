@@ -13,6 +13,8 @@
         public int LimiteDePaginas { get; set; }
         public int PesoPorPagina { get; set; }
         public bool Activo { get; set; }
+        public int EstadoAtencionInicialId { get; set; }
+
 
     }
 }

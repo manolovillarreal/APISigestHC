@@ -20,7 +20,7 @@ namespace ApiSigestHC.Tests.Servicios
         private readonly Mock<ITipoDocumentoRepositorio> _tipoDocumentoRepoMock;
         private readonly Mock<IMapper> _mapperMock;
 
-        private readonly CrearDocumentoRequeridoService _service;
+        private readonly DocumentoRequeridoService _service;
 
         public CrearDocumentoRequeridoServiceTests()
         {
@@ -29,7 +29,7 @@ namespace ApiSigestHC.Tests.Servicios
             _tipoDocumentoRepoMock = new Mock<ITipoDocumentoRepositorio>();
             _mapperMock = new Mock<IMapper>();
 
-            _service = new CrearDocumentoRequeridoService(
+            _service = new DocumentoRequeridoService(
                 _documentoRequeridoRepoMock.Object,
                 _estadoAtencionRepoMock.Object,
                 _tipoDocumentoRepoMock.Object,
@@ -42,7 +42,7 @@ namespace ApiSigestHC.Tests.Servicios
         public async Task CrearAsync_DeberiaCrearDocumentoRequerido_CuandoTodoEsValido()
         {
             // Arrange
-            var dto = new DocumentoRequeridoDto { EstadoAtencionId = 2, TipoDocumentoId = 10 };
+            var dto = new DocumentoRequeridoCrearDto { EstadoAtencionId = 2, TipoDocumentoId = 10 };
 
             var estadoMock = new EstadoAtencion { Id = 2, Orden = 2 };
             var tipoMock = new TipoDocumento { Id = 10 };
@@ -52,7 +52,7 @@ namespace ApiSigestHC.Tests.Servicios
             _tipoDocumentoRepoMock.Setup(r => r.GetTipoDocumentoPorIdAsync(dto.TipoDocumentoId)).ReturnsAsync(tipoMock);
             _documentoRequeridoRepoMock.Setup(r => r.ExisteAsync(dto.EstadoAtencionId, dto.TipoDocumentoId)).ReturnsAsync(false);
             _mapperMock.Setup(m => m.Map<DocumentoRequerido>(dto)).Returns(entidad);
-            _mapperMock.Setup(m => m.Map<DocumentoRequeridoDto>(entidad)).Returns(dto);
+            _mapperMock.Setup(m => m.Map<DocumentoRequeridoCrearDto>(entidad)).Returns(dto);
 
             // Act
             var resultado = await _service.CrearAsync(dto);
@@ -67,7 +67,7 @@ namespace ApiSigestHC.Tests.Servicios
         public async Task CrearAsync_DeberiaRetornarBadRequest_SiEstadoNoExiste()
         {
             // Arrange
-            var dto = new DocumentoRequeridoDto { EstadoAtencionId = 5 };
+            var dto = new DocumentoRequeridoCrearDto { EstadoAtencionId = 5 };
 
             _estadoAtencionRepoMock
                 .Setup(r => r.ObtenerPorIdAsync(dto.EstadoAtencionId))
@@ -86,7 +86,7 @@ namespace ApiSigestHC.Tests.Servicios
         public async Task CrearAsync_DeberiaRetornarBadRequest_SiEstadoTieneOrdenMenorIgualA1()
         {
             // Arrange
-            var dto = new DocumentoRequeridoDto { EstadoAtencionId = 1 };
+            var dto = new DocumentoRequeridoCrearDto { EstadoAtencionId = 1 };
 
             var estado = new EstadoAtencion { Id = 1, Orden = 1 };
 
@@ -108,7 +108,7 @@ namespace ApiSigestHC.Tests.Servicios
         public async Task CrearAsync_DeberiaRetornarBadRequest_SiTipoDocumentoNoExiste()
         {
             // Arrange
-            var dto = new DocumentoRequeridoDto { EstadoAtencionId = 2, TipoDocumentoId = 99 };
+            var dto = new DocumentoRequeridoCrearDto { EstadoAtencionId = 2, TipoDocumentoId = 99 };
             var estado = new EstadoAtencion { Id = 2, Orden = 2 };
 
             _estadoAtencionRepoMock
@@ -133,7 +133,7 @@ namespace ApiSigestHC.Tests.Servicios
         public async Task CrearAsync_DeberiaRetornarBadRequest_SiDocumentoYaExiste()
         {
             // Arrange
-            var dto = new DocumentoRequeridoDto { EstadoAtencionId = 2, TipoDocumentoId = 10 };
+            var dto = new DocumentoRequeridoCrearDto { EstadoAtencionId = 2, TipoDocumentoId = 10 };
             var estado = new EstadoAtencion { Id = 2, Orden = 2 };
             var tipo = new TipoDocumento { Id = 10 };
 
@@ -163,7 +163,7 @@ namespace ApiSigestHC.Tests.Servicios
         public async Task CrearAsync_DeberiaRetornarInternalServerError_SiOcurreUnaExcepcion()
         {
             // Arrange
-            var dto = new DocumentoRequeridoDto { EstadoAtencionId = 2, TipoDocumentoId = 10 };
+            var dto = new DocumentoRequeridoCrearDto { EstadoAtencionId = 2, TipoDocumentoId = 10 };
 
             _estadoAtencionRepoMock
                 .Setup(r => r.ObtenerPorIdAsync(It.IsAny<int>()))

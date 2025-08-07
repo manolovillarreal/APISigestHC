@@ -19,14 +19,14 @@ namespace ApiSigestHC.Tests.Controllers
     public class DocumentosRequeridosControllerTests
     {
         private readonly Mock<IDocumentoRequeridoRepositorio> _documentoRequeridoRepoMock;
-        private readonly Mock<ICrearDocumentoRequeridoService> _crearDocumentoRequeridoServiceMock;
+        private readonly Mock<ApiSigestHC.Servicios.IServicios.IDocumentoRequeridoService> _crearDocumentoRequeridoServiceMock;
         private readonly Mock<IMapper> _mapperMock;
         private readonly DocumentosRequeridosController _controller;
 
         public DocumentosRequeridosControllerTests()
         {
             _documentoRequeridoRepoMock = new Mock<IDocumentoRequeridoRepositorio>();
-            _crearDocumentoRequeridoServiceMock = new Mock<ICrearDocumentoRequeridoService>();
+            _crearDocumentoRequeridoServiceMock = new Mock<ApiSigestHC.Servicios.IServicios.IDocumentoRequeridoService>();
             _mapperMock = new Mock<IMapper>();
 
             _controller = new DocumentosRequeridosController(
@@ -45,15 +45,15 @@ namespace ApiSigestHC.Tests.Controllers
                 new DocumentoRequerido { EstadoAtencionId = 3, TipoDocumentoId = 2 }
             };
 
-                    var listaDto = new List<DocumentoRequeridoDto> {
-                new DocumentoRequeridoDto { EstadoAtencionId = 2, TipoDocumentoId = 1 },
-                new DocumentoRequeridoDto { EstadoAtencionId = 3, TipoDocumentoId = 2 }
+                    var listaDto = new List<DocumentoRequeridoCrearDto> {
+                new DocumentoRequeridoCrearDto { EstadoAtencionId = 2, TipoDocumentoId = 1 },
+                new DocumentoRequeridoCrearDto { EstadoAtencionId = 3, TipoDocumentoId = 2 }
             };
 
             _documentoRequeridoRepoMock.Setup(r => r.ObtenerTodosAsync())
                 .ReturnsAsync(listaDocs);
 
-            _mapperMock.Setup(m => m.Map<IEnumerable<DocumentoRequeridoDto>>(listaDocs))
+            _mapperMock.Setup(m => m.Map<IEnumerable<DocumentoRequeridoCrearDto>>(listaDocs))
                 .Returns(listaDto);
 
             // Act
@@ -78,10 +78,10 @@ namespace ApiSigestHC.Tests.Controllers
                 new DocumentoRequerido { EstadoAtencionId = estadoId, TipoDocumentoId = 2 }
             };
 
-                    var documentosDto = new List<DocumentoRequeridoDto>
+                    var documentosDto = new List<DocumentoRequeridoCrearDto>
             {
-                new DocumentoRequeridoDto { EstadoAtencionId = estadoId, TipoDocumentoId = 1 },
-                new DocumentoRequeridoDto { EstadoAtencionId = estadoId, TipoDocumentoId = 2 }
+                new DocumentoRequeridoCrearDto { EstadoAtencionId = estadoId, TipoDocumentoId = 1 },
+                new DocumentoRequeridoCrearDto { EstadoAtencionId = estadoId, TipoDocumentoId = 2 }
             };
 
             _documentoRequeridoRepoMock
@@ -89,7 +89,7 @@ namespace ApiSigestHC.Tests.Controllers
                 .ReturnsAsync(documentos);
 
             _mapperMock
-                .Setup(m => m.Map<IEnumerable<DocumentoRequeridoDto>>(documentos))
+                .Setup(m => m.Map<IEnumerable<DocumentoRequeridoCrearDto>>(documentos))
                 .Returns(documentosDto);
 
             // Act
@@ -107,7 +107,7 @@ namespace ApiSigestHC.Tests.Controllers
         public async Task Crear_DebeRetornar201_CuandoLaOperacionEsExitosa()
         {
             // Arrange
-            var dto = new DocumentoRequeridoDto
+            var dto = new DocumentoRequeridoCrearDto
             {
                 EstadoAtencionId = 2,
                 TipoDocumentoId = 5

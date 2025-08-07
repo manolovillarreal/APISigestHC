@@ -16,15 +16,15 @@ namespace ApiSigestHC.Controllers
     public class DocumentosRequeridosController : ControllerBase
     {
         private readonly IDocumentoRequeridoRepositorio _documentoRequeridoRepo;
-        private readonly ICrearDocumentoRequeridoService _crearDocumentoRequeridoService;
+        private readonly IDocumentoRequeridoService _documentoRequeridoService;
         private readonly IMapper _mapper;
 
         public DocumentosRequeridosController(IDocumentoRequeridoRepositorio documentoRequeridoRepo,
-                                              ICrearDocumentoRequeridoService crearDocumentoRequeridoService,
+                                              IDocumentoRequeridoService documentoRequeridoService,
                                                 IMapper mapper)
         {
             _documentoRequeridoRepo = documentoRequeridoRepo;
-            _crearDocumentoRequeridoService = crearDocumentoRequeridoService;
+            _documentoRequeridoService = documentoRequeridoService;
             _mapper = mapper;
         }
 
@@ -37,7 +37,7 @@ namespace ApiSigestHC.Controllers
             try
             {
                 var docs = await _documentoRequeridoRepo.ObtenerTodosAsync();
-                var docsDto = _mapper.Map<IEnumerable<DocumentoRequeridoDto>>(docs);
+                var docsDto = _mapper.Map<IEnumerable<DocumentoRequeridoCrearDto>>(docs);
 
                 return Ok(new RespuestaAPI
                 {
@@ -57,7 +57,7 @@ namespace ApiSigestHC.Controllers
             }
         }
 
-        [HttpGet("{estadoAtencionId}")]
+        [HttpGet("por-estado/{estadoAtencionId}")]
         [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> ObtenerPorEstado(int estadoAtencionId)
@@ -65,7 +65,7 @@ namespace ApiSigestHC.Controllers
             try
             {
                 var docs = await _documentoRequeridoRepo.ObtenerPorEstadoAsync(estadoAtencionId);
-                var docsDto = _mapper.Map<IEnumerable<DocumentoRequeridoDto>>(docs);
+                var docsDto = _mapper.Map<IEnumerable<DocumentoRequeridoCrearDto>>(docs);
 
                 return Ok(new RespuestaAPI
                 {
@@ -85,14 +85,62 @@ namespace ApiSigestHC.Controllers
             }
         }
 
+        [HttpGet("por-tipo/{tipoDocumentoId}")]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ObtenerPorTipo(int tipoDocumentoId)
+        {
+            try
+            {
+                var doc = await _documentoRequeridoRepo.ObtenerPorTipoAsync(tipoDocumentoId);
+                if (doc == null)
+                {
+                    return Ok( new RespuestaAPI
+                    {
+                        Ok = true,
+                        StatusCode = HttpStatusCode.OK,
+                        ErrorMessages = new List<string> { "No hay documentos requeridos asociados." }
+                    });
+                }
+                var docDto = _mapper.Map<DocumentoRequeridoDto>(doc);
+
+                return Ok(new RespuestaAPI
+                {
+                    Ok = true,
+                    StatusCode = HttpStatusCode.OK,
+                    Result = docDto
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new RespuestaAPI
+                {
+                    Ok = false,
+                    StatusCode = HttpStatusCode.InternalServerError,
+                    ErrorMessages = new List<string> { "Error al obtener documentos por estado.", ex.Message }
+                });
+            }
+        }
+
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Crear([FromBody] DocumentoRequeridoDto dto)
+        public async Task<IActionResult> Crear([FromBody] DocumentoRequeridoCrearDto dto)
         {
-            var respuesta = await _crearDocumentoRequeridoService.CrearAsync(dto);
+            var respuesta = await _documentoRequeridoService.CrearAsync(dto);
+            return StatusCode((int)respuesta.StatusCode, respuesta);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("{tipoDocumentoId}")]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> Eliminar( int tipoDocumentoId)
+        {
+            var respuesta = await _documentoRequeridoService.EliminarAsync(tipoDocumentoId);
             return StatusCode((int)respuesta.StatusCode, respuesta);
         }
 

@@ -29,7 +29,7 @@ namespace ApiSigestHC.Controllers
         }
 
         [Authorize(Roles = "Admin")]
-        [HttpGet("{usuarioId:int}", Name = "GetUsuario")]
+        [HttpGet("{id}")]
         [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status500InternalServerError)]
@@ -40,13 +40,23 @@ namespace ApiSigestHC.Controllers
         }
 
         [Authorize(Roles = "Admin")]
-        [HttpPost("crear")]
+        [HttpPost]
         [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> CrearUsuario([FromBody] UsuarioCrearDto dto)
         {
             var respuesta = await _usuarioService.CrearUsuarioAsync(dto);
+            return StatusCode((int)respuesta.StatusCode, respuesta);
+        }
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{id}")]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> EditarUsuario(int id,[FromBody] UsuarioEditarDto dto)
+        {
+            var respuesta = await _usuarioService.EditarUsuarioAsync(id,dto);
             return StatusCode((int)respuesta.StatusCode, respuesta);
         }
 

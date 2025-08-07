@@ -35,12 +35,25 @@ namespace ApiSigestHC.Controllers
         }
 
         /// <summary>
+        /// Obtiene las relaciones de un tipo de documento con roles.
+        /// </summary>
+        /// 
+        [HttpGet("por-rol/{rolId}")]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetPorRol(int rolId)
+        {
+            var respuesta = await _service.ObtenerPorRolAsync(rolId);
+            return StatusCode((int)respuesta.StatusCode, respuesta);
+        }
+
+        /// <summary>
         /// Crea una nueva relación entre tipo de documento y rol.
         /// </summary>
         [HttpPost]
         [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Crear([FromBody] TipoDocumentoRolDto dto)
+        public async Task<IActionResult> Crear([FromBody] TipoDocumentoRolCrearDto dto)
         {
             var respuesta = await _service.CrearAsync(dto);
             return StatusCode((int)respuesta.StatusCode, respuesta);
@@ -53,7 +66,7 @@ namespace ApiSigestHC.Controllers
         [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Actualizar([FromBody] TipoDocumentoRolDto dto)
+        public async Task<IActionResult> Actualizar([FromBody] TipoDocumentoRolCrearDto dto)
         {
             var respuesta = await _service.ActualizarAsync(dto);
             return StatusCode((int)respuesta.StatusCode, respuesta);

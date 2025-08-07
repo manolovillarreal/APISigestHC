@@ -30,6 +30,7 @@ builder.Services.AddScoped<IDocumentoRequeridoRepositorio,DocumentoRequeridoRepo
 builder.Services.AddScoped<IEstadoAtencionRepositorio, EstadoAtencionRepositorio>();
 builder.Services.AddScoped<IPacienteRepositorio, PacienteRepositorio>();
 builder.Services.AddScoped<ISolicitudCorreccionRepositorio,SolicitudCorreccionRepositorio>();
+builder.Services.AddScoped<IRolRepositorio,RolRepositorio>();
 builder.Services.AddScoped<ITipoDocumentoRepositorio, TipoDocumentoRepositorio>();
 builder.Services.AddScoped<ITipoDocumentoRolRepositorio,TipoDocumentoRolRepositorio>();
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
@@ -37,8 +38,9 @@ builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 //Servicios
 builder.Services.AddScoped<IAlmacenamientoArchivoService,AlmacenamientoArchivoService>();
 builder.Services.AddScoped<ICambioEstadoService,CambioEstadoService>();
-builder.Services.AddScoped<ICrearDocumentoRequeridoService,CrearDocumentoRequeridoService>();
+builder.Services.AddScoped<IDocumentoRequeridoService,DocumentoRequeridoService>();
 builder.Services.AddScoped<IDocumentoService,DocumentoService>();
+builder.Services.AddScoped<IRolService,RolService>();
 builder.Services.AddScoped<ITipoDocumentoService, TipoDocumentoService>();
 builder.Services.AddScoped<ITipoDocumentoRolService, TipoDocumentoRolService>();
 builder.Services.AddScoped<IUsuarioContextService,UsuarioContextService>();

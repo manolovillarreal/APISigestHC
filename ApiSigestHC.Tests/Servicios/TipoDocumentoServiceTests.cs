@@ -53,7 +53,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             var tipos = relaciones.Select(r => r.TipoDocumento).Distinct();
 
-            _rolRepositorioMock.Setup(x => x.ObtenerPorRolAsync(rolId)).ReturnsAsync(relaciones);
+            _rolRepositorioMock.Setup(x => x.GetByRolAsync(rolId)).ReturnsAsync(relaciones);
 
             var tipoDtos = new List<TipoDocumentoDto>
         {

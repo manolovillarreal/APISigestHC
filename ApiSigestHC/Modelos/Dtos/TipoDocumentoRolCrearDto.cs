@@ -1,16 +1,10 @@
 ﻿namespace ApiSigestHC.Modelos.Dtos
 {
-    public class TipoDocumentoRolDto
+    public class TipoDocumentoRolCrearDto
     {
         public int TipoDocumentoId { get; set; }
         public int RolId { get; set; }
         public bool PuedeVer { get; set; }
         public bool PuedeCargar { get; set; }
-
-
-        public RolDto Rol { get; set; }
-        public TipoDocumentoDto TipoDocumento { get; set; }
-
-
     }
 }

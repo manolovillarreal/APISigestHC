@@ -35,7 +35,7 @@ namespace ApiSigestHC.Servicios
             try
             {
                 var rolId = _usuarioContextService.ObtenerRolId();
-                var relaciones = await _tipoDocumentoRolRepositorio.ObtenerPorRolAsync(rolId);
+                var relaciones = await _tipoDocumentoRolRepositorio.GetByRolAsync(rolId);
                 var tipos = relaciones.Select(r => r.TipoDocumento).Distinct();
                 var dto = _mapper.Map<IEnumerable<TipoDocumentoDto>>(tipos);
 

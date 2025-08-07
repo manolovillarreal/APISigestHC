@@ -93,7 +93,7 @@ namespace ApiSigestHC.Servicios
         {
             try
             {
-                var esUnico = await _usuarioRepo.IsUniqueUser(dto.NombreUsuario);
+                var esUnico = await _usuarioRepo.IsUniqueUsername(dto.NombreUsuario);
                 if (!esUnico)
                 {
                     return new RespuestaAPI
@@ -131,6 +131,75 @@ namespace ApiSigestHC.Servicios
                     ErrorMessages = new List<string> { "Error interno al crear el usuario.", ex.Message }
                 };
             }
+        }
+
+        public async Task<RespuestaAPI> EditarUsuarioAsync(int id, UsuarioEditarDto dto)
+        {
+           
+            var usuario = await _usuarioRepo.GetUsuarioAsync(id);
+           
+            if (usuario == null)
+            {
+                return new RespuestaAPI
+                {
+                    Ok = false,
+                    StatusCode = HttpStatusCode.NotFound,
+                    ErrorMessages = new List<string> { "No se encontro el usuario con Id " +id }
+                };
+            }
+            var esUnicoUsernmane = await _usuarioRepo.IsUniqueUsername(dto.NombreUsuario);
+            if (usuario.NombreUsuario !=  dto.NombreUsuario && !esUnicoUsernmane)
+            {
+                return new RespuestaAPI
+                {
+                    Ok = false,
+                    StatusCode = HttpStatusCode.BadRequest,
+                    ErrorMessages = new List<string> { "El nombre de usuario ya existe ."+ dto.NombreUsuario }
+                };
+            }
+            var esUnicoCorreo = await _usuarioRepo.IsUniqueEmail(dto.Correo);
+            if (usuario.Correo != dto.Correo && !esUnicoCorreo)
+            {
+                return new RespuestaAPI
+                {
+                    Ok = false,
+                    StatusCode = HttpStatusCode.BadRequest,
+                    ErrorMessages = new List<string> { "El correo  "+dto.Correo+" ya esta registrado." }
+                };
+            }
+            var esUnicoDni = await _usuarioRepo.IsUniqueDni(dto.Dni);
+            if (usuario.Dni != dto.Dni && !esUnicoDni)
+            {
+                return new RespuestaAPI
+                {
+                    Ok = false,
+                    StatusCode = HttpStatusCode.BadRequest,
+                    ErrorMessages = new List<string> { "El DNI  " + dto.Dni + " ya asocioado a otro usuario." }
+                };
+            }
+
+           
+
+            usuario = await _usuarioRepo.EditarUsuario(id,dto);
+
+            if (usuario == null)
+            {
+                return new RespuestaAPI
+                {
+                    Ok = false,
+                    StatusCode = HttpStatusCode.BadRequest,
+                    ErrorMessages = new List<string> { "Error al registrar el usuario." }
+                };
+            }
+            var usuarioDto = _mapper.Map<UsuarioDto>(usuario);
+            return new RespuestaAPI
+            {
+                Ok = true,
+                StatusCode = HttpStatusCode.Created,
+                Result = usuarioDto
+            };
+
+
         }
 
         public async Task<RespuestaAPI> LoginAsync(UsuarioLoginDto dto)
@@ -238,5 +307,6 @@ namespace ApiSigestHC.Servicios
             return manejadorToken.WriteToken(token);
         }
 
+      
     }
 }

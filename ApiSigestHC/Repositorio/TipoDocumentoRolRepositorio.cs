@@ -13,12 +13,13 @@ namespace ApiSigestHC.Repositorio
         {
             _db = context;
         }
-        public async Task<IEnumerable<TipoDocumentoRol>> ObtenerPorRolAsync(int rolId)
+        public async Task<IEnumerable<TipoDocumentoRol>> GetByRolAsync(int rolId)
         {
             return await _db.TipoDocumentoRoles
-                .Include(x => x.TipoDocumento)
-                .Where(x => x.RolId == rolId && x.PuedeCargar && x.Activo)
-                .ToListAsync();
+               .Where(tdr => tdr.RolId == rolId )
+               .Include(tdr => tdr.Rol)
+               .Include(tdr => tdr.TipoDocumento)
+               .ToListAsync();
         }
 
         public async Task<IEnumerable<TipoDocumentoRol>> GetPorTipoDocumentoAsync(int tipoDocumentoId)
@@ -26,8 +27,10 @@ namespace ApiSigestHC.Repositorio
             return await _db.TipoDocumentoRoles
                 .Where(x => x.TipoDocumentoId == tipoDocumentoId)
                 .Include(x => x.Rol)
+                .Include(x => x.TipoDocumento)
                 .ToListAsync();
         }
+
 
         public async Task<TipoDocumentoRol> GetPorIdsAsync(int tipoDocumentoId, int rolId)
         {
@@ -60,6 +63,8 @@ namespace ApiSigestHC.Repositorio
                     && x.TipoDocumentoId == tipoDocumentoId
                     && x.PuedeCargar);
         }
+
+      
     }
 
 }

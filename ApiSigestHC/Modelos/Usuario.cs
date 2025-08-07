@@ -13,7 +13,8 @@ namespace ApiSigestHC.Modelos
         public string Contraseña { get; set; }
         public string Nombre { get; set; }
         public string Apellidos { get; set; }
-        public bool Estado { get; set; }
+        public string Dni { get; set; }
+        public bool EstaActivo { get; set; }
         [Column("rol_id")]
         public int RolId { get; set; }
 

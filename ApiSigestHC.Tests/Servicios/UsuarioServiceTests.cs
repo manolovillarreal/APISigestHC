@@ -88,7 +88,7 @@ namespace ApiSigestHC.Tests.Servicios
             var usuario = new Usuario { Id = 1 };
             var usuarioDto = new UsuarioDto { Id = 1 };
 
-            _usuarioRepoMock.Setup(r => r.IsUniqueUser(dto.NombreUsuario)).ReturnsAsync(true);
+            _usuarioRepoMock.Setup(r => r.IsUniqueUsername(dto.NombreUsuario)).ReturnsAsync(true);
             _usuarioRepoMock.Setup(r => r.CrearUsuario(dto)).ReturnsAsync(usuario);
             _mapperMock.Setup(m => m.Map<UsuarioDto>(usuario)).Returns(usuarioDto);
 
@@ -104,7 +104,7 @@ namespace ApiSigestHC.Tests.Servicios
         {
             var dto = new UsuarioCrearDto { NombreUsuario = "repetido" };
 
-            _usuarioRepoMock.Setup(r => r.IsUniqueUser(dto.NombreUsuario)).ReturnsAsync(false);
+            _usuarioRepoMock.Setup(r => r.IsUniqueUsername(dto.NombreUsuario)).ReturnsAsync(false);
 
             var resultado = await _service.CrearUsuarioAsync(dto);
 
