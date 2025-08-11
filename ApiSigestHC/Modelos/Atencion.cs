@@ -29,6 +29,9 @@ namespace ApiSigestHC.Modelos
         [ForeignKey("SIG_Usuario")]
         public int UsuarioId { get; set; }
 
+        [Column("tipoAtencion_id")]
+        public int TipoAtencionId { get; set; }
+
         public Paciente? Paciente { get; set; }
         public Administradora? Administradora { get; set; }
         public EstadoAtencion? EstadoAtencion { get; set; }

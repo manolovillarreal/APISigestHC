@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using System.Net;
 using ApiSigestHC.Servicios.IServicios;
+using XAct;
 
 namespace ApiSigestHC.Controllers
 
@@ -57,6 +58,21 @@ namespace ApiSigestHC.Controllers
             var atenciones = await _atencionRepo.GetAtencionesPorEstadoAsync(estados);
 
             var atencionesDto = _mapper.Map<IEnumerable<AtencionDto>>(atenciones);
+            
+            
+            string[] idsPacientesEstadoIngreso = atencionesDto
+                .Where(a => a.EstadoAtencionId == 3)
+                .Select(a => a.PacienteId)
+                .ToArray();
+
+            var ubicaciones = await _atencionRepo.GetUltimaUbicacionPacientesAsync(idsPacientesEstadoIngreso);
+
+        
+            foreach (var at in atencionesDto.Where(a => a.EstadoAtencionId == 3))
+            {
+                at.UbicacionPaciente = ubicaciones.FirstOrDefault(u => u.PacienteId == at.PacienteId);
+            }
+
 
             return Ok(new RespuestaAPI
             {
@@ -119,13 +135,12 @@ namespace ApiSigestHC.Controllers
             });
         }
 
-        [HttpPut("editar")]
-        [Authorize(Roles = "Admin,Admisiones")] // Puedes ajustar los roles permitidos
+        [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> EditarAtencion([FromBody] AtencionEditarDto atencionDto)
+        public async Task<IActionResult> EditarAtencion(int id,[FromBody] AtencionEditarDto atencionDto)
         {
             if (!ModelState.IsValid || atencionDto == null)
             {
@@ -137,9 +152,9 @@ namespace ApiSigestHC.Controllers
                 });
             }
 
-            var atencionExistente = await _atencionRepo.ObtenerAtencionPorIdAsync(atencionDto.AtencionId);
+            var atencion = await _atencionRepo.ObtenerAtencionPorIdAsync(id);
 
-            if (atencionExistente == null)
+            if (atencion == null)
             {
                 return NotFound(new RespuestaAPI
                 {
@@ -150,16 +165,22 @@ namespace ApiSigestHC.Controllers
             }
 
             // Actualiza los campos permitidos
-            atencionExistente.TerceroId = atencionDto.TerceroId;
+            atencion.TerceroId = !string.IsNullOrEmpty(atencionDto.TerceroId) 
+                                    ? atencionDto.TerceroId 
+                                    : atencion.TerceroId;
 
-            await _atencionRepo.EditarAtencionAsync(atencionExistente);
+            atencion.TipoAtencionId = atencionDto.TipoAtencionId>0
+                                   ? atencionDto.TipoAtencionId
+                                   : atencion.TipoAtencionId;
+
+            await _atencionRepo.EditarAtencionAsync(atencion);
 
             return Ok(new RespuestaAPI
             {
                 Ok = true,
                 StatusCode = HttpStatusCode.OK,
                 Message = $"Atención {atencionDto.AtencionId} actualizada correctamente",
-                Result = atencionExistente,
+                Result = atencion,
             });
         }
 

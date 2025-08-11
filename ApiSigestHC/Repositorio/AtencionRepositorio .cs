@@ -1,5 +1,6 @@
 ﻿using ApiSigestHC.Data;
 using ApiSigestHC.Modelos;
+using ApiSigestHC.Modelos.Dtos;
 using ApiSigestHC.Repositorio.IRepositorio;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
@@ -82,8 +83,43 @@ namespace ApiSigestHC.Repositorio
             }
         }
 
-     
-       
+        public async Task<IEnumerable<UbicacionPacienteDto>> GetUltimaUbicacionPacientesAsync(string[] pacienteIds)
+        {
+            if (pacienteIds == null || pacienteIds.Length == 0)
+                return Enumerable.Empty<UbicacionPacienteDto>();
+
+            var idsParam = string.Join("','", pacienteIds);
+
+            var sql = $@"
+        SELECT
+            paciente_id AS PacienteId,
+            nombre AS Nombre,
+            codigo AS Codigo
+        FROM (
+            SELECT 
+                I.paciente_id,
+                U.nombre,
+                U.codigo,
+                ROW_NUMBER() OVER (
+                    PARTITION BY I.paciente_id 
+                    ORDER BY I.fecha DESC
+                ) AS rn
+            FROM HOSP_ingresos I
+            JOIN Hosp_Ubicaciones U 
+                ON U.id = I.ubicacion_id
+            WHERE I.paciente_id IN ('{idsParam}')
+        ) t
+        WHERE rn = 1;
+    ";
+
+            return await _db.Set<UbicacionPacienteDto>()
+                .FromSqlRaw(sql)
+                .ToListAsync();
+        }
+
+
+
+
 
     }
 }

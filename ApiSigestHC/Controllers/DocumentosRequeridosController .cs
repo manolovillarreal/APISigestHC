@@ -65,7 +65,7 @@ namespace ApiSigestHC.Controllers
             try
             {
                 var docs = await _documentoRequeridoRepo.ObtenerPorEstadoAsync(estadoAtencionId);
-                var docsDto = _mapper.Map<IEnumerable<DocumentoRequeridoCrearDto>>(docs);
+                var docsDto = _mapper.Map<IEnumerable<DocumentoRequeridoDto>>(docs);
 
                 return Ok(new RespuestaAPI
                 {

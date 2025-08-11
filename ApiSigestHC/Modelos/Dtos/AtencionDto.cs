@@ -19,12 +19,15 @@ namespace ApiSigestHC.Modelos.Dtos
         public int EstadoAtencionId { get; set; }
 
         public int UsuarioId { get; set; }
+        public int TipoAtencionId { get; set; }
 
 
         public Paciente? Paciente { get; set; }
         public Administradora? Administradora { get; set; }
 
         public EstadoAtencion? EstadoAtencion { get; set; }
+
+        public UbicacionPacienteDto? UbicacionPaciente { get; set; }
 
     }
 }

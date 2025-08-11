@@ -1,4 +1,5 @@
 ﻿using ApiSigestHC.Modelos;
+using ApiSigestHC.Modelos.Dtos;
 using Microsoft.EntityFrameworkCore;
 
 namespace ApiSigestHC.Data
@@ -21,6 +22,8 @@ namespace ApiSigestHC.Data
         public DbSet<TipoDocumento> TiposDocumento { get; set; }
         public DbSet<TipoDocumentoRol> TipoDocumentoRoles { get; set; }
         public DbSet<Usuario> Usuarios { get; set; }
+
+        public DbSet<UbicacionPacienteDto> UltimasUbicaciones { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -83,6 +86,11 @@ namespace ApiSigestHC.Data
                 .HasOne(dr => dr.EstadoAtencion)
                 .WithMany(ea => ea.DocumentosRequeridos)
                 .HasForeignKey(dr => dr.EstadoAtencionId);
+
+            // Configuración para UbicacionPacienteDto
+            modelBuilder.Entity<UbicacionPacienteDto>()
+                .HasNoKey() // No tiene clave primaria
+                .ToView(null); // No está mapeado a una tabla o vista física
 
             base.OnModelCreating(modelBuilder);
 

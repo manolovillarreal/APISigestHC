@@ -37,7 +37,9 @@ namespace ApiSigestHC.Repositorio
 
         public async Task<IEnumerable<TipoDocumento>> GetTiposDocumentoAsync()
         {
-            return await _db.TiposDocumento.ToListAsync();
+            return await _db.TiposDocumento
+                        .Include(td=>td.EstadoAtencionInicial)
+                        .ToListAsync();
         }
 
         public async Task<TipoDocumento> GetTipoDocumentoPorIdAsync(int id)

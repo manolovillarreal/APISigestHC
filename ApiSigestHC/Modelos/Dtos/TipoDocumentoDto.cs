@@ -16,6 +16,7 @@ namespace ApiSigestHC.Modelos.Dtos
         public int PesoPorPagina { get; set; }
         public bool Activo { get; set; }
         public int EstadoAtencionInicialId { get; set; }
+        public EstadoAtencion EstadoAtencionInicial { get; set; }
 
 
     }

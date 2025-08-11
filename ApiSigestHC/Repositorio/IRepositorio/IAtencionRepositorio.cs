@@ -1,4 +1,5 @@
 ﻿using ApiSigestHC.Modelos;
+using ApiSigestHC.Modelos.Dtos;
 
 namespace ApiSigestHC.Repositorio.IRepositorio
 {
@@ -12,5 +13,7 @@ namespace ApiSigestHC.Repositorio.IRepositorio
         Task CrearAtencionAsync(Atencion atencion);
         Task EditarAtencionAsync(Atencion atencion);
         Task EliminarAtencionAsync(int id);
+
+        Task<IEnumerable<UbicacionPacienteDto>> GetUltimaUbicacionPacientesAsync(string[] pacienteIds);
     }
 }
