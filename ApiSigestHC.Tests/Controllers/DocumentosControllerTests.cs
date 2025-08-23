@@ -173,7 +173,7 @@ namespace ApiSigestHC.Tests.Controllers
             };
 
             _documentoServiceMock
-                .Setup(s => s.ReemplazarDocumentoAsync(dto))
+                .Setup(s => s.ReemplazarDocumentoCorreccionAsync(dto))
                 .ReturnsAsync(respuestaEsperada);
 
             // Act

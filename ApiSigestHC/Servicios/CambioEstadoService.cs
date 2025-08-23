@@ -3,6 +3,7 @@ using ApiSigestHC.Modelos.Dtos;
 using ApiSigestHC.Repositorio.IRepositorio;
 using ApiSigestHC.Servicios.IServicios;
 using System.Net;
+using System.Reflection.Metadata;
 
 namespace ApiSigestHC.Servicios
 {
@@ -13,19 +14,22 @@ namespace ApiSigestHC.Servicios
         private readonly ICambioEstadoRepositorio _cambioEstadoRepo;
         private readonly IValidacionDocumentosObligatoriosService _validacionDocService;
         private readonly IUsuarioContextService _usuarioContext;
+        private readonly ISolicitudCorreccionRepositorio _solicitudCorreccionRepo;
 
         public CambioEstadoService(
              IAtencionRepositorio atencionRepo,
              IEstadoAtencionRepositorio estadoRepo,
              ICambioEstadoRepositorio cambioEstadoRepo,
              IValidacionDocumentosObligatoriosService validacionDocService,
-             IUsuarioContextService usuarioContext)
+             IUsuarioContextService usuarioContext,
+             ISolicitudCorreccionRepositorio solicitudCorreccionRepo)
         {
             _atencionRepo = atencionRepo;
             _estadoRepo = estadoRepo;
             _cambioEstadoRepo = cambioEstadoRepo;
             _validacionDocService = validacionDocService;
             _usuarioContext = usuarioContext;
+            _solicitudCorreccionRepo = solicitudCorreccionRepo;
         }
 
         public async Task<RespuestaAPI> CambiarEstadoAsync(AtencionCambioEstadoDto dto)
@@ -64,8 +68,19 @@ namespace ApiSigestHC.Servicios
                 respuesta.ErrorMessages.AddRange(validacion.DocumentosFaltantes);
                 return respuesta;
             }
+    
+            // Validar si existen correcciones pendientes en los documentos de la atención
+            var documentosConCorreccionPendiente = atencion.
+                Documentos.Any(d => d.SolicitudesCorreccion.Any(c => c.EstadoCorreccionId != 3));
 
-           
+            if (documentosConCorreccionPendiente)
+            {
+                respuesta.Ok = false;
+                respuesta.StatusCode = HttpStatusCode.BadRequest;
+                respuesta.ErrorMessages.Add("No se puede cambiar el estado porque existen documentos con correcciones pendientes.");
+                return respuesta;
+            }
+
             await _cambioEstadoRepo.RegistrarCambioAsync(new CambioEstado
             {
                 AtencionId = dto.AtencionId,
@@ -86,8 +101,63 @@ namespace ApiSigestHC.Servicios
             return respuesta;
         }
 
+        public async Task<RespuestaAPI> CerrarAtencionAsync(AtencionCambioEstadoDto dto)
+        {
+            var respuesta = new RespuestaAPI();
+            var usuarioId = _usuarioContext.ObtenerUsuarioId();
+            var rolNombre = _usuarioContext.ObtenerRolNombre();
+
+            //Validamos que la atencion exista
+            var atencion = await _atencionRepo.ObtenerAtencionPorIdAsync(dto.AtencionId);
+            if (atencion == null)
+            {
+                respuesta.Ok = false;
+                respuesta.StatusCode = HttpStatusCode.NotFound;
+                respuesta.ErrorMessages.Add("La atención no existe");
+                return respuesta;
+            }
+
+            //validamos que el rol sea medico
+           
+            if (rolNombre != "Medico" && atencion.EstadoAtencionId != 2)
+            {
+                respuesta.Ok = false;
+                respuesta.StatusCode = HttpStatusCode.Forbidden;
+                respuesta.ErrorMessages.Add($"El rol '{rolNombre}' no puede cerrar la atencion desde el estado {atencion.EstadoAtencionId}");
+                return respuesta;
+            }
+
+            //Validamos si existen documento requerido faltantes para avanzzar
+            var validacion = await _validacionDocService.ValidarDocumentosObligatoriosAsync(atencion);
+            if (!validacion.EsValido)
+            {
+                respuesta.Ok = false;
+                respuesta.StatusCode = HttpStatusCode.BadRequest;
+                respuesta.ErrorMessages.Add("Faltan documentos requeridos para el cambio:");
+                respuesta.ErrorMessages.AddRange(validacion.DocumentosFaltantes);
+                return respuesta;
+            }
 
 
+            await _cambioEstadoRepo.RegistrarCambioAsync(new CambioEstado
+            {
+                AtencionId = dto.AtencionId,
+                EstadoInicial = atencion.EstadoAtencionId,
+                EstadoNuevo = 4, // Estado Cierre id 4
+                Fecha = DateTime.UtcNow,
+                UsuarioId = usuarioId,
+                Observacion = dto.Obervacion,
+            });
+            atencion.EstadoAtencionId =4;
+            atencion.EstadoAtencion = await _estadoRepo.ObtenerPorIdAsync(4);
+            await _atencionRepo.EditarAtencionAsync(atencion);
+
+            respuesta.Ok = true;
+            respuesta.StatusCode = HttpStatusCode.OK;
+            respuesta.Message = $"Atención actualizada al estado {4}";
+            respuesta.Result = atencion;
+            return respuesta;
+        }
 
         private int? ObtenerNuevoEstado(int estadoActual, string rol)
         {

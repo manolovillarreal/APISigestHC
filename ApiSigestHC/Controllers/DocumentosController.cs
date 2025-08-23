@@ -19,10 +19,14 @@ namespace ApiSigestHC.Controllers
     public class DocumentosController : ControllerBase
     {
         private readonly IDocumentoService _documentoService;
+        private readonly IThumbnailPdfService _thumbnailPdfService;
+        private readonly IDocumentoRepositorio _documentoRepo;
 
-        public DocumentosController(IDocumentoService documentoService)
+        public DocumentosController(IDocumentoService documentoService, IThumbnailPdfService thumbnailPdfService, IDocumentoRepositorio documentoRepo)
         {
             _documentoService = documentoService;
+            _thumbnailPdfService = thumbnailPdfService;
+            _documentoRepo = documentoRepo;
         }
 
 
@@ -63,18 +67,7 @@ namespace ApiSigestHC.Controllers
         }
 
 
-        [HttpPost("reemplazar")]
-        [Authorize]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RespuestaAPI))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(RespuestaAPI))]
-        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(RespuestaAPI))]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
-        public async Task<IActionResult> ReemplazarDocumento([FromForm] DocumentoReemplazarDto dto)
-        {
-            var resultado = await _documentoService.ReemplazarDocumentoAsync(dto);
-            return StatusCode((int)resultado.StatusCode, resultado);
-        }
-
+   
 
 
         [HttpPost("corregir")]
@@ -128,6 +121,49 @@ namespace ApiSigestHC.Controllers
             return Ok(resultado);
         }
 
+        [HttpGet("thumbnails/{documentoId}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(RespuestaAPI))]
+        public async Task<IActionResult> ObtenerThumbnailsPdf(int documentoId)
+        {
+            var documento = await _documentoRepo.ObtenerPorIdAsync(documentoId);
+            if (documento == null)
+            {
+                return NotFound(new RespuestaAPI
+                {
+                    Ok = false,
+                    StatusCode = HttpStatusCode.NotFound,
+                    ErrorMessages = new List<string> { "Documento no encontrado." }
+                });
+            }
+            if (!documento.NombreArchivo.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+            {
+                return BadRequest(new RespuestaAPI
+                {
+                    Ok = false,
+                    StatusCode = HttpStatusCode.BadRequest,
+                    ErrorMessages = new List<string> { "El documento no es un PDF." }
+                });
+            }
+            var filePath = Path.Combine(documento.RutaBase, documento.RutaRelativa, documento.NombreArchivo);
+            if (!System.IO.File.Exists(filePath))
+            {
+                return NotFound(new RespuestaAPI
+                {
+                    Ok = false,
+                    StatusCode = HttpStatusCode.NotFound,
+                    ErrorMessages = new List<string> { "Archivo físico no encontrado." }
+                });
+            }
+            await using var stream = System.IO.File.OpenRead(filePath);
+            var thumbnails = await _thumbnailPdfService.GenerarThumbnailsAsync(stream, 150, 150);
+            return Ok(new RespuestaAPI
+            {
+                Ok = true,
+                StatusCode = HttpStatusCode.OK,
+                Result = thumbnails
+            });
+        }
 
     }
 }

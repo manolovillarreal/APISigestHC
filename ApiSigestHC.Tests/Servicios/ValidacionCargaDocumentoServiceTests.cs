@@ -22,7 +22,7 @@ namespace ApiSigestHC.Tests.Servicios
         private readonly Mock<IDocumentoRepositorio> _documentoRepoMock = new();
         private readonly Mock<IUsuarioContextService> _usuarioContextServiceMock = new();
 
-        private readonly IValidacionCargaDocumentoService _service;
+        private readonly IValidacionCargaArchivoService _service;
 
         public ValidacionCargaDocumentoServiceTests()
         {

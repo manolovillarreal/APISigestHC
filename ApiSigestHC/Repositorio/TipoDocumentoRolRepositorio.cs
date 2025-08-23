@@ -21,6 +21,14 @@ namespace ApiSigestHC.Repositorio
                .Include(tdr => tdr.TipoDocumento)
                .ToListAsync();
         }
+        public async Task<IEnumerable<TipoDocumentoRol>> GetByRolParaCargaAsync(int rolId)
+        {
+            return await _db.TipoDocumentoRoles
+               .Where(tdr => tdr.RolId == rolId && tdr.PuedeCargar)
+               .Include(tdr => tdr.Rol)
+               .Include(tdr => tdr.TipoDocumento)
+               .ToListAsync();
+        }
 
         public async Task<IEnumerable<TipoDocumentoRol>> GetPorTipoDocumentoAsync(int tipoDocumentoId)
         {

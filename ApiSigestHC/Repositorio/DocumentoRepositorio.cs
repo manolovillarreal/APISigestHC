@@ -28,12 +28,15 @@ namespace ApiSigestHC.Repositorio
                 .Where(d => d.AtencionId == atencionId)
                 .Include(d => d.Usuario)
                     .ThenInclude(u=>u.Rol)
+                .Include(d => d.SolicitudesCorreccion
+                    .Where(s => s.EstadoCorreccionId != 3)) // 🔥 solo trae las pendientes
                 .ToListAsync();
         }
         public async Task<IEnumerable<Documento>> ObtenerPermitidosParaCargar(int atencionId, int rolId)
         {
             return await _db.Documentos
                 .Include(d => d.TipoDocumento)
+
                 .Include(d => d.Usuario)
                     .ThenInclude(u => u.Rol)
                 .Where(d => d.AtencionId == atencionId &&
@@ -41,6 +44,8 @@ namespace ApiSigestHC.Repositorio
                                 tdr.TipoDocumentoId == d.TipoDocumentoId &&
                                 tdr.RolId == rolId &&
                                 tdr.PuedeCargar))
+                .Include(d => d.SolicitudesCorreccion
+                    .Where(s => s.EstadoCorreccionId != 3)) // 🔥 solo trae las pendientes
                 .ToListAsync();
         }
         public async Task<IEnumerable<Documento>> ObtenerPermitidosParaVer(int atencionId, int rolId)
@@ -54,6 +59,8 @@ namespace ApiSigestHC.Repositorio
                                 tdr.TipoDocumentoId == d.TipoDocumentoId &&
                                 tdr.RolId == rolId &&
                                 tdr.PuedeVer))
+                 .Include(d => d.SolicitudesCorreccion
+                    .Where(s => s.EstadoCorreccionId != 3)) // 🔥 solo trae las pendientes
                 .ToListAsync();
         }
 
@@ -62,6 +69,7 @@ namespace ApiSigestHC.Repositorio
             return await _db.Documentos
                 .Include(d => d.TipoDocumento)
                 .Include(d=>d.Atencion)
+                    .ThenInclude(a=>a.Paciente)
                 .Include(d => d.Usuario)
                 .FirstOrDefaultAsync(d=> d.Id == id);
         }

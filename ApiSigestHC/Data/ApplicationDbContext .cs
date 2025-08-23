@@ -9,6 +9,7 @@ namespace ApiSigestHC.Data
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> opciones) : base(opciones) { }
 
         public DbSet<Administradora> Administradoras { get; set; }
+        public DbSet<AnulacionAtencion> AnulacionAtenciones { get; set; }
         public DbSet<Atencion> Atenciones { get; set; }
         public DbSet<CambioEstado> CambiosEstado { get; set; }
         public DbSet<Documento> Documentos { get; set; }
@@ -58,6 +59,7 @@ namespace ApiSigestHC.Data
                  .WithMany()
                  .HasForeignKey(d => d.UsuarioId);
 
+
             modelBuilder.Entity<Paciente>().HasKey(p => p.Id);
 
             modelBuilder.Entity<TipoDocumentoRol>()
@@ -91,6 +93,15 @@ namespace ApiSigestHC.Data
             modelBuilder.Entity<UbicacionPacienteDto>()
                 .HasNoKey() // No tiene clave primaria
                 .ToView(null); // No está mapeado a una tabla o vista física
+
+            modelBuilder.Entity<SolicitudCorreccion>()
+             .HasOne(sc => sc.Documento)                // una solicitud pertenece a un documento
+             .WithMany(d => d.SolicitudesCorreccion)    // un documento tiene muchas solicitudes
+             .HasForeignKey(sc => sc.DocumentoId);      // la FK está en SolicitudCorreccion
+
+            modelBuilder.Entity<SolicitudCorreccion>()
+               .Navigation(s => s.EstadoCorreccion)
+               .AutoInclude();
 
             base.OnModelCreating(modelBuilder);
 

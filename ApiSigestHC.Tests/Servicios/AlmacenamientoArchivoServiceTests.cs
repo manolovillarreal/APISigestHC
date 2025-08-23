@@ -291,7 +291,7 @@ namespace ApiSigestHC.Tests.Servicios
                     .Returns<Stream, CancellationToken>((stream, _) => ms.CopyToAsync(stream));
 
             // Act
-            var resultado = await _service.ReemplazarArchivoAsync(documento, fileMock.Object);
+            var resultado = await _service.ReemplazarArchivoCorreccionAsync(documento, fileMock.Object);
 
             // Assert: resultado
             Assert.NotNull(resultado);

@@ -26,5 +26,7 @@ namespace ApiSigestHC.Modelos
         public TipoDocumento? TipoDocumento { get; set; }
         public Atencion? Atencion { get; set; }
         public Usuario Usuario { get; set; }
+        // 🔹 Relación real (1 Documento -> muchas Solicitudes)
+        public ICollection<SolicitudCorreccion> SolicitudesCorreccion { get; set; }
     }
 }

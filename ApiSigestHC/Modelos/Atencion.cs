@@ -32,8 +32,13 @@ namespace ApiSigestHC.Modelos
         [Column("tipoAtencion_id")]
         public int TipoAtencionId { get; set; }
 
+        [Column("estaAnulada")]
+        public bool EstaAnulada { get; set; }
+
         public Paciente? Paciente { get; set; }
         public Administradora? Administradora { get; set; }
         public EstadoAtencion? EstadoAtencion { get; set; }
+
+        public ICollection<Documento> Documentos { get; set; }
     }
 }

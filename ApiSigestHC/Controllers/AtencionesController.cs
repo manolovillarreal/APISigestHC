@@ -1,14 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using ApiSigestHC.Repositorio;
-using ApiSigestHC.Modelos;
-using ApiSigestHC.Repositorio.IRepositorio;
+﻿using ApiSigestHC.Modelos;
 using ApiSigestHC.Modelos.Dtos;
-using System.Net.WebSockets;
+using ApiSigestHC.Repositorio;
+using ApiSigestHC.Repositorio.IRepositorio;
+using ApiSigestHC.Servicios.IServicios;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
+using System.Data;
 using System.Net;
-using ApiSigestHC.Servicios.IServicios;
+using System.Net.WebSockets;
+using System.Security.Claims;
 using XAct;
 
 namespace ApiSigestHC.Controllers
@@ -25,11 +26,15 @@ namespace ApiSigestHC.Controllers
         private readonly IValidacionDocumentosObligatoriosService _validacionDocumentosService;
         private readonly IVisualizacionEstadoService _visualizacionEstadoService;
         private readonly ICambioEstadoService _cambioEstadoService;
+        private readonly IAtencionesService _atencionesService;
+        private readonly IUsuarioContextService _usuarioContext;
 
         public AtencionesController(IAtencionRepositorio atencionRepo, 
                 IValidacionDocumentosObligatoriosService validacionDocumentosService,
                 ICambioEstadoService cambioEstadoService,
                 IVisualizacionEstadoService visualizacionEstadoService,
+                IAtencionesService atencionesService,
+                IUsuarioContextService usuarioContext,
                 IMapper mapper
            )
         {
@@ -38,14 +43,11 @@ namespace ApiSigestHC.Controllers
             _validacionDocumentosService = validacionDocumentosService;
             _cambioEstadoService = cambioEstadoService;
             _visualizacionEstadoService = visualizacionEstadoService;
+            _atencionesService = atencionesService;
+            _usuarioContext = usuarioContext;
         }
 
-        //[HttpGet]
-        //public async Task<IActionResult> GetAtenciones()
-        //{
-        //    var atenciones = await _atencionRepo.ObtenerAtencionesAsync();
-        //    return Ok(atenciones);
-        //}
+    
 
         [HttpGet("visibles")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<AtencionDto>))]
@@ -82,33 +84,6 @@ namespace ApiSigestHC.Controllers
             });
         }
 
-
-        [HttpGet("rango-fechas")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RespuestaAPI))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetAtencionesPorRangoFechas([FromQuery] DateTime fechaInicio, [FromQuery] DateTime fechaFin, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
-        {
-            if (fechaInicio > fechaFin)
-                return BadRequest(new RespuestaAPI
-                {
-                    Ok = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    ErrorMessages = new List<string> { "La fecha inicial no puede ser mayor que la final" }
-                });
-
-            var atenciones = await _atencionRepo.ObtenerPorFechasAsync(fechaInicio, fechaFin, page, pageSize);
-
-            return Ok(new RespuestaAPI
-            {
-                Ok = true,
-                StatusCode = HttpStatusCode.OK,
-                Result = atenciones
-            });
-        }
-
-
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -124,9 +99,18 @@ namespace ApiSigestHC.Controllers
                     ErrorMessages = new List<string> { "Datos inválidos para crear la atención." }
                 });
             }
-
+            
             var atencion = _mapper.Map<Atencion>(crearAtencionDto);
+
+            atencion.Fecha = DateTime.Now;
+            atencion.EstadoAtencionId = 1;
+            atencion.UsuarioId = _usuarioContext.ObtenerUsuarioId();
+
             await _atencionRepo.CrearAtencionAsync(atencion);
+
+            atencion = await  _atencionRepo.ObtenerAtencionPorIdAsync(atencion.Id);
+
+
             return CreatedAtAction(nameof(CrearAtencion), new RespuestaAPI
             {
                 Ok = true,
@@ -198,7 +182,41 @@ namespace ApiSigestHC.Controllers
             return StatusCode((int)resultado.StatusCode, resultado);
         }
 
+        [HttpPost("cerrar")]
+        [Authorize(Roles = "Medico")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
+        public async Task<IActionResult> CerrarAtencion([FromBody] AtencionCambioEstadoDto dto)
+        {
+            var resultado = await _cambioEstadoService.CerrarAtencionAsync(dto);
+
+            return StatusCode((int)resultado.StatusCode, resultado);
+        }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetAtencionesFiltradas([FromQuery] AtencionFiltroDto filtro)
+        {
+            var respuesta = await _atencionesService.ObteneAtencionesPorFiltroAsync(filtro);
+            return StatusCode((int)respuesta.StatusCode, respuesta);
+        }
 
 
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
+        public async Task<IActionResult> AnularAtencion([FromBody] AnulacionAtencionCrearDto dto)
+        {
+            var respuesta = await _atencionesService.AnularAtencionAsync(dto);
+            return StatusCode((int)respuesta.StatusCode, respuesta);
+        }
     }
 }

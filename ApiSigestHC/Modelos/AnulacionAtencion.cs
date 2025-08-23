@@ -2,6 +2,8 @@
 
 namespace ApiSigestHC.Modelos
 {
+
+    [Table("SIG_AnulacionAtencion")]
     public class AnulacionAtencion
     {
         public int Id { get; set; }

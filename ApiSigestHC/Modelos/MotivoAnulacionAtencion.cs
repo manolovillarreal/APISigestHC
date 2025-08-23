@@ -1,9 +1,19 @@
-﻿namespace ApiSigestHC.Modelos
+﻿
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace ApiSigestHC.Modelos
 {
+    [Table("SIG_MotivoAnulacionAtencion")]
     public class MotivoAnulacionAtencion
     {
-        public int id { get; set; }
+        [Key]
+        public int Id { get; set; }
 
-        public string nombre { get; set; } = string.Empty;
+        [Required]
+        [MaxLength(150)]
+        public string Descripcion { get; set; } = string.Empty;
+
+        public bool Activo { get; set; }
     }
 }

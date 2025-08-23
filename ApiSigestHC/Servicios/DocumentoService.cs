@@ -10,18 +10,19 @@ namespace ApiSigestHC.Servicios
 {
     public class DocumentoService : IDocumentoService
     {
-        private readonly IAlmacenamientoArchivoService _almacenamientoArchivoService;
-        private readonly IValidacionCargaDocumentoService _validacionCargaDocumentoService;
-        private readonly ISolicitudCorreccionRepositorio _solicitudCorreccionRepo;
         private readonly IDocumentoRepositorio _documentoRepo;
+        private readonly ISolicitudCorreccionRepositorio _solicitudCorreccionRepo;
         private readonly ITipoDocumentoRolRepositorio _tipoDocumentoRolRepo;
+
+        private readonly IAlmacenamientoArchivoService _almacenamientoArchivoService;
+        private readonly IValidacionCargaArchivoService _validacionCargaDocumentoService;
         private readonly IUsuarioContextService _usuarioContextService;
         private readonly IMapper _mapper;
 
         public DocumentoService(
         IAlmacenamientoArchivoService almacenamientoArchivoService,
         ISolicitudCorreccionRepositorio solicitudCorreccionRepo,
-        IValidacionCargaDocumentoService validacionCargaDocumentoService,
+        IValidacionCargaArchivoService validacionCargaDocumentoService,
         IDocumentoRepositorio documentoRepo,
         ITipoDocumentoRolRepositorio tipoDocumentoRepo,
         IUsuarioContextService usuarioContextService,
@@ -109,7 +110,7 @@ namespace ApiSigestHC.Servicios
                 {
                     Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
-                    ErrorMessages = new List<string> { "Error interno al editar el documento.", ex.Message }
+                    ErrorMessages = new List<string> { "Error interno al cargar el documento.", ex.Message }
                 };
             }
             
@@ -166,17 +167,11 @@ namespace ApiSigestHC.Servicios
             }
         }
 
-        public async Task<RespuestaAPI> ReemplazarDocumentoAsync(DocumentoReemplazarDto dto)
-        {
-            // 1. Validar si es posible reemplazar el documento
-            var validacion = await _validacionCargaDocumentoService.ValidarReemplazoDocumentoAsync(dto);
-
-            if (!validacion.Ok)
-                return validacion;
-
+        public async Task<RespuestaAPI> ReemplazarDocumentoCorreccionAsync(DocumentoReemplazarDto dto,int usuarioId)
+        {         
             try
             {
-                // 2. Obtener el documento original
+                // 1. Obtener el documento original
                 var documento = await _documentoRepo.ObtenerPorIdAsync(dto.Id);
                 if (documento == null)
                 {
@@ -187,13 +182,19 @@ namespace ApiSigestHC.Servicios
                         ErrorMessages = new List<string> { $"Documento con id {dto.Id} no encontrado." }
                     };
                 }
-
-                // 3. Reemplazar el archivo físico
-                await _almacenamientoArchivoService.ReemplazarArchivoAsync(documento, dto.Archivo);
+                // 2. Validar si es posible reemplazar el documento
+                var validacion = await _validacionCargaDocumentoService.ValidarArchivoAsync(dto.Archivo,documento.TipoDocumento);
+                if (!validacion.Ok)
+                    return validacion;
 
                 // 4. Actualizar metadatos del documento
-                documento.FechaCarga = DateTime.UtcNow;
-                documento.UsuarioId = _usuarioContextService.ObtenerUsuarioId();
+                documento.FechaCarga = DateTime.Now;
+                documento.UsuarioId = usuarioId;
+
+
+                // 3. Reemplazar el archivo físico
+                await _almacenamientoArchivoService.ReemplazarArchivoCorreccionAsync(documento, dto.Archivo);
+               
 
                 // 5. Guardar en base de datos
                 await _documentoRepo.ActualizarAsync(documento);
@@ -259,7 +260,7 @@ namespace ApiSigestHC.Servicios
                 }
 
                 // 4. Reemplazar archivo físico
-                await _almacenamientoArchivoService.ReemplazarArchivoAsync(documento, dto.Archivo);
+                await _almacenamientoArchivoService.ReemplazarArchivoCorreccionAsync(documento, dto.Archivo);
 
                 // 5. Actualizar información del documento
                 var usuarioId = _usuarioContextService.ObtenerUsuarioId();
@@ -268,7 +269,7 @@ namespace ApiSigestHC.Servicios
                 await _documentoRepo.ActualizarAsync(documento);
 
                 // 6. Marcar corrección como aplicada
-                correccion.Pendiente = false;
+                correccion.EstadoCorreccionId = 3;
                 correccion.FechaCorrige = DateTime.UtcNow;
                 correccion.UsuarioCorrigeId = usuarioId;
                 await _solicitudCorreccionRepo.ActualizarAsync(correccion);

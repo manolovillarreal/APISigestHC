@@ -18,14 +18,6 @@ namespace ApiSigestHC.Repositorio
             _cambioEstadoRepo = cambioEstadoRepo;
         }
 
-        public async Task<ICollection<Atencion>> ObtenerAtencionesAsync()
-        {
-
-            return await _db.Atenciones
-                .Include(a => a.Paciente)
-                .OrderBy(a => a.Fecha).ToListAsync();
-               
-        }
         public async Task<IEnumerable<Atencion>> GetAtencionesPorEstadoAsync(List<int> estados)
         {
             if (estados == null || !estados.Any())
@@ -33,36 +25,31 @@ namespace ApiSigestHC.Repositorio
 
             // Obtiene solo los datos necesarios primero
             var atenciones = await _db.Atenciones
+                .Where(a => !a.EstaAnulada)
                 .Include(a => a.Paciente)
                 .Include(a => a.EstadoAtencion)
                 .Include(a=>a.Administradora)
+                .Include(a => a.Documentos)
+                    .ThenInclude(d => d.SolicitudesCorreccion)
                 .ToListAsync(); // Fuerza ejecución sin OPENJSON
 
             return atenciones.Where(a => estados.Contains(a.EstadoAtencionId));
         }
 
-        public async Task<IEnumerable<Atencion>> ObtenerPorFechasAsync(DateTime fechaInicio, DateTime fechaFin, int page, int pageSize)
-        {
-            return await _db.Atenciones
-                .Include(a => a.Paciente)
-                .Where(a => a.Fecha >= fechaInicio && a.Fecha <= fechaFin)
-                .OrderBy(a => a.Fecha)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-        }
-
-
         public async Task<Atencion> ObtenerAtencionPorIdAsync(int id)
         {
-            return await _db.Atenciones.FindAsync(id);
+            return await _db.Atenciones
+                  .Include(a => a.Paciente)
+                .Include(a => a.EstadoAtencion)
+                .Include(a => a.Administradora)
+                .Include(a => a.Documentos)
+                    .ThenInclude(d => d.SolicitudesCorreccion)
+                .FirstOrDefaultAsync(a=>a.Id == id);
         }
 
         public async Task CrearAtencionAsync(Atencion atencion)
         {
-            atencion.Fecha = DateTime.Now;
-            atencion.EstadoAtencionId = 1;
-            atencion.UsuarioId = 1;
+            
             await _db.Atenciones.AddAsync(atencion);
             await _db.SaveChangesAsync();
         }
@@ -117,9 +104,42 @@ namespace ApiSigestHC.Repositorio
                 .ToListAsync();
         }
 
+        public async Task<ICollection<Atencion>> ObtenerAtencionesPorFiltroAsync(
+            AtencionFiltroDto filtro)
+        {
+            var query = _db.Atenciones.AsQueryable();
 
+            if (filtro.AtencionId.HasValue)
+                query = query.Where(a => a.Id == filtro.AtencionId.Value);
 
+            if (filtro.EstadoAtencionId.HasValue)
+                query = query.Where(a => a.EstadoAtencionId == filtro.EstadoAtencionId.Value);
 
+            if (!string.IsNullOrEmpty(filtro.TerceroId))
+                query = query.Where(a => a.TerceroId == filtro.TerceroId);
+
+            if (!string.IsNullOrEmpty(filtro.PacienteId))
+                query = query.Where(a => a.PacienteId == filtro.PacienteId);
+
+            if (filtro.FechaInicio.HasValue)
+                query = query.Where(a => a.Fecha >= filtro.FechaInicio.Value);
+
+            if (filtro.FechaFin.HasValue)
+                query = query.Where(a => a.Fecha <= filtro.FechaFin.Value);
+
+            if (!filtro.consultarAnuladas)
+                query = query.Where(a => !a.EstaAnulada);
+
+            query = query
+                .Include(a => a.Paciente)
+                .Include(a => a.EstadoAtencion)
+                .Include(a => a.Administradora)
+                .OrderByDescending(a => a.Fecha)
+                .Skip((filtro.Page - 1) * filtro.PageSize)
+                .Take(filtro.PageSize);
+
+            return await query.ToListAsync();
+        }
 
     }
 }

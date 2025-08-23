@@ -20,7 +20,7 @@ namespace ApiSigestHC.Tests.Servicios
     {
         private readonly Mock<IAlmacenamientoArchivoService> _almacenamientoArchivoServiceMock;
         private readonly Mock<ISolicitudCorreccionRepositorio> _solicitudCorreccionRepoMock;
-        private readonly Mock<IValidacionCargaDocumentoService> _validacionCargaDocumentoServiceMock;
+        private readonly Mock<IValidacionCargaArchivoService> _validacionCargaDocumentoServiceMock;
         private readonly Mock<IDocumentoRepositorio> _documentoRepoMock;
         private readonly Mock<ITipoDocumentoRolRepositorio> _tipoDocumentoRolRepoMock;
         private readonly Mock<IUsuarioContextService> _usuarioContextServiceMock;
@@ -34,7 +34,7 @@ namespace ApiSigestHC.Tests.Servicios
         {
             _almacenamientoArchivoServiceMock = new Mock<IAlmacenamientoArchivoService>();
             _solicitudCorreccionRepoMock = new Mock<ISolicitudCorreccionRepositorio>();
-            _validacionCargaDocumentoServiceMock = new Mock<IValidacionCargaDocumentoService>();
+            _validacionCargaDocumentoServiceMock = new Mock<IValidacionCargaArchivoService>();
             _documentoRepoMock = new Mock<IDocumentoRepositorio>();
             _tipoDocumentoRolRepoMock = new Mock<ITipoDocumentoRolRepositorio>();
             _usuarioContextServiceMock = new Mock<IUsuarioContextService>();
@@ -412,7 +412,7 @@ namespace ApiSigestHC.Tests.Servicios
 
 
             _almacenamientoArchivoServiceMock
-                .Setup(s => s.ReemplazarArchivoAsync(documento, dto.Archivo))
+                .Setup(s => s.ReemplazarArchivoCorreccionAsync(documento, dto.Archivo))
                 .ReturnsAsync(resultadoGuardado);
 
             _usuarioContextServiceMock
@@ -420,14 +420,14 @@ namespace ApiSigestHC.Tests.Servicios
                 .Returns(99);
 
             // Act
-            var respuesta = await _documentoService.ReemplazarDocumentoAsync(dto);
+            var respuesta = await _documentoService.ReemplazarDocumentoCorreccionAsync(dto);
 
             // Assert
             Assert.True(respuesta.Ok);
             Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
 
             _documentoRepoMock.Verify(r => r.ObtenerPorIdAsync(dto.Id), Times.Once);
-            _almacenamientoArchivoServiceMock.Verify(a => a.ReemplazarArchivoAsync(documento, dto.Archivo), Times.Once);
+            _almacenamientoArchivoServiceMock.Verify(a => a.ReemplazarArchivoCorreccionAsync(documento, dto.Archivo), Times.Once);
             _documentoRepoMock.Verify(r => r.ActualizarAsync(It.Is<Documento>(d => d.UsuarioId == 99)), Times.Once);
         }
 
@@ -450,13 +450,13 @@ namespace ApiSigestHC.Tests.Servicios
                 .ReturnsAsync((Documento)null!);
 
             // Act
-            var respuesta = await _documentoService.ReemplazarDocumentoAsync(dto);
+            var respuesta = await _documentoService.ReemplazarDocumentoCorreccionAsync(dto);
 
             // Assert
             Assert.False(respuesta.Ok);
             Assert.Equal(HttpStatusCode.NotFound, respuesta.StatusCode);
             Assert.Contains("no encontrado", respuesta.ErrorMessages.First().ToLower());
-            _almacenamientoArchivoServiceMock.Verify(a => a.ReemplazarArchivoAsync((Documento)null, dto.Archivo), Times.Never);
+            _almacenamientoArchivoServiceMock.Verify(a => a.ReemplazarArchivoCorreccionAsync((Documento)null, dto.Archivo), Times.Never);
 
         }
 
@@ -478,7 +478,7 @@ namespace ApiSigestHC.Tests.Servicios
                 .ReturnsAsync(respuestaError);
 
             // Act
-            var respuesta = await _documentoService.ReemplazarDocumentoAsync(dto);
+            var respuesta = await _documentoService.ReemplazarDocumentoCorreccionAsync(dto);
 
             // Assert
             Assert.False(respuesta.Ok);
@@ -502,11 +502,11 @@ namespace ApiSigestHC.Tests.Servicios
                 .ReturnsAsync(documento);
 
             _almacenamientoArchivoServiceMock
-                .Setup(a => a.ReemplazarArchivoAsync(documento, dto.Archivo))
+                .Setup(a => a.ReemplazarArchivoCorreccionAsync(documento, dto.Archivo))
                 .ThrowsAsync(new ArgumentException("Archivo no válido"));
 
             // Act
-            var respuesta = await _documentoService.ReemplazarDocumentoAsync(dto);
+            var respuesta = await _documentoService.ReemplazarDocumentoCorreccionAsync(dto);
 
             // Assert
             Assert.False(respuesta.Ok);
@@ -530,11 +530,11 @@ namespace ApiSigestHC.Tests.Servicios
             _documentoRepoMock.Setup(r => r.ObtenerPorIdAsync(dto.Id))
                 .ReturnsAsync(new Documento());
 
-            _almacenamientoArchivoServiceMock.Setup(s => s.ReemplazarArchivoAsync(It.IsAny<Documento>(), dto.Archivo))
+            _almacenamientoArchivoServiceMock.Setup(s => s.ReemplazarArchivoCorreccionAsync(It.IsAny<Documento>(), dto.Archivo))
                 .ThrowsAsync(new Exception("Error al reemplazar el documento"));
 
             // Act
-            var resultado = await _documentoService.ReemplazarDocumentoAsync(dto);
+            var resultado = await _documentoService.ReemplazarDocumentoCorreccionAsync(dto);
 
             // Assert
             Assert.False(resultado.Ok);
@@ -573,7 +573,7 @@ namespace ApiSigestHC.Tests.Servicios
             _documentoRepoMock.Setup(r => r.ObtenerPorIdAsync(dto.Id))
                 .ReturnsAsync(documento);
 
-            _almacenamientoArchivoServiceMock.Setup(s => s.ReemplazarArchivoAsync(documento, dto.Archivo))
+            _almacenamientoArchivoServiceMock.Setup(s => s.ReemplazarArchivoCorreccionAsync(documento, dto.Archivo))
                 .ReturnsAsync(resultadoGuardado);
 
             _usuarioContextServiceMock.Setup(s => s.ObtenerUsuarioId()).Returns(10);

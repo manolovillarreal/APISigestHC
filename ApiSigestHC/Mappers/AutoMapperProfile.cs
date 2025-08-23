@@ -8,10 +8,16 @@ namespace ApiSigestHC.Mappers
     {
         public AutoMapperProfile()
         {
-            CreateMap<Atencion, AtencionDto>().ReverseMap();
+            CreateMap<Atencion, AtencionDto>()
+             .ForMember(atencionDto => atencionDto.TieneCorreccionesPendientes,
+                 opt => opt.MapFrom(atencion => 
+                     atencion.Documentos.Any(d => d.SolicitudesCorreccion.Any(c => c.EstadoCorreccionId !=3))));
+
             CreateMap<Atencion,AtencionCrearDto>().ReverseMap();
 
             CreateMap<Documento, DocumentoDto>().ReverseMap();
+            CreateMap<Documento, DocumentoConAtencionDto>().ReverseMap();
+
             CreateMap<DocumentoRequerido, DocumentoRequeridoDto>().ReverseMap();
             CreateMap<DocumentoRequerido, DocumentoRequeridoCrearDto>().ReverseMap();
 
@@ -19,7 +25,10 @@ namespace ApiSigestHC.Mappers
             CreateMap<EstadoAtencion, EstadoAtencionDto>().ReverseMap();        
 
             CreateMap<Rol, RolDto>().ReverseMap();
-           
+
+            CreateMap<SolicitudCorreccion, SolicitudCorreccionDocDto>();
+            CreateMap<SolicitudCorreccion, SolicitudCorreccionDto>();
+
             CreateMap<TipoDocumento, TipoDocumentoDto>().ReverseMap();
             CreateMap<TipoDocumento, TipoDocumentoCrearDto>().ReverseMap();
 

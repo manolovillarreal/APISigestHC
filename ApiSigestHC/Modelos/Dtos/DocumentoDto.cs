@@ -19,5 +19,8 @@ namespace ApiSigestHC.Modelos.Dtos
 
         public bool puedeCargar { get; set; }
 
+        public ICollection<SolicitudCorreccionDocDto> SolicitudesCorreccion { get; set; }
+
+
     }
 }

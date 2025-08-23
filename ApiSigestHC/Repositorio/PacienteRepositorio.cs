@@ -89,6 +89,7 @@ namespace ApiSigestHC.Repositorio
                     FROM SIG_ATENCION A
                     WHERE A.PACIENTE_ID = P.NU_HIST_PAC
                       AND A.ESTADOATENCION_ID <= 4
+                      AND A.ESTAANULADA = 0
                 )";
 
             var pacientes = await _db.Pacientes

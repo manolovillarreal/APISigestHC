@@ -9,7 +9,7 @@ namespace ApiSigestHC.Servicios.IServicios
         Task<RespuestaAPI> ObtenerDocumentosPorAtencionAsync(int atencionId);
         Task<RespuestaAPI> CargarDocumentoAsync(DocumentoCargarDto dto);
         Task<RespuestaAPI> EditarDocumentoAsync(DocumentoEditarDto dto);
-        Task<RespuestaAPI> ReemplazarDocumentoAsync(DocumentoReemplazarDto dto);
+        Task<RespuestaAPI> ReemplazarDocumentoCorreccionAsync(DocumentoReemplazarDto dto,int usuarioId);
         Task<RespuestaAPI> CorregirDocumentoAsync(DocumentoReemplazarDto dto);
         Task<RespuestaAPI> EliminarDocumentoAsync(int documentoId);
         Task<IActionResult> DescargarDocumentoAsync(int documentoId);

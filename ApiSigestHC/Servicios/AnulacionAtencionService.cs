@@ -24,7 +24,7 @@ namespace ApiSigestHC.Servicios
         }
         public async Task<RespuestaAPI> AnularAtencionAsync(AnulacionAtencionCrearDto dto)
         {
-            var atencion = await _atencionRepo.ObtenerAtencionPorIdAsync(dto.atencion_id);
+            var atencion = await _atencionRepo.ObtenerAtencionPorIdAsync(dto.AtencionId);
             if (atencion == null)
             {
                 return new RespuestaAPI
@@ -35,7 +35,7 @@ namespace ApiSigestHC.Servicios
                 };
             }
 
-            var motivoExiste = await _anulacionRepo.MotivoExisteAsync(dto.motivoAnulacionAtencion_id);
+            var motivoExiste = await _anulacionRepo.MotivoExisteAsync(dto.MotivoAnulacionAtencionId);
             if (!motivoExiste)
             {
                 return new RespuestaAPI
@@ -61,10 +61,10 @@ namespace ApiSigestHC.Servicios
 
             var anulacion = new AnulacionAtencion
             {
-                AtencionId = dto.atencion_id,
-                MotivoAnulacionAtencionId = dto.motivoAnulacionAtencion_id,
+                AtencionId = dto.AtencionId,
+                MotivoAnulacionAtencionId = dto.MotivoAnulacionAtencionId,
                 UsuarioId = usuarioId,
-                Observacion = dto.observacion,
+                Observacion = dto.Observacion,
                 Fecha = DateTime.Now
             };
 

@@ -8,7 +8,7 @@ using PdfSharp.Pdf.IO;
 
 namespace ApiSigestHC.Servicios
 {
-    public class ValidacionCargaDocumentoService : IValidacionCargaDocumentoService
+    public class ValidacionCargaDocumentoService : IValidacionCargaArchivoService
     {
         private readonly IAtencionRepositorio _atencionRepo;
         private readonly ITipoDocumentoRepositorio _tipoDocumentoRepo;
@@ -30,7 +30,7 @@ namespace ApiSigestHC.Servicios
         public async Task<RespuestaAPI> ValidarCargaDocumentoAsync(DocumentoCargarDto dto)
         {
             var respuesta = new RespuestaAPI();
-
+            var rolId = _usuarioContextService.ObtenerRolId();
             var atencion = await _atencionRepo.ObtenerAtencionPorIdAsync(dto.AtencionId);
             var tipoDoc = await _tipoDocumentoRepo.GetTipoDocumentoPorIdAsync(dto.TipoDocumentoId);
 
@@ -40,7 +40,14 @@ namespace ApiSigestHC.Servicios
             if (atencion == null)
                 return Error("Atencion no encontrada.", HttpStatusCode.NotFound);
 
-            var validacionArchivo = await ValidarArchivoAsync(dto.Archivo, atencion, tipoDoc);
+            if (!PuedeCargarSegunEstado(atencion.EstadoAtencionId))
+                return Error("No puede cargar documentos en el estado actual de la atención.", HttpStatusCode.Forbidden);
+            
+            var puedeCargar = await _documentoRepo.PuedeCargarDocumento(rolId, tipoDoc.Id);
+            if (!puedeCargar)
+                return Error("No tiene permiso para cargar este tipo de documento.", HttpStatusCode.Forbidden);
+
+            var validacionArchivo = await ValidarArchivoAsync(dto.Archivo, tipoDoc);
             if (!validacionArchivo.Ok)
                 return validacionArchivo;
 
@@ -63,26 +70,26 @@ namespace ApiSigestHC.Servicios
             if (documento == null)
                 return Error("Documento no encontrado.", HttpStatusCode.NotFound);
 
-            var atencion = documento.Atencion;
             var tipoDoc = documento.TipoDocumento;
 
-            return await ValidarArchivoAsync(dto.Archivo, atencion, tipoDoc);
+            return await ValidarArchivoAsync(dto.Archivo, tipoDoc);
         }
-
-        private async Task<RespuestaAPI> ValidarArchivoAsync(IFormFile archivo, Atencion atencion, TipoDocumento tipoDoc)
-        {
-            var rolNombre = _usuarioContextService.ObtenerRolNombre();
+        public async Task<RespuestaAPI> ValidarCargaArchivoCorreccionAsync(IFormFile archivo, TipoDocumento tipoDoc)
+        {        
             var rolId = _usuarioContextService.ObtenerRolId();
-
-            if (archivo == null || archivo.Length == 0)
-                return Error("Archivo no proporcionado o vacío.", HttpStatusCode.BadRequest);
 
             var puedeCargar = await _documentoRepo.PuedeCargarDocumento(rolId, tipoDoc.Id);
             if (!puedeCargar)
                 return Error("No tiene permiso para cargar este tipo de documento.", HttpStatusCode.Forbidden);
 
-            if (!PuedeCargarSegunEstado(rolNombre, atencion.EstadoAtencionId))
-                return Error("No puede cargar documentos en el estado actual de la atención.", HttpStatusCode.Forbidden);
+            return await ValidarArchivoAsync(archivo, tipoDoc);
+        }
+
+        public async Task<RespuestaAPI> ValidarArchivoAsync(IFormFile archivo, TipoDocumento tipoDoc)
+        {          
+
+            if (archivo == null || archivo.Length == 0)
+                return Error("Archivo no proporcionado o vacío.", HttpStatusCode.BadRequest);     
 
             var ext = Path.GetExtension(archivo.FileName).TrimStart('.').ToLowerInvariant();
             var permitidas = tipoDoc.ExtensionPermitida.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -130,6 +137,7 @@ namespace ApiSigestHC.Servicios
             return new RespuestaAPI { Ok = true };
         }
 
+  
         private RespuestaAPI Error(string mensaje, HttpStatusCode code)
         {
             return new RespuestaAPI
@@ -140,8 +148,10 @@ namespace ApiSigestHC.Servicios
             };
         }
 
-        private bool PuedeCargarSegunEstado(string rolNombre, int estadoAtencion)
+        private bool PuedeCargarSegunEstado(int estadoAtencion)
         {
+            var rolNombre = _usuarioContextService.ObtenerRolNombre();
+
             return rolNombre switch
             {
                 "Admisiones" => estadoAtencion >= 1 && estadoAtencion <= 4,

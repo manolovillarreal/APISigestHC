@@ -27,7 +27,7 @@ namespace ApiSigestHC.Repositorio
 
         public async Task<bool> MotivoExisteAsync(int motivoId)
         {
-            return await _context.MotivosAnulacionAtencion.AnyAsync(m => m.id == motivoId);
+            return await _context.MotivosAnulacionAtencion.AnyAsync(m => m.Id == motivoId);
         }
     }
 

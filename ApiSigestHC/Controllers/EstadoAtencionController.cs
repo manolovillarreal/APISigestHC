@@ -8,7 +8,7 @@ using System.Net;
 
 namespace ApiSigestHC.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class EstadoAtencionController : ControllerBase

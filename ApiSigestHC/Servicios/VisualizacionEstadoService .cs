@@ -15,10 +15,12 @@ namespace ApiSigestHC.Servicios
                 { "Admisiones", new List<int> { 1, 2, 3, 4 } },
                 { "Medico", new List<int> { 1, 2, 3 } },
                 { "Enfermeria", new List<int> { 3 } },
-                { "Auditoria", new List<int> { 4, 5, 6 } },
-                { "Facturacion", new List<int> { 5, 6 } },
-                { "Archivo", new List<int> { 7 } },
-                { "Admin", new List<int> { 1, 2, 3, 4, 5, 6, 7 } }
+                { "Laboratorio", new List<int> { 3 } },
+                { "Radiologia", new List<int> { 3 } },
+                { "Auditoria", new List<int> {1,2,3,4 } },
+                { "Facturacion", new List<int> { } },
+                { "Archivo", new List<int> {  } },
+                { "Admin", new List<int> { 1, 2, 3, 4 } }
             };
 
         public List<int> ObtenerEstadosVisiblesPorRol()

@@ -17,18 +17,18 @@ namespace ApiSigestHC.Repositorio
         public async Task<List<MotivoAnulacionAtencion>> ObtenerTodosAsync()
         {
             return await _context.MotivosAnulacionAtencion
-                .OrderBy(m => m.nombre).ToListAsync();
+                .OrderBy(m => m.Descripcion).ToListAsync();
         }
 
         public async Task<MotivoAnulacionAtencion?> ObtenerPorIdAsync(int id)
         {
             return await _context.MotivosAnulacionAtencion
-                .FirstOrDefaultAsync(m => m.id == id);
+                .FirstOrDefaultAsync(m => m.Id == id);
         }
 
         public async Task<bool> ExisteAsync(int id)
         {
-            return await _context.MotivosAnulacionAtencion.AnyAsync(m => m.id == id);
+            return await _context.MotivosAnulacionAtencion.AnyAsync(m => m.Id == id);
         }
     }
 

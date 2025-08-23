@@ -28,5 +28,11 @@ namespace ApiSigestHC.Modelos
         [NotMapped]
         public List<Administradora> Administradoras { get; set; } = new();
 
+
+        public string NombreCorto()
+        {
+            return $"{PrimerNombre} {PrimerApellido}";
+        }
+
     }
 }

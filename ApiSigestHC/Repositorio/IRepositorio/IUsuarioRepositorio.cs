@@ -8,6 +8,7 @@ namespace ApiSigestHC.Repositorio.IRepositorio
     {
         Task<ICollection<Usuario>> GetUsuariosAsync();
         Task<Usuario> GetUsuarioAsync(int usuarioId);    
+        Usuario GetUsuario(int usuarioId);
         Task<bool> IsUniqueUsername(string usuario);      
         Task<bool> IsUniqueEmail(string correo);
         Task<bool> IsUniqueDni(string dni);

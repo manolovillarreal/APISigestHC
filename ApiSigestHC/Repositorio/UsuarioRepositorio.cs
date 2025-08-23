@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using XAct;
 using XSystem.Security.Cryptography;
 
 namespace ApiSigestHC.Repositorio
@@ -126,5 +127,11 @@ namespace ApiSigestHC.Repositorio
 
         }
 
+        public Usuario GetUsuario(int usuarioId)
+        {
+            return _db.Usuarios
+                .Include(u => u.Rol)
+                .First(u => u.Id == usuarioId);
+        }
     }
 }

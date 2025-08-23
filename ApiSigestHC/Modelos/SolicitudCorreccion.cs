@@ -8,11 +8,11 @@ namespace ApiSigestHC.Modelos
     {
         [Key]
         [Column("id")]
-        public long Id { get; set; }
+        public int Id { get; set; }
 
         [Required]
         [Column("documento_id")]
-        public long DocumentoId { get; set; }        
+        public int DocumentoId { get; set; }        
 
         [Required]
         [Column("usuarioSolicita_id")]
@@ -33,8 +33,12 @@ namespace ApiSigestHC.Modelos
         [Column("fechaCorrige")]
         public DateTime? FechaCorrige { get; set; }
 
-        [Column("pendiente")]
-        public bool Pendiente { get; set; }
+        [Column("estadoCorreccion_id")]
+        public int EstadoCorreccionId { get; set; }
+
+        public Documento Documento { get; set; }
+        public EstadoCorreccion EstadoCorreccion { get; set; }
+
 
     }
 }

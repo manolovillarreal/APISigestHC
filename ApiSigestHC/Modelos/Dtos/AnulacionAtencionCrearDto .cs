@@ -2,8 +2,8 @@
 {
     public class AnulacionAtencionCrearDto
     {
-        public int atencion_id { get; set; }
-        public int motivoAnulacionAtencion_id { get; set; }
-        public string? observacion { get; set; }
+        public int AtencionId { get; set; }
+        public int MotivoAnulacionAtencionId { get; set; }
+        public string? Observacion { get; set; }
     }
 }

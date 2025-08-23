@@ -4,27 +4,39 @@ using ApiSigestHC.Modelos.Dtos;
 using ApiSigestHC.Repositorio.IRepositorio;
 using ApiSigestHC.Servicios.IServicios;
 using Microsoft.AspNetCore.Mvc;
+using PdfSharp.Pdf;
+using PdfSharp.Pdf.IO;
 using System.Net;
 using XAct.Library.Settings;
+using Microsoft.AspNetCore.Http;
+using System.IO;
 
 namespace ApiSigestHC.Servicios
 {
-    public class AlmacenamientoArchivoService:IAlmacenamientoArchivoService
+    public class AlmacenamientoArchivoService: IAlmacenamientoArchivoService
     {
+        const string rutaTemporal = "documentos/temporal";
+
         private readonly IWebHostEnvironment _env;
         private readonly IDocumentoRepositorio _documentoRepo;
         private readonly IAtencionRepositorio _atencionRepo;
         private readonly ITipoDocumentoRepositorio _tipoDocumentoRepo;
+        private readonly IUsuarioRepositorio _usuarioRepo;
+        private readonly IUsuarioContextService _usuarioContext;
 
         public AlmacenamientoArchivoService(IWebHostEnvironment env, 
                                             IDocumentoRepositorio documentoRepo,
                                             ITipoDocumentoRepositorio tipoDocumentoRepositorio,
-                                            IAtencionRepositorio atencionRepo)
+                                            IAtencionRepositorio atencionRepo,
+                                            IUsuarioRepositorio usuarioRepo,
+                                            IUsuarioContextService usuarioContext   )
         {
             _env = env;
             _documentoRepo = documentoRepo;
             _atencionRepo = atencionRepo;
-            _tipoDocumentoRepo= tipoDocumentoRepositorio;
+            _tipoDocumentoRepo = tipoDocumentoRepositorio;
+            _usuarioRepo = usuarioRepo;
+            _usuarioContext = usuarioContext;
         }
 
         public async Task<ResultadoGuardadoArchivo> GuardarArchivoAsync(DocumentoCargarDto dto)
@@ -32,7 +44,7 @@ namespace ApiSigestHC.Servicios
             var archivo = dto.Archivo;
             var atencion = await _atencionRepo.ObtenerAtencionPorIdAsync(dto.AtencionId);
             var tipoDocumento = await _tipoDocumentoRepo.GetTipoDocumentoPorIdAsync(dto.TipoDocumentoId);
-
+           
             // Validación básica
             if (archivo == null || archivo.Length == 0)
                 throw new ArgumentException("Archivo vacio no válido.");
@@ -73,6 +85,15 @@ namespace ApiSigestHC.Servicios
                 {
                     await archivo.CopyToAsync(stream);
                 }
+                if (extension == ".pdf")
+                {
+                    ActualizarMetadatosPdf(
+                        rutaCompleta,
+                        tipoDocumento.Nombre+" - "+atencion.Paciente.NombreCorto(),
+                        _usuarioContext.ObtenerNombreUsuario(),
+                         tipoDocumento.Nombre // tema opcional
+                    );
+                }
 
                 return new ResultadoGuardadoArchivo
                 {
@@ -89,7 +110,7 @@ namespace ApiSigestHC.Servicios
            
         }
 
-        public async Task<ResultadoGuardadoArchivo> ReemplazarArchivoAsync(Documento documento, IFormFile archivo)
+        public async Task<ResultadoGuardadoArchivo> ReemplazarArchivoCorreccionAsync(Documento documento, IFormFile archivo)
         {
             // Validación básica
             if (archivo == null || archivo.Length == 0)
@@ -109,7 +130,16 @@ namespace ApiSigestHC.Servicios
                 await archivo.CopyToAsync(stream);
             }
 
-
+            string extension = Path.GetExtension(archivo.FileName).ToLowerInvariant();
+            if (extension == ".pdf")
+            {
+                ActualizarMetadatosPdf(
+                    rutaAbsoluta,
+                    documento.TipoDocumento.Nombre + " - " + documento.Atencion.Paciente.NombreCorto(),
+                    _usuarioRepo.GetUsuario(documento.UsuarioId).NombreUsuario,
+                    documento.TipoDocumento.Nombre // tema opcional
+                );
+            }
             return new ResultadoGuardadoArchivo
             {
                 RutaBase = documento.RutaBase.Replace("\\", "/"),
@@ -118,6 +148,36 @@ namespace ApiSigestHC.Servicios
             };
         }
 
+        public async Task<ResultadoGuardadoArchivo> GuardarArchivoTemporal(string coleccion, IFormFile archivo, int id)
+        {
+            if (archivo == null || archivo.Length == 0)
+                throw new ArgumentException("Archivo no válido.");
+
+            // Construir la ruta absoluta y relativa
+            var nombreArchivo = $"{id}.pdf";
+            var rutaRelativa = Path.Combine(rutaTemporal+"/" + coleccion, nombreArchivo);
+            var rutaAbsoluta = Path.Combine(_env.ContentRootPath, rutaRelativa);
+
+            // Crear el directorio si no existe
+            var directorio = Path.GetDirectoryName(rutaAbsoluta);
+            if (!Directory.Exists(directorio))
+                Directory.CreateDirectory(directorio);
+
+            // Guardar el archivo
+            using (var stream = new FileStream(rutaAbsoluta, FileMode.Create))
+            {
+                await archivo.CopyToAsync(stream);
+            }           
+
+            return new ResultadoGuardadoArchivo
+            {
+                RutaBase = _env.ContentRootPath.Replace("\\", "/"),
+                RutaRelativa = rutaRelativa.Replace("\\", "/"),
+                NombreArchivo = nombreArchivo,
+                IsSuccess = true,
+                Message = "Archivo temporal guardado correctamente."
+            };
+        }
         public async Task EliminarArchivoAsync(Documento documento)
         {
             if (documento == null)
@@ -176,7 +236,57 @@ namespace ApiSigestHC.Servicios
             // No se define FileDownloadName => el navegador intenta mostrarlo en lugar de descargarlo
             return new FileStreamResult(stream, mimeType);
         }
+        public async Task<FileStreamResult?> ObtenerArchivoTemporalParaVisualizacionAsync(string coleccion, int solicitudId)
+        {
+            var nombreArchivo = solicitudId + ".pdf";
 
+            var path = Path.Combine(rutaTemporal, coleccion, nombreArchivo);
+            if (!File.Exists(path)) return null;
+
+            var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
+            var mimeType = MimeTypeHelper.GetMimeType(nombreArchivo);
+
+            // No se define FileDownloadName => el navegador intenta mostrarlo en lugar de descargarlo
+            return new FileStreamResult(stream, mimeType);
+        }
+        public async Task<IFormFile?> ObtenerArchivoTemporalComoFormFileAsync(string coleccion, int solicitudId)
+        {
+            var nombreArchivo = $"{solicitudId}.pdf";
+            var rutaAbsoluta = Path.Combine(_env.ContentRootPath, rutaTemporal, coleccion, nombreArchivo);
+
+            if (!File.Exists(rutaAbsoluta))
+                return null;
+
+            await using var stream = new FileStream(rutaAbsoluta, FileMode.Open, FileAccess.Read);
+            var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+
+            var formFile = new FormFile(memoryStream, 0, memoryStream.Length, "archivo", nombreArchivo)
+            {
+                Headers = new HeaderDictionary(),
+                ContentType = MimeTypeHelper.GetMimeType(nombreArchivo)
+            };
+
+            return formFile;
+        }
+        public Task EliminarArchivoTemporalAsync(string coleccion, int id)
+        {
+            var nombreArchivo = $"{id}.pdf";
+            var rutaAbsoluta = Path.Combine(_env.ContentRootPath, rutaTemporal, coleccion, nombreArchivo);
+            if (File.Exists(rutaAbsoluta))
+            {
+                try
+                {
+                    File.Delete(rutaAbsoluta);
+                }
+                catch (IOException ex)
+                {
+                    throw new IOException($"Error al intentar eliminar el archivo temporal: {rutaAbsoluta}", ex);
+                }
+            }
+            return Task.CompletedTask;
+        }
 
         public async Task<ResultadoGuardadoArchivo> ActualizarNombreSiEsNecesarioAsync(DocumentoEditarDto dto)
         {
@@ -257,7 +367,26 @@ namespace ApiSigestHC.Servicios
 
             return string.Join("_", partes) + extension;
         }
+        /// <summary>
+        /// Actualiza los metadatos de un PDF (título, autor, tema).
+        /// </summary>
+        private void ActualizarMetadatosPdf(string rutaPdf, string titulo, string? autor = null, string? tema = null)
+        {
+            using (PdfDocument pdf = PdfReader.Open(rutaPdf, PdfDocumentOpenMode.Modify))
+            {
+                pdf.Info.Title = titulo;
 
+                if (!string.IsNullOrWhiteSpace(autor))
+                    pdf.Info.Author = autor;
+
+                if (!string.IsNullOrWhiteSpace(tema))
+                    pdf.Info.Subject = tema;
+
+                pdf.Save(rutaPdf); // Sobrescribe el mismo archivo
+            }
+        }
+
+        
     }
 
 

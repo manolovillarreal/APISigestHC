@@ -21,6 +21,8 @@ namespace ApiSigestHC.Modelos.Dtos
         public int UsuarioId { get; set; }
         public int TipoAtencionId { get; set; }
 
+        [NotMapped]
+        public bool TieneCorreccionesPendientes { get; set; }        
 
         public Paciente? Paciente { get; set; }
         public Administradora? Administradora { get; set; }
