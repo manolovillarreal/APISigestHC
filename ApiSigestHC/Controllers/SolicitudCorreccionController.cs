@@ -55,6 +55,12 @@ namespace ApiSigestHC.Controllers
             var respuesta = await _service.AprobarSolicitudAsync(solicitudId,dto);
             return StatusCode((int)respuesta.StatusCode, respuesta);
         }
+        [HttpPost("{solicitudId}/rechazar")]
+        public async Task<IActionResult> RechazarSolicitud(int solicitudId, [FromBody] string observacion)
+        {
+            var respuesta = await _service.RechazarSolicitudAsync(solicitudId, observacion);
+            return StatusCode((int)respuesta.StatusCode, respuesta);
+        }
 
         [HttpGet("{solicitudId}/visualizar")]
         public async Task<IActionResult> VerDocumentoCorreccion(int solicitudId)

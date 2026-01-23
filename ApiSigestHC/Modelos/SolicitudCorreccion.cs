@@ -38,6 +38,8 @@ namespace ApiSigestHC.Modelos
 
         public Documento Documento { get; set; }
         public EstadoCorreccion EstadoCorreccion { get; set; }
+        public Usuario UsuarioSolicita { get; set; }
+        public Usuario? UsuarioCorrige { get; set; }
 
 
     }

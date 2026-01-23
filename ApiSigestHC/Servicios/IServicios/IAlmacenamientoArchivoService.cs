@@ -7,7 +7,7 @@ namespace ApiSigestHC.Servicios.IServicios
     public interface IAlmacenamientoArchivoService
     {
         Task<ResultadoGuardadoArchivo> GuardarArchivoAsync(DocumentoCargarDto dto);
-        Task<ResultadoGuardadoArchivo> ReemplazarArchivoCorreccionAsync(Documento documento, IFormFile archivo);
+        Task<ResultadoGuardadoArchivo> ReemplazarArchivoDocuemntoAsync(Documento documento, IFormFile archivo);
         Task<ResultadoGuardadoArchivo> GuardarArchivoTemporal(string coleccion, IFormFile archivo, int id);
         Task<ResultadoGuardadoArchivo> ActualizarNombreSiEsNecesarioAsync(DocumentoEditarDto dto);
         Task EliminarArchivoAsync(Documento documento);

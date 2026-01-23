@@ -57,7 +57,8 @@ builder.Services.AddScoped<ISolicitudCorreccionService, SolicitudCorreccionServi
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors(p => p.AddPolicy("PoliticaCors", build =>
 {
-    build.WithOrigins("*")
+    build
+            .AllowAnyOrigin()
             .AllowAnyMethod()
             .AllowAnyHeader()
             .WithExposedHeaders("Content-Disposition");
@@ -133,7 +134,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseCors("PoliticaCors");
 
 app.UseAuthentication();

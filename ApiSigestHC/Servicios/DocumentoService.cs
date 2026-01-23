@@ -193,7 +193,7 @@ namespace ApiSigestHC.Servicios
 
 
                 // 3. Reemplazar el archivo físico
-                await _almacenamientoArchivoService.ReemplazarArchivoCorreccionAsync(documento, dto.Archivo);
+                await _almacenamientoArchivoService.ReemplazarArchivoDocuemntoAsync(documento, dto.Archivo);
                
 
                 // 5. Guardar en base de datos
@@ -225,30 +225,12 @@ namespace ApiSigestHC.Servicios
                 };
             }
         }
-
-        public async Task<RespuestaAPI> CorregirDocumentoAsync(DocumentoReemplazarDto dto)
+        public async Task<RespuestaAPI> ReemplazarDocumentoPorFirma(DocumentoReemplazarDto dto, int documentoId)
         {
-            // 1. Verificar si hay una corrección pendiente
-            var correccion = await _solicitudCorreccionRepo.ObtenerPendientePorDocumentoIdAsync(dto.Id);
-            if (correccion == null)
-            {
-                return new RespuestaAPI
-                {
-                    Ok = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    ErrorMessages = new List<string> { "Este documento no tiene una solicitud de corrección pendiente." }
-                };
-            }
-
-            // 2. Validar si es posible reemplazar (permite en estado auditoría si hay corrección pendiente)
-            var validacion = await _validacionCargaDocumentoService.ValidarReemplazoDocumentoAsync(dto);
-            if (!validacion.Ok)
-                return validacion;
-
             try
             {
-                // 3. Obtener documento original
-                var documento = await _documentoRepo.ObtenerPorIdAsync(dto.Id);
+                // 1. Obtener el documento original
+                var documento = await _documentoRepo.ObtenerPorIdAsync(documentoId);
                 if (documento == null)
                 {
                     return new RespuestaAPI
@@ -258,27 +240,37 @@ namespace ApiSigestHC.Servicios
                         ErrorMessages = new List<string> { $"Documento con id {dto.Id} no encontrado." }
                     };
                 }
+                // 2. Validar si es posible reemplazar el documento
+                var validacion = await _validacionCargaDocumentoService.ValidarArchivoAsync(dto.Archivo, documento.TipoDocumento);
+                if (!validacion.Ok)
+                    return validacion;
 
-                // 4. Reemplazar archivo físico
-                await _almacenamientoArchivoService.ReemplazarArchivoCorreccionAsync(documento, dto.Archivo);
+                // 4. Actualizar metadatos del documento
+                //documento.FechaCarga = DateTime.Now;
+                //documento.UsuarioId = usuarioId;
 
-                // 5. Actualizar información del documento
-                var usuarioId = _usuarioContextService.ObtenerUsuarioId();
-                documento.FechaCarga = DateTime.UtcNow;
-                documento.UsuarioId = usuarioId;
+
+                // 3. Reemplazar el archivo físico
+                await _almacenamientoArchivoService.ReemplazarArchivoDocuemntoAsync(documento, dto.Archivo);
+
+
+                // 5. Guardar en base de datos
                 await _documentoRepo.ActualizarAsync(documento);
-
-                // 6. Marcar corrección como aplicada
-                correccion.EstadoCorreccionId = 3;
-                correccion.FechaCorrige = DateTime.UtcNow;
-                correccion.UsuarioCorrigeId = usuarioId;
-                await _solicitudCorreccionRepo.ActualizarAsync(correccion);
 
                 return new RespuestaAPI
                 {
                     Ok = true,
                     StatusCode = HttpStatusCode.OK,
-                    Result = "Corrección aplicada exitosamente."
+                    Result = "Documento reemplazado exitosamente"
+                };
+            }
+            catch (ArgumentException ex)
+            {
+                return new RespuestaAPI
+                {
+                    Ok = false,
+                    StatusCode = HttpStatusCode.BadRequest,
+                    ErrorMessages = new List<string> { ex.Message }
                 };
             }
             catch (Exception ex)
@@ -287,10 +279,77 @@ namespace ApiSigestHC.Servicios
                 {
                     Ok = false,
                     StatusCode = HttpStatusCode.InternalServerError,
-                    ErrorMessages = new List<string> { "Ocurrió un error al corregir el documento.", ex.Message }
+                    ErrorMessages = new List<string> { "Error al reemplazar el documento.", ex.Message }
                 };
             }
         }
+
+
+        //public async Task<RespuestaAPI> CorregirDocumentoAsync(DocumentoReemplazarDto dto)
+        //{
+        //    // 1. Verificar si hay una corrección pendiente
+        //    var correccion = await _solicitudCorreccionRepo.ObtenerPendientePorDocumentoIdAsync(dto.Id);
+        //    if (correccion == null)
+        //    {
+        //        return new RespuestaAPI
+        //        {
+        //            Ok = false,
+        //            StatusCode = HttpStatusCode.BadRequest,
+        //            ErrorMessages = new List<string> { "Este documento no tiene una solicitud de corrección pendiente." }
+        //        };
+        //    }
+
+        //    // 2. Validar si es posible reemplazar (permite en estado auditoría si hay corrección pendiente)
+        //    var validacion = await _validacionCargaDocumentoService.ValidarReemplazoDocumentoAsync(dto);
+        //    if (!validacion.Ok)
+        //        return validacion;
+
+        //    try
+        //    {
+        //        // 3. Obtener documento original
+        //        var documento = await _documentoRepo.ObtenerPorIdAsync(dto.Id);
+        //        if (documento == null)
+        //        {
+        //            return new RespuestaAPI
+        //            {
+        //                Ok = false,
+        //                StatusCode = HttpStatusCode.NotFound,
+        //                ErrorMessages = new List<string> { $"Documento con id {dto.Id} no encontrado." }
+        //            };
+        //        }
+
+        //        // 4. Reemplazar archivo físico
+        //        await _almacenamientoArchivoService.ReemplazarArchivoCorreccionAsync(documento, dto.Archivo);
+
+        //        // 5. Actualizar información del documento
+        //        var usuarioId = _usuarioContextService.ObtenerUsuarioId();
+        //        documento.FechaCarga = DateTime.UtcNow;
+        //        documento.UsuarioId = usuarioId;
+        //        await _documentoRepo.ActualizarAsync(documento);
+
+        //        // 6. Marcar corrección como aplicada
+        //        correccion.EstadoCorreccionId = 3;
+        //        correccion.FechaCorrige = DateTime.UtcNow;
+        //        correccion.UsuarioCorrigeId = usuarioId;
+        //        await _solicitudCorreccionRepo.ActualizarAsync(correccion);
+
+        //        return new RespuestaAPI
+        //        {
+        //            Ok = true,
+        //            StatusCode = HttpStatusCode.OK,
+        //            Result = "Corrección aplicada exitosamente."
+        //        };
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return new RespuestaAPI
+        //        {
+        //            Ok = false,
+        //            StatusCode = HttpStatusCode.InternalServerError,
+        //            ErrorMessages = new List<string> { "Ocurrió un error al corregir el documento.", ex.Message }
+        //        };
+        //    }
+        //}
 
         public async Task<RespuestaAPI> EliminarDocumentoAsync(int documentoId)
         {

@@ -67,20 +67,30 @@ namespace ApiSigestHC.Controllers
         }
 
 
-   
-
-
-        [HttpPost("corregir")]
+        [HttpPost("firmar/{documentoId}")]
         [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RespuestaAPI))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(RespuestaAPI))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(RespuestaAPI))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
-        public async Task<IActionResult> CorregirDocumento([FromForm] DocumentoReemplazarDto dto)
+        public async Task<IActionResult> ReemplazarDocumentoPorFirma([FromForm] DocumentoReemplazarDto dto,int documentoId)
         {
-            var resultado = await _documentoService.CorregirDocumentoAsync(dto);
+            var resultado = await _documentoService.ReemplazarDocumentoPorFirma(dto,documentoId);
             return StatusCode((int)resultado.StatusCode, resultado);
         }
+
+
+        //[HttpPost("corregir")]
+        //[Authorize]
+        //[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RespuestaAPI))]
+        //[ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(RespuestaAPI))]
+        //[ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(RespuestaAPI))]
+        //[ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
+        //public async Task<IActionResult> CorregirDocumento([FromForm] DocumentoReemplazarDto dto)
+        //{
+        //    var resultado = await _documentoService.CorregirDocumentoAsync(dto);
+        //    return StatusCode((int)resultado.StatusCode, resultado);
+        //}
 
 
 

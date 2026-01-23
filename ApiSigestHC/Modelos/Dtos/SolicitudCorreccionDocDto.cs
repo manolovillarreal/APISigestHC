@@ -7,6 +7,8 @@
         public string Observacion { get; set; }
         public int EstadoCorreccionId { get; set; }
         public EstadoCorreccion EstadoCorreccion { get; set; }
+        public Usuario UsuarioSolicita { get; set; }
+        public Usuario? UsuarioCorrige { get; set; }
 
     }
 }

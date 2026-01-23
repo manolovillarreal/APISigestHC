@@ -1,7 +1,9 @@
-﻿using ApiSigestHC.Modelos;
+﻿using ApiSigestHC.Mappers;
+using ApiSigestHC.Modelos;
 using ApiSigestHC.Modelos.Dtos;
 using ApiSigestHC.Repositorio.IRepositorio;
 using ApiSigestHC.Servicios.IServicios;
+using AutoMapper;
 using System.Net;
 using System.Reflection.Metadata;
 
@@ -16,13 +18,16 @@ namespace ApiSigestHC.Servicios
         private readonly IUsuarioContextService _usuarioContext;
         private readonly ISolicitudCorreccionRepositorio _solicitudCorreccionRepo;
 
+        private readonly IMapper _mapper;
+
         public CambioEstadoService(
              IAtencionRepositorio atencionRepo,
              IEstadoAtencionRepositorio estadoRepo,
              ICambioEstadoRepositorio cambioEstadoRepo,
              IValidacionDocumentosObligatoriosService validacionDocService,
              IUsuarioContextService usuarioContext,
-             ISolicitudCorreccionRepositorio solicitudCorreccionRepo)
+             ISolicitudCorreccionRepositorio solicitudCorreccionRepo,
+             IMapper mapper)
         {
             _atencionRepo = atencionRepo;
             _estadoRepo = estadoRepo;
@@ -30,6 +35,7 @@ namespace ApiSigestHC.Servicios
             _validacionDocService = validacionDocService;
             _usuarioContext = usuarioContext;
             _solicitudCorreccionRepo = solicitudCorreccionRepo;
+            _mapper = mapper;
         }
 
         public async Task<RespuestaAPI> CambiarEstadoAsync(AtencionCambioEstadoDto dto)
@@ -97,7 +103,8 @@ namespace ApiSigestHC.Servicios
             respuesta.Ok = true;
             respuesta.StatusCode = HttpStatusCode.OK;
             respuesta.Message =  $"Atención actualizada al estado {nuevoEstado.Value}";
-            respuesta.Result = atencion;
+            AtencionDto atencionDto = _mapper.Map<AtencionDto>(atencion);
+            respuesta.Result = atencionDto;
             return respuesta;
         }
 

@@ -110,7 +110,7 @@ namespace ApiSigestHC.Servicios
            
         }
 
-        public async Task<ResultadoGuardadoArchivo> ReemplazarArchivoCorreccionAsync(Documento documento, IFormFile archivo)
+        public async Task<ResultadoGuardadoArchivo> ReemplazarArchivoDocuemntoAsync(Documento documento, IFormFile archivo)
         {
             // Validación básica
             if (archivo == null || archivo.Length == 0)

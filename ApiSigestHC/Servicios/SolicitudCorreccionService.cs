@@ -203,7 +203,7 @@ namespace ApiSigestHC.Servicios
             if( solicitudes == null || !solicitudes.Any())
             {
                 respuesta.Ok = false;
-                respuesta.StatusCode = HttpStatusCode.NotFound;
+                respuesta.StatusCode = HttpStatusCode.NoContent;
                 respuesta.ErrorMessages.Add("No se encontraron solicitudes de corrección para el rol actual.");
                 return respuesta;
             }
@@ -214,6 +214,53 @@ namespace ApiSigestHC.Servicios
             respuesta.Result = solicitudesDtos;
 
             return respuesta;
+        }
+
+        public async  Task<RespuestaAPI> RechazarSolicitudAsync(int solicitudId, string  observacion)
+        {
+            var respuesta = new RespuestaAPI();
+
+            // Validar DTO y archivo
+            if (string.IsNullOrEmpty(observacion))
+            {
+                respuesta.Ok = false;
+                respuesta.StatusCode = HttpStatusCode.BadRequest;
+                respuesta.ErrorMessages.Add("Erro en la informacion enviada.");
+                return respuesta;
+            }
+            var solicitud = await _solicitudRepo.ObtenerPorIdAsync(solicitudId);
+            if (solicitud == null)
+            {
+                respuesta.Ok = false;
+                respuesta.StatusCode = HttpStatusCode.NotFound;
+                respuesta.ErrorMessages.Add("No se encontró la solicitud de corrección.");
+                return respuesta;
+            }
+            if (solicitud.EstadoCorreccionId != 2)
+            {
+                respuesta.Ok = false;
+                respuesta.StatusCode = HttpStatusCode.Conflict;
+                respuesta.ErrorMessages.Add("La solicitud no está en estado de aprobación.");
+                return respuesta;
+            }
+           
+            // Actualizar la solicitud
+
+            solicitud.EstadoCorreccionId = 4; // Rechcazada
+            solicitud.Observacion += "|" + observacion;
+
+            await _solicitudRepo.ActualizarAsync(solicitud);
+
+            solicitud.EstadoCorreccion = new EstadoCorreccion { Id = 4, Nombre = "Rechazada" };
+            var solicituDto = _mapper.Map<SolicitudCorreccionDocDto>(solicitud);
+
+            return new RespuestaAPI
+            {
+                Ok = true,
+                StatusCode = HttpStatusCode.OK,
+                Message = "Solicitud de corrección aprobada y documento actualizado correctamente.",
+                Result = solicituDto
+            };
         }
 
         public async Task<RespuestaAPI> ResponderSolicitudAsync(int id, SolicitudCorreccionRespuestaDto dto)

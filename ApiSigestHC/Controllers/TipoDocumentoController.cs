@@ -96,7 +96,7 @@ namespace ApiSigestHC.Controllers
             return StatusCode((int)respuesta.StatusCode, respuesta);
         }
 
-        // PUT: api/TipoDocumento/{id}
+        // DELETE: api/TipoDocumento/{id}
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status204NoContent)]

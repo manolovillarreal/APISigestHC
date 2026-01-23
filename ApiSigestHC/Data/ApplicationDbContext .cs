@@ -32,19 +32,22 @@ namespace ApiSigestHC.Data
                 .HasNoKey();
 
             modelBuilder.Entity<Atencion>()
-                  .HasOne(a => a.Paciente)
-                  .WithMany()
-                  .HasForeignKey(a => a.PacienteId);
+                .HasOne(a => a.Paciente)
+                .WithMany()
+                .HasForeignKey(a => a.PacienteId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Atencion>()
-                 .HasOne(a => a.EstadoAtencion)
-                 .WithMany()
-                 .HasForeignKey(a => a.EstadoAtencionId);
+                .HasOne(a => a.EstadoAtencion)
+                .WithMany()
+                .HasForeignKey(a => a.EstadoAtencionId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Atencion>()
                 .HasOne(a => a.Administradora)
                 .WithMany()
-                .HasForeignKey(a => a.TerceroId);
+                .HasForeignKey(a => a.TerceroId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Atencion>()
                 .Property(a => a.PacienteId)
@@ -55,39 +58,43 @@ namespace ApiSigestHC.Data
                 .HasColumnType("varchar(20)");
 
             modelBuilder.Entity<Documento>()
-                 .HasOne(d => d.Usuario)
-                 .WithMany()
-                 .HasForeignKey(d => d.UsuarioId);
+                .HasOne(d => d.Usuario)
+                .WithMany()
+                .HasForeignKey(d => d.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
 
 
             modelBuilder.Entity<Paciente>().HasKey(p => p.Id);
 
             modelBuilder.Entity<TipoDocumentoRol>()
-       .HasKey(tdr => new { tdr.TipoDocumentoId, tdr.RolId });
+                .HasKey(tdr => new { tdr.TipoDocumentoId, tdr.RolId });
 
             modelBuilder.Entity<TipoDocumentoRol>()
                 .HasOne(tdr => tdr.TipoDocumento)
                 .WithMany(td => td.TipoDocumentoRoles)
-                .HasForeignKey(tdr => tdr.TipoDocumentoId);
+                .HasForeignKey(tdr => tdr.TipoDocumentoId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<TipoDocumentoRol>()
                 .HasOne(tdr => tdr.Rol)
                 .WithMany(r => r.TipoDocumentoRoles)
-                .HasForeignKey(tdr => tdr.RolId);
+                .HasForeignKey(tdr => tdr.RolId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<DocumentoRequerido>()
-            .HasKey(dr => dr.TipoDocumentoId);
+                .HasKey(dr => dr.TipoDocumentoId);
 
-
-                    modelBuilder.Entity<DocumentoRequerido>()
-             .HasOne(dr => dr.TipoDocumento)
-             .WithOne(td => td.DocumentoRequerido)
-             .HasForeignKey<DocumentoRequerido>(dr => dr.TipoDocumentoId);
+            modelBuilder.Entity<DocumentoRequerido>()
+                .HasOne(dr => dr.TipoDocumento)
+                .WithOne(td => td.DocumentoRequerido)
+                .HasForeignKey<DocumentoRequerido>(dr => dr.TipoDocumentoId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<DocumentoRequerido>()
                 .HasOne(dr => dr.EstadoAtencion)
                 .WithMany(ea => ea.DocumentosRequeridos)
-                .HasForeignKey(dr => dr.EstadoAtencionId);
+                .HasForeignKey(dr => dr.EstadoAtencionId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Configuración para UbicacionPacienteDto
             modelBuilder.Entity<UbicacionPacienteDto>()
@@ -102,6 +109,19 @@ namespace ApiSigestHC.Data
             modelBuilder.Entity<SolicitudCorreccion>()
                .Navigation(s => s.EstadoCorreccion)
                .AutoInclude();
+
+            modelBuilder.Entity<SolicitudCorreccion>()
+            .HasOne(sc => sc.UsuarioSolicita)
+            .WithMany()
+            .HasForeignKey(sc => sc.UsuarioSolicitaId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<SolicitudCorreccion>()
+                .HasOne(sc => sc.UsuarioCorrige)
+                .WithMany()
+                .HasForeignKey(sc => sc.UsuarioCorrigeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
 
             base.OnModelCreating(modelBuilder);
 

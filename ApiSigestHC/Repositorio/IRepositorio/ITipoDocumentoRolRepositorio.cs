@@ -5,6 +5,8 @@ namespace ApiSigestHC.Repositorio.IRepositorio
     public interface ITipoDocumentoRolRepositorio
     {
         Task<IEnumerable<TipoDocumentoRol>> GetByRolAsync(int rolId);
+        Task<IEnumerable<TipoDocumentoRol>> GetByRolParaCargaAsync(int rolId);
+        
         Task<IEnumerable<TipoDocumentoRol>> GetPorTipoDocumentoAsync(int tipoDocumentoId);
         Task<TipoDocumentoRol> GetPorIdsAsync(int tipoDocumentoId, int rolId);
         Task CrearAsync(TipoDocumentoRol entidad);

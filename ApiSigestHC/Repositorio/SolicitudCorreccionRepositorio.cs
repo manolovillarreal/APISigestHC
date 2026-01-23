@@ -32,6 +32,8 @@ namespace ApiSigestHC.Repositorio
         {
             return await _db.SolicitudCorrecciones
                 .Include(sc => sc.EstadoCorreccion)
+                .Include(sc=>sc.UsuarioSolicita)
+                .Include(sc => sc.UsuarioCorrige)
                 .Include(sc => sc.Documento)
                     .ThenInclude(d => d.TipoDocumento)
                 .FirstOrDefaultAsync(c => c.Id == id);
@@ -40,6 +42,8 @@ namespace ApiSigestHC.Repositorio
         public async Task<SolicitudCorreccion?> ObtenerPendientePorDocumentoIdAsync(int documentoId)
         {
             return await _db.SolicitudCorrecciones
+                .Include(sc => sc.UsuarioSolicita)
+                .Include(sc => sc.UsuarioCorrige)
                 .FirstOrDefaultAsync(c => c.DocumentoId == documentoId && c.EstadoCorreccionId != 3);
         }
 
@@ -56,7 +60,10 @@ namespace ApiSigestHC.Repositorio
                 .Where(sc => _db.Documentos                
                     .Any(d => d.Id == sc.DocumentoId && _db.Usuarios
                         .Any(u => u.Id == d.UsuarioId && u.RolId == rolId)))
+
                 .Include(sc=>sc.EstadoCorreccion)
+                .Include(sc => sc.UsuarioSolicita)
+                .Include(sc => sc.UsuarioCorrige)
                 .Include(sc => sc.Documento)
                     .ThenInclude(d => d.Atencion)
                         .ThenInclude(a => a.Paciente)
