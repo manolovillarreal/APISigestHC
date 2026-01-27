@@ -49,5 +49,32 @@ namespace ApiSigestHC.Controllers
                 });
             }
         }
+        [HttpGet("permitidos")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
+        public async Task<IActionResult> ObtenerPermitidos()
+        {
+            try
+            {
+                var estados = await _estadoRepo.ObtenerPermitidosAsync();
+                var estadosDto = _mapper.Map<IEnumerable<EstadoAtencionDto>>(estados);
+
+                return Ok(new RespuestaAPI
+                {
+                    Ok = true,
+                    StatusCode = HttpStatusCode.OK,
+                    Result = estadosDto
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new RespuestaAPI
+                {
+                    Ok = false,
+                    StatusCode = HttpStatusCode.InternalServerError,
+                    ErrorMessages = new List<string> { "Error interno al obtener los estados de atención.", ex.Message }
+                });
+            }
+        }
     }
 }
