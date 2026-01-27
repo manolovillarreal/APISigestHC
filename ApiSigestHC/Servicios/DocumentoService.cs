@@ -93,6 +93,11 @@ namespace ApiSigestHC.Servicios
                 };
 
                 await _documentoRepo.GuardarAsync(nuevoDocumento);
+                
+                if(nuevoDocumento.TipoDocumentoId == 12)
+                {
+                    
+                }
 
                 var dtoResultado = _mapper.Map<DocumentoDto>(nuevoDocumento);
 
