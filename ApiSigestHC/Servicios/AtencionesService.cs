@@ -14,14 +14,21 @@ namespace ApiSigestHC.Servicios
         private readonly IAnulacionAtencionRepositorio _anulacionAtencionRepo;
         private readonly IDocumentoRepositorio _documentoRepo;
         private readonly IUsuarioContextService _usuarioContextService;
+        private readonly IVisualizacionEstadoService _visualizacionEstadoService;
 
-        public AtencionesService(IAtencionRepositorio atencionRepo, IMapper mapper, IAnulacionAtencionRepositorio anulacionAtencionRepo, IDocumentoRepositorio documentoRepo, IUsuarioContextService usuarioContextService)
+        public AtencionesService(IAtencionRepositorio atencionRepo, 
+                                    IMapper mapper, 
+                                    IAnulacionAtencionRepositorio anulacionAtencionRepo, 
+                                    IDocumentoRepositorio documentoRepo, 
+                                    IUsuarioContextService usuarioContextService,
+                                    IVisualizacionEstadoService visualizacionEstadoService)
         {
             _atencionRepo = atencionRepo;
             _mapper = mapper;
             _anulacionAtencionRepo = anulacionAtencionRepo;
             _documentoRepo = documentoRepo;
             _usuarioContextService = usuarioContextService;
+            _visualizacionEstadoService = visualizacionEstadoService;
         }
 
         public async Task<RespuestaAPI> ObteneAtencionesPorFiltroAsync(AtencionFiltroDto filtro)
@@ -39,8 +46,10 @@ namespace ApiSigestHC.Servicios
                 };
             }
 
+            filtro.EstadosPermitidos = _visualizacionEstadoService.ObtenerEstadosPermitidosPorRol();
+
             var atenciones = await _atencionRepo.ObtenerAtencionesPorFiltroAsync(filtro);
-            var total = atenciones.Count;
+            var total = atenciones.Count();
 
             return new RespuestaAPI
             {

@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace ApiSigestHC.Modelos.Dtos
 {
     public class AtencionFiltroDto
@@ -11,5 +13,8 @@ namespace ApiSigestHC.Modelos.Dtos
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 50;
         public bool consultarAnuladas { get; set; }
+
+        [JsonIgnore]
+        public List<int>? EstadosPermitidos { get; set; } // Campo interno, no requerido en el front
     }
 }
