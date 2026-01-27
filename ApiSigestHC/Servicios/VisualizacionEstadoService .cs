@@ -1,40 +1,43 @@
-﻿using ApiSigestHC.Servicios.IServicios;
+﻿using ApiSigestHC.Repositorio.IRepositorio;
+using ApiSigestHC.Servicios.IServicios;
 
 namespace ApiSigestHC.Servicios
 {
     public class VisualizacionEstadoService : IVisualizacionEstadoService
     {
         private readonly IUsuarioContextService _usuarioContextService;
+        private readonly IPermisoRolAtencionRepositorio _permisoRolAtencionRepo;
 
-        public VisualizacionEstadoService(IUsuarioContextService usuarioContextService)
+        public VisualizacionEstadoService(
+            IUsuarioContextService usuarioContextService,
+            IPermisoRolAtencionRepositorio permisoRolAtencionRepo)
         {
             _usuarioContextService = usuarioContextService;
+            _permisoRolAtencionRepo = permisoRolAtencionRepo;
         }
-        private static readonly Dictionary<string, List<int>> EstadosPorRol = new()
-            {
-                { "Admisiones", new List<int> { 1, 2, 3, 4 } },
-                { "Medico", new List<int> { 1, 2, 3 } },
-                { "Enfermeria", new List<int> { 3 } },
-                { "Laboratorio", new List<int> { 3 } },
-                { "Radiologia", new List<int> { 3 } },
-                { "Auditoria", new List<int> {1,2,3,4 } },
-                { "Facturacion", new List<int> { } },
-                { "Archivo", new List<int> {  } },
-                { "Admin", new List<int> { 1, 2, 3, 4 } }
-            };
 
         public List<int> ObtenerEstadosVisiblesPorRol()
         {
-            var rolNombre = _usuarioContextService.ObtenerRolNombre();
+            var rolId = _usuarioContextService.ObtenerRolId();
 
-            if (string.IsNullOrWhiteSpace(rolNombre))
+            if (rolId <= 0)
                 throw new UnauthorizedAccessException("No se pudo determinar el rol del usuario");
-            var estados = EstadosPorRol[rolNombre];
-            if (estados!=null )
-                return estados;
 
-            return new List<int>();
+            var estados = _permisoRolAtencionRepo.ObtenerEstadosVisiblesPorRolAsync(rolId).Result;
+            
+            return estados ?? new List<int>();
+        }
+
+        public List<int> ObtenerEstadosPermitidosPorRol()
+        {
+            var rolId = _usuarioContextService.ObtenerRolId();
+
+            if (rolId <= 0)
+                throw new UnauthorizedAccessException("No se pudo determinar el rol del usuario");
+
+            var estados = _permisoRolAtencionRepo.ObtenerEstadosPermitidosPorRolAsync(rolId).Result;
+            
+            return estados ?? new List<int>();
         }
     }
-
 }

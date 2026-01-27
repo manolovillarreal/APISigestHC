@@ -24,17 +24,18 @@ builder.Services.AddEndpointsApiExplorer();
 
 //Repositorios
 builder.Services.AddScoped<IAtencionRepositorio, AtencionRepositorio>();
+builder.Services.AddScoped<IAnulacionAtencionRepositorio, AnulacionAtencionRepositorio>();
 builder.Services.AddScoped<ICambioEstadoRepositorio,CambioEstadoRepositorio>();
 builder.Services.AddScoped<IDocumentoRepositorio,DocumentoRepositorio>();
 builder.Services.AddScoped<IDocumentoRequeridoRepositorio,DocumentoRequeridoRepositorio>();
 builder.Services.AddScoped<IEstadoAtencionRepositorio, EstadoAtencionRepositorio>();
 builder.Services.AddScoped<IPacienteRepositorio, PacienteRepositorio>();
+builder.Services.AddScoped<IPermisoRolAtencionRepositorio, PermisoRolAtencionRepositorio>();
 builder.Services.AddScoped<ISolicitudCorreccionRepositorio,SolicitudCorreccionRepositorio>();
 builder.Services.AddScoped<IRolRepositorio,RolRepositorio>();
 builder.Services.AddScoped<ITipoDocumentoRepositorio, TipoDocumentoRepositorio>();
 builder.Services.AddScoped<ITipoDocumentoRolRepositorio,TipoDocumentoRolRepositorio>();
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
-builder.Services.AddScoped<IAnulacionAtencionRepositorio, AnulacionAtencionRepositorio>();
 
 //Servicios
 builder.Services.AddScoped<IAlmacenamientoArchivoService,AlmacenamientoArchivoService>();

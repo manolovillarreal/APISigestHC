@@ -23,6 +23,7 @@ namespace ApiSigestHC.Data
         public DbSet<TipoDocumento> TiposDocumento { get; set; }
         public DbSet<TipoDocumentoRol> TipoDocumentoRoles { get; set; }
         public DbSet<Usuario> Usuarios { get; set; }
+        public DbSet<PermisoRolEstadoAtencion> PermisosRolAtencion { get; set; }
 
         public DbSet<UbicacionPacienteDto> UltimasUbicaciones { get; set; }
 
@@ -120,6 +121,22 @@ namespace ApiSigestHC.Data
                 .HasOne(sc => sc.UsuarioCorrige)
                 .WithMany()
                 .HasForeignKey(sc => sc.UsuarioCorrigeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configuración para PermisoRolAtencion
+            modelBuilder.Entity<PermisoRolEstadoAtencion>()
+                .HasKey(p => new { p.RolId, p.EstadoAtencionId });
+
+            modelBuilder.Entity<PermisoRolEstadoAtencion>()
+                .HasOne(p => p.Rol)
+                .WithMany()
+                .HasForeignKey(p => p.RolId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PermisoRolEstadoAtencion>()
+                .HasOne(p => p.EstadoAtencion)
+                .WithMany()
+                .HasForeignKey(p => p.EstadoAtencionId)
                 .OnDelete(DeleteBehavior.Restrict);
 
 

@@ -3,6 +3,6 @@
     public interface IVisualizacionEstadoService
     {
         List<int> ObtenerEstadosVisiblesPorRol();
-
+        List<int> ObtenerEstadosPermitidosPorRol();
     }
 }
