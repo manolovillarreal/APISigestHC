@@ -14,17 +14,20 @@ namespace ApiSigestHC.Servicios
         private readonly ITipoDocumentoRepositorio _tipoDocumentoRepo;
         private readonly IDocumentoRepositorio _documentoRepo;
         private readonly IUsuarioContextService _usuarioContextService;
+        private readonly IPermisoRolAtencionRepositorio _permisoRolAtencionRepo;
 
         public ValidacionCargaDocumentoService(
             IAtencionRepositorio atencionRepo,
             ITipoDocumentoRepositorio tipoDocumentoRepo,
             IDocumentoRepositorio documentoRepo,
-            IUsuarioContextService usuarioContextService)
+            IUsuarioContextService usuarioContextService,
+            IPermisoRolAtencionRepositorio permisoRolAtencionRepo)
         {
             _atencionRepo = atencionRepo;
             _tipoDocumentoRepo = tipoDocumentoRepo;
             _documentoRepo = documentoRepo;
             _usuarioContextService = usuarioContextService;
+            _permisoRolAtencionRepo = permisoRolAtencionRepo;
         }
 
         public async Task<RespuestaAPI> ValidarCargaDocumentoAsync(DocumentoCargarDto dto)
@@ -40,7 +43,7 @@ namespace ApiSigestHC.Servicios
             if (atencion == null)
                 return Error("Atencion no encontrada.", HttpStatusCode.NotFound);
 
-            if (!PuedeCargarSegunEstado(atencion.EstadoAtencionId))
+            if (!await PuedeCargarSegunEstadoAsync(atencion.EstadoAtencionId))
                 return Error("No puede cargar documentos en el estado actual de la atención.", HttpStatusCode.Forbidden);
             
             var puedeCargar = await _documentoRepo.PuedeCargarDocumento(rolId, tipoDoc.Id);
@@ -148,20 +151,10 @@ namespace ApiSigestHC.Servicios
             };
         }
 
-        private bool PuedeCargarSegunEstado(int estadoAtencion)
+        private async Task<bool> PuedeCargarSegunEstadoAsync(int estadoAtencion)
         {
-            var rolNombre = _usuarioContextService.ObtenerRolNombre();
-
-            return rolNombre switch
-            {
-                "Admisiones" => estadoAtencion >= 1 && estadoAtencion <= 4,
-                "Medico" => estadoAtencion >= 2 && estadoAtencion <= 3,
-                "Enfermeria" => estadoAtencion == 3,
-                "Laboratorio" => estadoAtencion == 3,
-                "Auditoria" => estadoAtencion >= 1 && estadoAtencion <= 5,
-                "facturacion" => estadoAtencion == 6 || estadoAtencion == 7,
-                _ => false
-            };
+            var rolId = _usuarioContextService.ObtenerRolId();
+            return await _permisoRolAtencionRepo.TienePermisoAsync(rolId, estadoAtencion);
         }
     }
 
