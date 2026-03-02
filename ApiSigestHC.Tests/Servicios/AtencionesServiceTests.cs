@@ -119,7 +119,7 @@ namespace ApiSigestHC.Tests.Servicios
             // Assert
             Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.NotFound, resultado.StatusCode);
-            Assert.Contains("La atención no existe", resultado.ErrorMessages);
+            Assert.Contains("La atención no existe.", resultado.ErrorMessages);
         }
 
         [Fact]
