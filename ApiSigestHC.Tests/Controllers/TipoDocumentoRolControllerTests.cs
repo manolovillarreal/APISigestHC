@@ -27,7 +27,7 @@ namespace ApiSigestHC.Tests.Controllers
         public async Task Actualizar_ReturnsNoContent_WhenSuccessful()
         {
             // Arrange
-            var dto = new TipoDocumentoRolDto { TipoDocumentoId = 1, RolId = 2 };
+            var dto = new TipoDocumentoRolCrearDto { TipoDocumentoId = 1, RolId = 2 };
             var respuesta = new RespuestaAPI { Ok = true, StatusCode = HttpStatusCode.NoContent };
 
             _serviceMock.Setup(s => s.ActualizarAsync(dto)).ReturnsAsync(respuesta);
@@ -64,7 +64,7 @@ namespace ApiSigestHC.Tests.Controllers
         public async Task Crear_ReturnsOk_WhenSuccessful()
         {
             // Arrange
-            var dto = new TipoDocumentoRolDto { TipoDocumentoId = 1, RolId = 2 };
+            var dto = new TipoDocumentoRolCrearDto { TipoDocumentoId = 1, RolId = 2 };
             var respuesta = new RespuestaAPI { Ok = true, StatusCode = HttpStatusCode.OK };
 
             _serviceMock.Setup(s => s.CrearAsync(dto)).ReturnsAsync(respuesta);

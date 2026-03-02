@@ -53,7 +53,7 @@ namespace ApiSigestHC.Tests.Servicios
         public async Task CrearAsync_CreaRelacion_Correctamente()
         {
             // Arrange
-            var dto = new TipoDocumentoRolDto { RolId = 1, TipoDocumentoId = 2 };
+            var dto = new TipoDocumentoRolCrearDto { RolId = 1, TipoDocumentoId = 2 };
             var entidad = new TipoDocumentoRol { RolId = 1, TipoDocumentoId = 2 };
 
             _mapperMock.Setup(m => m.Map<TipoDocumentoRol>(dto)).Returns(entidad);
@@ -72,7 +72,7 @@ namespace ApiSigestHC.Tests.Servicios
         public async Task ActualizarAsync_ActualizaRelacion_Correctamente()
         {
             // Arrange
-            var dto = new TipoDocumentoRolDto { RolId = 1, TipoDocumentoId = 2 };
+            var dto = new TipoDocumentoRolCrearDto { RolId = 1, TipoDocumentoId = 2 };
             var existente = new TipoDocumentoRol { RolId = 1, TipoDocumentoId = 2 };
 
             _repoMock.Setup(r => r.GetPorIdsAsync(dto.TipoDocumentoId, dto.RolId)).ReturnsAsync(existente);
@@ -114,7 +114,7 @@ namespace ApiSigestHC.Tests.Servicios
         public async Task ActualizarAsync_CuandoRelacionNoExiste_RetornaNotFound()
         {
             // Arrange
-            var dto = new TipoDocumentoRolDto { TipoDocumentoId = 1, RolId = 2 };
+            var dto = new TipoDocumentoRolCrearDto { TipoDocumentoId = 1, RolId = 2 };
 
             _repoMock.Setup(r => r.GetPorIdsAsync(dto.TipoDocumentoId, dto.RolId)).ReturnsAsync((TipoDocumentoRol)null);
 
@@ -151,7 +151,7 @@ namespace ApiSigestHC.Tests.Servicios
         public async Task CrearAsync_CuandoFallaInternamente_RetornaErrorInterno()
         {
             // Arrange
-            var dto = new TipoDocumentoRolDto { TipoDocumentoId = 1, RolId = 2 };
+            var dto = new TipoDocumentoRolCrearDto { TipoDocumentoId = 1, RolId = 2 };
             _mapperMock.Setup(m => m.Map<TipoDocumentoRol>(dto)).Throws(new Exception("Error simulado"));
 
             // Act
@@ -168,7 +168,7 @@ namespace ApiSigestHC.Tests.Servicios
         public async Task ActualizarAsync_CuandoFallaInternamente_RetornaErrorInterno()
         {
             // Arrange
-            var dto = new TipoDocumentoRolDto { TipoDocumentoId = 1, RolId = 2 };
+            var dto = new TipoDocumentoRolCrearDto { TipoDocumentoId = 1, RolId = 2 };
             var entidad = new TipoDocumentoRol();
 
             _repoMock.Setup(r => r.GetPorIdsAsync(dto.TipoDocumentoId, dto.RolId)).ReturnsAsync(entidad);

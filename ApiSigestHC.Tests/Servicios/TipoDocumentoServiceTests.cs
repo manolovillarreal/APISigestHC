@@ -19,6 +19,7 @@ namespace ApiSigestHC.Tests.Servicios
         private readonly Mock<ITipoDocumentoRepositorio> _tipoDocumentoRepositoryMock;
         private readonly Mock<ITipoDocumentoRolRepositorio> _rolRepositorioMock;
         private readonly Mock<IUsuarioContextService> _usuarioContextServiceMock;
+        private readonly Mock<IDocumentoRepositorio> _documentoRepoMock;
         private readonly Mock<IMapper> _mapperMock;
 
         private readonly TipoDocumentoService _service;
@@ -28,12 +29,14 @@ namespace ApiSigestHC.Tests.Servicios
             _tipoDocumentoRepositoryMock = new Mock<ITipoDocumentoRepositorio>();
             _rolRepositorioMock = new Mock<ITipoDocumentoRolRepositorio>();
             _usuarioContextServiceMock = new Mock<IUsuarioContextService>();
+            _documentoRepoMock = new Mock<IDocumentoRepositorio>();
             _mapperMock = new Mock<IMapper>();
 
             _service = new TipoDocumentoService(
                 _tipoDocumentoRepositoryMock.Object,
                 _rolRepositorioMock.Object,
                 _usuarioContextServiceMock.Object,
+                _documentoRepoMock.Object,
                 _mapperMock.Object
             );
         }

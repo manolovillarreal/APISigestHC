@@ -4,6 +4,7 @@ using ApiSigestHC.Repositorio;
 using ApiSigestHC.Repositorio.IRepositorio;
 using ApiSigestHC.Servicios;
 using ApiSigestHC.Servicios.IServicios;
+using AutoMapper;
 using Moq;
 using System;
 using System.Collections.Generic;
@@ -18,10 +19,11 @@ namespace ApiSigestHC.Tests.Servicios
     {
         private readonly Mock<IAtencionRepositorio> _atencionRepoMock;
         private readonly Mock<IEstadoAtencionRepositorio> _estadoAtencionRepositorio;
-
         private readonly Mock<ICambioEstadoRepositorio> _cambioEstadoRepoMock;
         private readonly Mock<IUsuarioContextService> _usuarioContextMock;
         private readonly Mock<IValidacionDocumentosObligatoriosService> _validacionDocServiceMock;
+        private readonly Mock<ISolicitudCorreccionRepositorio> _solicitudCorreccionRepoMock;
+        private readonly Mock<IMapper> _mapperMock;
         private readonly ICambioEstadoService _service;
 
         public CambiarEsadoServiceTests()
@@ -31,13 +33,17 @@ namespace ApiSigestHC.Tests.Servicios
             _cambioEstadoRepoMock = new Mock<ICambioEstadoRepositorio>();
             _usuarioContextMock = new Mock<IUsuarioContextService>();
             _validacionDocServiceMock = new Mock<IValidacionDocumentosObligatoriosService>();
+            _solicitudCorreccionRepoMock = new Mock<ISolicitudCorreccionRepositorio>();
+            _mapperMock = new Mock<IMapper>();
 
             _service = new CambioEstadoService(
                 _atencionRepoMock.Object,
                 _estadoAtencionRepositorio.Object,
                 _cambioEstadoRepoMock.Object,
                 _validacionDocServiceMock.Object,
-                _usuarioContextMock.Object
+                _usuarioContextMock.Object,
+                _solicitudCorreccionRepoMock.Object,
+                _mapperMock.Object
             );
         }
 

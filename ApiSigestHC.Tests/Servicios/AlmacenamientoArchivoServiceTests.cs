@@ -2,6 +2,7 @@
 using ApiSigestHC.Modelos;
 using ApiSigestHC.Repositorio.IRepositorio;
 using ApiSigestHC.Servicios;
+using ApiSigestHC.Servicios.IServicios;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Moq;
@@ -20,6 +21,8 @@ namespace ApiSigestHC.Tests.Servicios
         private readonly Mock<IDocumentoRepositorio> _documentoRepoMock;
         private readonly Mock<IAtencionRepositorio> _atencionRepoMock;
         private readonly Mock<ITipoDocumentoRepositorio> _tipoDocumentoRepoMock;
+        private readonly Mock<IUsuarioRepositorio> _usuarioRepoMock;
+        private readonly Mock<IUsuarioContextService> _usuarioContextMock;
         private readonly AlmacenamientoArchivoService _service;
         private readonly string _basePath;
 
@@ -29,6 +32,8 @@ namespace ApiSigestHC.Tests.Servicios
             _documentoRepoMock = new Mock<IDocumentoRepositorio>();
             _atencionRepoMock = new Mock<IAtencionRepositorio>();
             _tipoDocumentoRepoMock = new Mock<ITipoDocumentoRepositorio>();
+            _usuarioRepoMock = new Mock<IUsuarioRepositorio>();
+            _usuarioContextMock = new Mock<IUsuarioContextService>();
 
             // Usamos un directorio temporal único por test
             _basePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
@@ -40,8 +45,9 @@ namespace ApiSigestHC.Tests.Servicios
                 _envMock.Object,
                 _documentoRepoMock.Object,
                 _tipoDocumentoRepoMock.Object,
-                _atencionRepoMock.Object
-
+                _atencionRepoMock.Object,
+                _usuarioRepoMock.Object,
+                _usuarioContextMock.Object
             );
         }
 
@@ -88,11 +94,11 @@ namespace ApiSigestHC.Tests.Servicios
             _documentoRepoMock.Setup(r => r.ContarPorTipoYAtencionAsync(1, 1)).ReturnsAsync(0);
 
             // Act
-            var resultado = await _service.GuardarArchivoAsync(dto);
+            var resultado = await _service.GuardarArchivoAsync(dto, 1);
 
             // Assert
             Assert.NotNull(resultado);
-            Assert.Equal("HC_1_20240510.pdf", resultado.NombreArchivo);
+            Assert.Equal("1_HC_1_20240510.pdf", resultado.NombreArchivo);
 
             // Verificar ruta relativa
             var year = atencion.Fecha.Year.ToString();
@@ -125,11 +131,11 @@ namespace ApiSigestHC.Tests.Servicios
             _tipoDocumentoRepoMock.Setup(r => r.GetTipoDocumentoPorIdAsync(1)).ReturnsAsync(tipo);
 
             // Act
-            var r = await _service.GuardarArchivoAsync(dto);
+            var r = await _service.GuardarArchivoAsync(dto, 1);
 
             // Assert
             Assert.NotNull(r);
-            Assert.Equal("COD.pdf", r.NombreArchivo);
+            Assert.Equal("1_COD.pdf", r.NombreArchivo);
         }
 
         // 2) Con múltiple, no asistencial, no relación → "COD_1.pdf"
@@ -150,11 +156,11 @@ namespace ApiSigestHC.Tests.Servicios
             _tipoDocumentoRepoMock.Setup(r => r.GetTipoDocumentoPorIdAsync(1)).ReturnsAsync(tipo);
 
             // Act
-            var r = await _service.GuardarArchivoAsync(dto);
+            var r = await _service.GuardarArchivoAsync(dto, 1);
 
             // Assert
             Assert.NotNull(r);
-            Assert.Equal("COD_1.pdf", r.NombreArchivo);
+            Assert.Equal("1_COD_1.pdf", r.NombreArchivo);
         }
 
         // 3) Sin múltiple, asistencial, no relación → "COD_20250617.pdf"
@@ -175,11 +181,11 @@ namespace ApiSigestHC.Tests.Servicios
             _tipoDocumentoRepoMock.Setup(r => r.GetTipoDocumentoPorIdAsync(1)).ReturnsAsync(tipo);
 
             // Act
-            var r = await _service.GuardarArchivoAsync(dto);
+            var r = await _service.GuardarArchivoAsync(dto, 1);
 
             // Assert
             Assert.NotNull(r);
-            Assert.Equal("COD_20250617.pdf", r.NombreArchivo);
+            Assert.Equal("1_COD_20250617.pdf", r.NombreArchivo);
         }
 
         // 4) Múltiple + asistencial + no relación → "COD_1_20250617.pdf"
@@ -200,11 +206,11 @@ namespace ApiSigestHC.Tests.Servicios
             _tipoDocumentoRepoMock.Setup(r => r.GetTipoDocumentoPorIdAsync(1)).ReturnsAsync(tipo);
 
             // Act
-            var r = await _service.GuardarArchivoAsync(dto);
+            var r = await _service.GuardarArchivoAsync(dto, 1);
 
             // Assert
             Assert.NotNull(r);
-            Assert.Equal("COD_1_20250617.pdf", r.NombreArchivo);
+            Assert.Equal("1_COD_1_20250617.pdf", r.NombreArchivo);
         }
 
         // 5) Relación tiene prioridad sobre fecha (sin múltiple) → "COD_REF123.pdf"
@@ -225,12 +231,12 @@ namespace ApiSigestHC.Tests.Servicios
             _tipoDocumentoRepoMock.Setup(r => r.GetTipoDocumentoPorIdAsync(1)).ReturnsAsync(tipo);
 
             // Act
-            var r = await _service.GuardarArchivoAsync(dto);
+            var r = await _service.GuardarArchivoAsync(dto, 1);
 
             // Assert
 
             Assert.NotNull(r);
-            Assert.Equal("COD_REF123.pdf", r.NombreArchivo);
+            Assert.Equal("1_COD_REF123.pdf", r.NombreArchivo);
         }
 
         // 6) Relación + múltiple → "COD_1_REF123.pdf"
@@ -251,11 +257,11 @@ namespace ApiSigestHC.Tests.Servicios
             _tipoDocumentoRepoMock.Setup(r => r.GetTipoDocumentoPorIdAsync(1)).ReturnsAsync(tipo);
 
             // Act
-            var r = await _service.GuardarArchivoAsync(dto);
+            var r = await _service.GuardarArchivoAsync(dto, 1);
 
             // Assert
             Assert.NotNull(r);
-            Assert.Equal("COD_1_REL-456.pdf", r.NombreArchivo);
+            Assert.Equal("1_COD_1_REL-456.pdf", r.NombreArchivo);
         }
 
         #endregion

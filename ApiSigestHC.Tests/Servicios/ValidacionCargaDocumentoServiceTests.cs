@@ -21,6 +21,7 @@ namespace ApiSigestHC.Tests.Servicios
         private readonly Mock<ITipoDocumentoRepositorio> _tipoDocumentoRepoMock = new();
         private readonly Mock<IDocumentoRepositorio> _documentoRepoMock = new();
         private readonly Mock<IUsuarioContextService> _usuarioContextServiceMock = new();
+        private readonly Mock<IPermisoRolAtencionRepositorio> _permisoRolAtencionRepoMock = new();
 
         private readonly IValidacionCargaArchivoService _service;
 
@@ -30,7 +31,8 @@ namespace ApiSigestHC.Tests.Servicios
                 _atencionRepoMock.Object,
                 _tipoDocumentoRepoMock.Object,
                 _documentoRepoMock.Object,
-                _usuarioContextServiceMock.Object
+                _usuarioContextServiceMock.Object,
+                _permisoRolAtencionRepoMock.Object
             );
         }
 
@@ -69,8 +71,11 @@ namespace ApiSigestHC.Tests.Servicios
             var documentoRepo = new Mock<IDocumentoRepositorio>();
             documentoRepo.Setup(r => r.PuedeCargarDocumento(1, 2)).ReturnsAsync(true);
 
+            var permisoRolRepo = new Mock<IPermisoRolAtencionRepositorio>();
+            permisoRolRepo.Setup(p => p.TienePermisoAsync(1, 2)).ReturnsAsync(true);
+
             var service = new ValidacionCargaDocumentoService(
-                atencionRepo.Object, tipoDocRepo.Object, documentoRepo.Object, usuarioContextMock.Object
+                atencionRepo.Object, tipoDocRepo.Object, documentoRepo.Object, usuarioContextMock.Object, permisoRolRepo.Object
             );
 
             // Act
@@ -94,8 +99,9 @@ namespace ApiSigestHC.Tests.Servicios
 
             var documentoRepo = new Mock<IDocumentoRepositorio>();
             var usuarioContext = new Mock<IUsuarioContextService>();
+            var permisoRolRepo = new Mock<IPermisoRolAtencionRepositorio>();
 
-            var service = new ValidacionCargaDocumentoService(atencionRepo.Object, tipoDocRepo.Object, documentoRepo.Object, usuarioContext.Object);
+            var service = new ValidacionCargaDocumentoService(atencionRepo.Object, tipoDocRepo.Object, documentoRepo.Object, usuarioContext.Object, permisoRolRepo.Object);
 
             var resultado = await service.ValidarCargaDocumentoAsync(dto);
 
@@ -117,8 +123,9 @@ namespace ApiSigestHC.Tests.Servicios
 
             var documentoRepo = new Mock<IDocumentoRepositorio>();
             var usuarioContext = new Mock<IUsuarioContextService>();
+            var permisoRolRepo = new Mock<IPermisoRolAtencionRepositorio>();
 
-            var service = new ValidacionCargaDocumentoService(atencionRepo.Object, tipoDocRepo.Object, documentoRepo.Object, usuarioContext.Object);
+            var service = new ValidacionCargaDocumentoService(atencionRepo.Object, tipoDocRepo.Object, documentoRepo.Object, usuarioContext.Object, permisoRolRepo.Object);
 
             var resultado = await service.ValidarCargaDocumentoAsync(dto);
 
@@ -158,7 +165,10 @@ namespace ApiSigestHC.Tests.Servicios
             var documentoRepo = new Mock<IDocumentoRepositorio>();
             documentoRepo.Setup(r => r.PuedeCargarDocumento(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(true);
 
-            var service = new ValidacionCargaDocumentoService(atencionRepo.Object, tipoDocRepo.Object, documentoRepo.Object, usuarioContext.Object);
+            var permisoRolRepo = new Mock<IPermisoRolAtencionRepositorio>();
+            permisoRolRepo.Setup(p => p.TienePermisoAsync(1, 2)).ReturnsAsync(true);
+
+            var service = new ValidacionCargaDocumentoService(atencionRepo.Object, tipoDocRepo.Object, documentoRepo.Object, usuarioContext.Object, permisoRolRepo.Object);
 
             var resultado = await service.ValidarCargaDocumentoAsync(dto);
 
@@ -198,7 +208,10 @@ namespace ApiSigestHC.Tests.Servicios
             var documentoRepo = new Mock<IDocumentoRepositorio>();
             documentoRepo.Setup(r => r.PuedeCargarDocumento(1, 2)).ReturnsAsync(true);
 
-            var service = new ValidacionCargaDocumentoService(atencionRepo.Object, tipoDocRepo.Object, documentoRepo.Object, usuarioContext.Object);
+            var permisoRolRepo = new Mock<IPermisoRolAtencionRepositorio>();
+            permisoRolRepo.Setup(p => p.TienePermisoAsync(1, 2)).ReturnsAsync(true);
+
+            var service = new ValidacionCargaDocumentoService(atencionRepo.Object, tipoDocRepo.Object, documentoRepo.Object, usuarioContext.Object, permisoRolRepo.Object);
 
             var resultado = await service.ValidarCargaDocumentoAsync(dto);
 
@@ -238,7 +251,10 @@ namespace ApiSigestHC.Tests.Servicios
             var documentoRepo = new Mock<IDocumentoRepositorio>();
             documentoRepo.Setup(r => r.PuedeCargarDocumento(1, 2)).ReturnsAsync(true);
 
-            var service = new ValidacionCargaDocumentoService(atencionRepo.Object, tipoDocRepo.Object, documentoRepo.Object, usuarioContext.Object);
+            var permisoRolRepo = new Mock<IPermisoRolAtencionRepositorio>();
+            permisoRolRepo.Setup(p => p.TienePermisoAsync(1, 2)).ReturnsAsync(true);
+
+            var service = new ValidacionCargaDocumentoService(atencionRepo.Object, tipoDocRepo.Object, documentoRepo.Object, usuarioContext.Object, permisoRolRepo.Object);
 
             var resultado = await service.ValidarCargaDocumentoAsync(dto);
 
@@ -273,7 +289,9 @@ namespace ApiSigestHC.Tests.Servicios
             var documentoRepo = new Mock<IDocumentoRepositorio>();
             documentoRepo.Setup(r => r.PuedeCargarDocumento(1, 2)).ReturnsAsync(false);
 
-            var service = new ValidacionCargaDocumentoService(atencionRepo.Object, tipoDocRepo.Object, documentoRepo.Object, usuarioContext.Object);
+            var permisoRolRepo = new Mock<IPermisoRolAtencionRepositorio>();
+
+            var service = new ValidacionCargaDocumentoService(atencionRepo.Object, tipoDocRepo.Object, documentoRepo.Object, usuarioContext.Object, permisoRolRepo.Object);
 
             var resultado = await service.ValidarCargaDocumentoAsync(dto);
 
@@ -315,7 +333,10 @@ namespace ApiSigestHC.Tests.Servicios
             documentoRepo.Setup(r => r.PuedeCargarDocumento(1, 2)).ReturnsAsync(true);
             documentoRepo.Setup(r => r.ExisteDocumentoAsync(1, 2)).ReturnsAsync(true);
 
-            var service = new ValidacionCargaDocumentoService(atencionRepo.Object, tipoDocRepo.Object, documentoRepo.Object, usuarioContext.Object);
+            var permisoRolRepo = new Mock<IPermisoRolAtencionRepositorio>();
+            permisoRolRepo.Setup(p => p.TienePermisoAsync(1, 2)).ReturnsAsync(true);
+
+            var service = new ValidacionCargaDocumentoService(atencionRepo.Object, tipoDocRepo.Object, documentoRepo.Object, usuarioContext.Object, permisoRolRepo.Object);
 
             var resultado = await service.ValidarCargaDocumentoAsync(dto);
 
@@ -358,7 +379,10 @@ namespace ApiSigestHC.Tests.Servicios
             var documentoRepo = new Mock<IDocumentoRepositorio>();
             documentoRepo.Setup(r => r.PuedeCargarDocumento(1, 2)).ReturnsAsync(true);
 
-            var service = new ValidacionCargaDocumentoService(atencionRepo.Object, tipoDocRepo.Object, documentoRepo.Object, usuarioContext.Object);
+            var permisoRolRepo = new Mock<IPermisoRolAtencionRepositorio>();
+            permisoRolRepo.Setup(p => p.TienePermisoAsync(1, 2)).ReturnsAsync(true);
+
+            var service = new ValidacionCargaDocumentoService(atencionRepo.Object, tipoDocRepo.Object, documentoRepo.Object, usuarioContext.Object, permisoRolRepo.Object);
 
             var resultado = await service.ValidarCargaDocumentoAsync(dto);
 
