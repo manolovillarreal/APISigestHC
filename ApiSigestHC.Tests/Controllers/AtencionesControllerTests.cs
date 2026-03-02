@@ -133,6 +133,9 @@ namespace ApiSigestHC.Tests.Controllers
             _atencionRepoMock.Setup(r => r.CrearAtencionAsync(atencionMapeada))
                              .Returns(Task.CompletedTask);
 
+            _atencionRepoMock.Setup(r => r.ObtenerAtencionPorIdAsync(It.IsAny<int>()))
+                             .ReturnsAsync(atencionMapeada);
+
 
             // Act
             var resultado = await _controller.CrearAtencion(crearDto);
@@ -172,6 +175,15 @@ namespace ApiSigestHC.Tests.Controllers
             _atencionRepoMock.Setup(r => r.EditarAtencionAsync(It.IsAny<Atencion>()))
                              .Returns(Task.CompletedTask);
 
+            var atencionDtoResultado = new AtencionDto
+            {
+                Id = editarDto.AtencionId,
+                TerceroId = editarDto.TerceroId
+            };
+
+            _mapperMock.Setup(m => m.Map<AtencionDto>(It.IsAny<Atencion>()))
+                       .Returns(atencionDtoResultado);
+
             // Act
             var resultado = await _controller.EditarAtencion(editarDto.AtencionId, editarDto);
 
@@ -183,7 +195,9 @@ namespace ApiSigestHC.Tests.Controllers
             var respuesta = Assert.IsType<RespuestaAPI>(okResult.Value);
             Assert.True(respuesta.Ok);
             Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
-            Assert.Equal(atencionModificada, respuesta.Result);
+
+            var resultadoDto = Assert.IsType<AtencionDto>(respuesta.Result);
+            Assert.Equal(editarDto.TerceroId, resultadoDto.TerceroId);
 
 
             _atencionRepoMock.Verify(r => r.ObtenerAtencionPorIdAsync(editarDto.AtencionId), Times.Once);
@@ -224,6 +238,142 @@ namespace ApiSigestHC.Tests.Controllers
             _cambioEstadoServiceMock.Verify(s => s.CambiarEstadoAsync(dto), Times.Once);
         }
 
+        [Fact]
+        public async Task AnularAtencion_AnulacionExitosa_RetornaOk()
+        {
+            // Arrange
+            var dto = new AnulacionAtencionCrearDto
+            {
+                AtencionId = 1,
+                MotivoAnulacionAtencionId = 1,
+                Observacion = "Anulación por error"
+            };
+
+            var respuestaEsperada = new RespuestaAPI
+            {
+                Ok = true,
+                StatusCode = HttpStatusCode.OK,
+                Message = "Atención anulada correctamente"
+            };
+
+            _atencionesServiceMock
+                .Setup(s => s.AnularAtencionAsync(dto))
+                .ReturnsAsync(respuestaEsperada);
+
+            // Act
+            var resultado = await _controller.AnularAtencion(dto);
+
+            // Assert
+            var objectResult = Assert.IsType<ObjectResult>(resultado);
+            Assert.Equal((int)HttpStatusCode.OK, objectResult.StatusCode);
+
+            var respuesta = Assert.IsType<RespuestaAPI>(objectResult.Value);
+            Assert.True(respuesta.Ok);
+            Assert.Equal("Atención anulada correctamente", respuesta.Message);
+
+            _atencionesServiceMock.Verify(s => s.AnularAtencionAsync(dto), Times.Once);
+        }
+
+        [Fact]
+        public async Task AnularAtencion_AtencionNoExiste_RetornaNotFound()
+        {
+            // Arrange
+            var dto = new AnulacionAtencionCrearDto
+            {
+                AtencionId = 999,
+                MotivoAnulacionAtencionId = 1,
+                Observacion = "Test"
+            };
+
+            var respuestaError = new RespuestaAPI
+            {
+                Ok = false,
+                StatusCode = HttpStatusCode.NotFound,
+                ErrorMessages = new List<string> { "La atención no existe." }
+            };
+
+            _atencionesServiceMock
+                .Setup(s => s.AnularAtencionAsync(dto))
+                .ReturnsAsync(respuestaError);
+
+            // Act
+            var resultado = await _controller.AnularAtencion(dto);
+
+            // Assert
+            var objectResult = Assert.IsType<ObjectResult>(resultado);
+            Assert.Equal((int)HttpStatusCode.NotFound, objectResult.StatusCode);
+
+            var respuesta = Assert.IsType<RespuestaAPI>(objectResult.Value);
+            Assert.False(respuesta.Ok);
+            Assert.Contains("no existe", respuesta.ErrorMessages[0]);
+        }
+
+        [Fact]
+        public async Task AnularAtencion_EstadoIncorrecto_RetornaBadRequest()
+        {
+            // Arrange
+            var dto = new AnulacionAtencionCrearDto
+            {
+                AtencionId = 1,
+                MotivoAnulacionAtencionId = 1,
+                Observacion = "Test"
+            };
+
+            var respuestaError = new RespuestaAPI
+            {
+                Ok = false,
+                StatusCode = HttpStatusCode.BadRequest,
+                ErrorMessages = new List<string> { "Solo se pueden anular atenciones en estado 'Admisión'." }
+            };
+
+            _atencionesServiceMock
+                .Setup(s => s.AnularAtencionAsync(dto))
+                .ReturnsAsync(respuestaError);
+
+            // Act
+            var resultado = await _controller.AnularAtencion(dto);
+
+            // Assert
+            var objectResult = Assert.IsType<ObjectResult>(resultado);
+            Assert.Equal((int)HttpStatusCode.BadRequest, objectResult.StatusCode);
+
+            var respuesta = Assert.IsType<RespuestaAPI>(objectResult.Value);
+            Assert.False(respuesta.Ok);
+        }
+
+        [Fact]
+        public async Task AnularAtencion_YaAnulada_RetornaBadRequest()
+        {
+            // Arrange
+            var dto = new AnulacionAtencionCrearDto
+            {
+                AtencionId = 1,
+                MotivoAnulacionAtencionId = 1,
+                Observacion = "Test"
+            };
+
+            var respuestaError = new RespuestaAPI
+            {
+                Ok = false,
+                StatusCode = HttpStatusCode.BadRequest,
+                ErrorMessages = new List<string> { "La atención ya ha sido anulada." }
+            };
+
+            _atencionesServiceMock
+                .Setup(s => s.AnularAtencionAsync(dto))
+                .ReturnsAsync(respuestaError);
+
+            // Act
+            var resultado = await _controller.AnularAtencion(dto);
+
+            // Assert
+            var objectResult = Assert.IsType<ObjectResult>(resultado);
+            Assert.Equal((int)HttpStatusCode.BadRequest, objectResult.StatusCode);
+
+            var respuesta = Assert.IsType<RespuestaAPI>(objectResult.Value);
+            Assert.False(respuesta.Ok);
+            Assert.Contains("ya ha sido anulada", respuesta.ErrorMessages[0]);
+        }
 
 
     }
