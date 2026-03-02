@@ -5,8 +5,8 @@ namespace ApiSigestHC.Repositorio.IRepositorio
     public interface IPacienteRepositorio
     {
         Task<Paciente> ObtenerPacientePorIdAsync(string id);
-        Task<Paciente> ObtenerUltimoPacienteIngresadoIdAsync();
-        Task<List<Paciente>> ObtenerUltimosPacientesIngresadosAsync(int limit);
+        Task<IngresoUrgencias> ObtenerUltimoPacienteIngresadoIdAsync();
+        Task<List<IngresoUrgencias>> ObtenerUltimosPacientesIngresadosAsync(int limit);
     }
 
 }

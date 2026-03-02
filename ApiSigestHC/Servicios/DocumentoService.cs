@@ -76,32 +76,42 @@ namespace ApiSigestHC.Servicios
 
             try
             {
-                var resultado = await _almacenamientoArchivoService.GuardarArchivoAsync(dto);
-
+                // 1. Crear documento inicial en BD (sin archivo físico aún)
                 var nuevoDocumento = new Documento
                 {
                     AtencionId = dto.AtencionId,
                     TipoDocumentoId = dto.TipoDocumentoId,
                     UsuarioId = _usuarioContextService.ObtenerUsuarioId(),
-                    RutaBase = resultado.RutaBase,
-                    RutaRelativa = resultado.RutaRelativa,
-                    NombreArchivo = resultado.NombreArchivo,
+                    RutaBase = string.Empty, // se actualiza después
+                    RutaRelativa = string.Empty, // se actualiza después
+                    NombreArchivo = "temporal.tmp", // se actualiza después
                     Fecha = dto.Fecha,
                     NumeroRelacion = dto.NumeroRelacion,
                     Observacion = dto.Observacion,
                     FechaCarga = DateTime.UtcNow,
+                    TamanoBytes = 0, // se actualiza después
+                    NumeroPaginas = 0 // se actualiza después
                 };
 
                 await _documentoRepo.GuardarAsync(nuevoDocumento);
                 
-                if(nuevoDocumento.TipoDocumentoId == 12)
-                {
-                    
-                }
+                // 2. Guardar archivo físico (ahora con el ID generado)
+                var resultado = await _almacenamientoArchivoService.GuardarArchivoAsync(dto, nuevoDocumento.Id);
 
-                var dtoResultado = _mapper.Map<DocumentoDto>(nuevoDocumento);
+                // 3. Actualizar documento con información del archivo
+                nuevoDocumento.RutaBase = resultado.RutaBase;
+                nuevoDocumento.RutaRelativa = resultado.RutaRelativa;
+                nuevoDocumento.NombreArchivo = resultado.NombreArchivo;
+                nuevoDocumento.TamanoBytes = resultado.TamanoBytes;
+                nuevoDocumento.NumeroPaginas = resultado.NumeroPaginas;
 
-                return new RespuestaAPI
+                await _documentoRepo.ActualizarAsync(nuevoDocumento);
+                
+                // 4. Obtener documento completo y retornar
+                var documentoBD = await _documentoRepo.ObtenerPorIdAsync(nuevoDocumento.Id);
+                var dtoResultado = _mapper.Map<DocumentoDto>(documentoBD);
+
+                return new RespuestaAPI 
                 {
                     Ok = true,
                     StatusCode = HttpStatusCode.OK,
@@ -110,7 +120,6 @@ namespace ApiSigestHC.Servicios
             }
             catch (Exception ex)
             {
-
                 return new RespuestaAPI
                 {
                     Ok = false,
@@ -371,24 +380,47 @@ namespace ApiSigestHC.Servicios
                     return respuesta;
                 }
 
+                // Validar si ya fue eliminado
+                if (documento.FechaEliminacion.HasValue)
+                {
+                    respuesta.Ok = false;
+                    respuesta.StatusCode = HttpStatusCode.BadRequest;
+                    respuesta.ErrorMessages.Add($"El documento ya fue eliminado el {documento.FechaEliminacion:yyyy-MM-dd HH:mm}");
+                    return respuesta;
+                }
+
                 var roleId = _usuarioContextService.ObtenerRolId();
-                var puedeEliminar = await _tipoDocumentoRolRepo.PuedeCargarTipoDocumento(roleId,documento.TipoDocumentoId);
+                var puedeEliminar = await _tipoDocumentoRolRepo.PuedeCargarTipoDocumento(roleId, documento.TipoDocumentoId);
 
                 if (!puedeEliminar)
                 {
                     respuesta.Ok = false;
-                    respuesta.StatusCode = HttpStatusCode.Unauthorized;
-                    respuesta.ErrorMessages.Add($"No tiene pemisos para eliminar este documento ");
+                    respuesta.StatusCode = HttpStatusCode.Forbidden;
+                    respuesta.ErrorMessages.Add($"No tiene permisos para eliminar este documento");
                     return respuesta;
                 }
 
-                await _almacenamientoArchivoService.EliminarArchivoAsync(documento);
+                // Mover archivo físico a carpeta _deleted
+                var nuevaRutaRelativa = await _almacenamientoArchivoService.MoverArchivoAEliminadosAsync(documento);
 
-                await _documentoRepo.EliminarAsync(documento);
+                // Actualizar registro con eliminación lógica
+                documento.FechaEliminacion = DateTime.UtcNow;
+                documento.UsuarioEliminacion = _usuarioContextService.ObtenerUsuarioId();
+                documento.RutaRelativa = nuevaRutaRelativa;
+
+                await _documentoRepo.ActualizarAsync(documento);
 
                 respuesta.Ok = true;
                 respuesta.StatusCode = HttpStatusCode.OK;
                 respuesta.Result = $"Documento con id {documentoId} eliminado correctamente";
+                return respuesta;
+            }
+            catch (FileNotFoundException ex)
+            {
+                respuesta.Ok = false;
+                respuesta.StatusCode = HttpStatusCode.NotFound;
+                respuesta.ErrorMessages.Add("El archivo físico no fue encontrado.");
+                respuesta.ErrorMessages.Add(ex.Message);
                 return respuesta;
             }
             catch (Exception ex)

@@ -73,12 +73,12 @@ namespace ApiSigestHC.Controllers
         [HttpGet("ultimo")]
         public async Task<IActionResult> GetUltimoPaciente()
         {
-            Paciente paciente = await _repositorio.ObtenerUltimoPacienteIngresadoIdAsync();
+            IngresoUrgencias ingreso = await _repositorio.ObtenerUltimoPacienteIngresadoIdAsync();
             return Ok(new RespuestaAPI
             {
                 Ok = true,
                 StatusCode = HttpStatusCode.OK,
-                Result = paciente
+                Result = ingreso
             });
         }
 
@@ -89,14 +89,13 @@ namespace ApiSigestHC.Controllers
         {
             try
             {
-                var pacientes = await _repositorio.ObtenerUltimosPacientesIngresadosAsync(15);
-                //var dto = _mapper.Map<List<Paciente>>(pacientes);
+                var ingresos = await _repositorio.ObtenerUltimosPacientesIngresadosAsync(15);
 
                 var respuesta = new RespuestaAPI
                 {
                     Ok = true,
                     StatusCode = HttpStatusCode.OK,
-                    Result = pacientes
+                    Result = ingresos
                 };
 
                 return Ok(respuesta);

@@ -39,7 +39,7 @@ namespace ApiSigestHC.Servicios
             _usuarioContext = usuarioContext;
         }
 
-        public async Task<ResultadoGuardadoArchivo> GuardarArchivoAsync(DocumentoCargarDto dto)
+        public async Task<ResultadoGuardadoArchivo> GuardarArchivoAsync(DocumentoCargarDto dto, int documentoId)
         {
             var archivo = dto.Archivo;
             var atencion = await _atencionRepo.ObtenerAtencionPorIdAsync(dto.AtencionId);
@@ -56,13 +56,12 @@ namespace ApiSigestHC.Servicios
                 throw new ArgumentException($"No se encontro el id del pacinete en la atencion de id {dto.AtencionId}");
 
             try
-            {          
-
+            {
+                // 1. Construir rutas
                 var fecha = atencion.Fecha;
                 var year = fecha.Year.ToString();
                 var mes = fecha.Month.ToString("D2");
                 var nroDocumentoPaciente = atencion.PacienteId ?? "000000";
-
                 var carpetaFinal = $"{atencion.Id}_{fecha:yyyyMMdd}";
                 var rutaCarpetaRelativa = Path.Combine("documentos", year, mes, nroDocumentoPaciente, carpetaFinal);
                 var rutaBase = _env.ContentRootPath;
@@ -71,27 +70,44 @@ namespace ApiSigestHC.Servicios
                 if (!Directory.Exists(rutaCarpetaAbsoluta))
                     Directory.CreateDirectory(rutaCarpetaAbsoluta);
 
-                // Consecutivo
+                // 2. Generar nombre base según reglas de negocio (sin el ID aún)
+                var documentoTemp = new Documento
+                {
+                    AtencionId = dto.AtencionId,
+                    TipoDocumentoId = dto.TipoDocumentoId,
+                    Fecha = dto.Fecha,
+                    NumeroRelacion = dto.NumeroRelacion
+                };
+                
+                string nombreBase = await GenerarNombreArchivo(tipoDocumento, documentoTemp, archivo.FileName);
+                
+                // 3. Construir nombre final con ID: {documentoId}_{nombreBase}
+                string nombreArchivoFinal = $"{documentoId}_{nombreBase}";
+                string rutaCompleta = Path.Combine(rutaCarpetaAbsoluta, nombreArchivoFinal);
 
-                string extension = Path.GetExtension(archivo.FileName).ToLowerInvariant();
-                string nombreArchivo = await GenerarNombreArchivo(tipoDocumento,new Documento {
-                                                                                        AtencionId = dto.AtencionId,
-                                                                                        Fecha = dto.Fecha,
-                                                                                        NumeroRelacion = dto.NumeroRelacion,
-                                                                                    } ,dto.Archivo.FileName);
-                string rutaCompleta = Path.Combine(rutaCarpetaAbsoluta, nombreArchivo);
-
+                // 4. Guardar archivo físicamente
                 using (var stream = new FileStream(rutaCompleta, FileMode.Create))
                 {
                     await archivo.CopyToAsync(stream);
                 }
+
+                // 5. Calcular número de páginas
+                int numeroPaginas = 1;
+                string extension = Path.GetExtension(archivo.FileName).ToLowerInvariant();
+                
                 if (extension == ".pdf")
                 {
+                    using (var pdfDoc = PdfReader.Open(rutaCompleta, PdfDocumentOpenMode.Import))
+                    {
+                        numeroPaginas = pdfDoc.PageCount;
+                    }
+
+                    // Actualizar metadatos del PDF
                     ActualizarMetadatosPdf(
                         rutaCompleta,
-                        tipoDocumento.Nombre+" - "+atencion.Paciente.NombreCorto(),
+                        tipoDocumento.Nombre + " - " + atencion.Paciente.NombreCorto(),
                         _usuarioContext.ObtenerNombreUsuario(),
-                         tipoDocumento.Nombre // tema opcional
+                        tipoDocumento.Nombre
                     );
                 }
 
@@ -99,15 +115,15 @@ namespace ApiSigestHC.Servicios
                 {
                     RutaBase = rutaBase.Replace("\\", "/"),
                     RutaRelativa = rutaCarpetaRelativa.Replace("\\", "/"),
-                    NombreArchivo = nombreArchivo,
+                    NombreArchivo = nombreArchivoFinal,
+                    TamanoBytes = archivo.Length,
+                    NumeroPaginas = numeroPaginas
                 };
             }
             catch (Exception)
             {
-
                 throw;
             }
-           
         }
 
         public async Task<ResultadoGuardadoArchivo> ReemplazarArchivoDocuemntoAsync(Documento documento, IFormFile archivo)
@@ -178,6 +194,40 @@ namespace ApiSigestHC.Servicios
                 Message = "Archivo temporal guardado correctamente."
             };
         }
+        public async Task<string> MoverArchivoAEliminadosAsync(Documento documento)
+        {
+            if (documento == null)
+                throw new ArgumentNullException(nameof(documento));
+
+            var rutaCarpetaOriginal = Path.Combine(documento.RutaBase, documento.RutaRelativa);
+            var rutaArchivoOriginal = Path.Combine(rutaCarpetaOriginal, documento.NombreArchivo);
+
+            if (!File.Exists(rutaArchivoOriginal))
+                throw new FileNotFoundException("No se encontró el archivo para mover.", rutaArchivoOriginal);
+
+            try
+            {
+                // Crear carpeta _deleted dentro de la ruta relativa actual
+                var carpetaDeleted = Path.Combine(rutaCarpetaOriginal, "_deleted");
+                if (!Directory.Exists(carpetaDeleted))
+                    Directory.CreateDirectory(carpetaDeleted);
+
+                // Ruta destino del archivo
+                var rutaArchivoDestino = Path.Combine(carpetaDeleted, documento.NombreArchivo);
+
+                // Mover archivo (sobrescribe si ya existe)
+                File.Move(rutaArchivoOriginal, rutaArchivoDestino, overwrite: true);
+
+                // Retornar nueva ruta relativa
+                var nuevaRutaRelativa = Path.Combine(documento.RutaRelativa, "_deleted");
+                return nuevaRutaRelativa.Replace("\\", "/");
+            }
+            catch (IOException ex)
+            {
+                throw new IOException($"Error al intentar mover el archivo a eliminados: {rutaArchivoOriginal}", ex);
+            }
+        }
+
         public async Task EliminarArchivoAsync(Documento documento)
         {
             if (documento == null)

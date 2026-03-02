@@ -24,6 +24,7 @@ namespace ApiSigestHC.Data
         public DbSet<TipoDocumentoRol> TipoDocumentoRoles { get; set; }
         public DbSet<Usuario> Usuarios { get; set; }
         public DbSet<PermisoRolEstadoAtencion> PermisosRolAtencion { get; set; }
+        public DbSet<IngresoUrgencias> IngresosUrgencias { get; set; }
 
         public DbSet<UbicacionPacienteDto> UltimasUbicaciones { get; set; }
 
@@ -138,6 +139,17 @@ namespace ApiSigestHC.Data
                 .WithMany()
                 .HasForeignKey(p => p.EstadoAtencionId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Configuración para IngresoUrgencias
+            modelBuilder.Entity<IngresoUrgencias>()
+                .HasOne(i => i.Paciente)
+                .WithMany()
+                .HasForeignKey(i => i.PacienteId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<IngresoUrgencias>()
+                .Property(i => i.PacienteId)
+                .HasColumnType("varchar(20)");
 
 
             base.OnModelCreating(modelBuilder);

@@ -6,10 +6,11 @@ namespace ApiSigestHC.Servicios.IServicios
 {
     public interface IAlmacenamientoArchivoService
     {
-        Task<ResultadoGuardadoArchivo> GuardarArchivoAsync(DocumentoCargarDto dto);
+        Task<ResultadoGuardadoArchivo> GuardarArchivoAsync(DocumentoCargarDto dto, int documentoId);
         Task<ResultadoGuardadoArchivo> ReemplazarArchivoDocuemntoAsync(Documento documento, IFormFile archivo);
         Task<ResultadoGuardadoArchivo> GuardarArchivoTemporal(string coleccion, IFormFile archivo, int id);
         Task<ResultadoGuardadoArchivo> ActualizarNombreSiEsNecesarioAsync(DocumentoEditarDto dto);
+        Task<string> MoverArchivoAEliminadosAsync(Documento documento);
         Task EliminarArchivoAsync(Documento documento);
         Task<FileStreamResult?> DescargarDocumentoAsync(Documento doc);
         Task<FileStreamResult?> ObtenerArchivoParaVisualizacionAsync(Documento doc);

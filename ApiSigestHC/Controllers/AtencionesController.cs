@@ -159,12 +159,14 @@ namespace ApiSigestHC.Controllers
 
             await _atencionRepo.EditarAtencionAsync(atencion);
 
+            AtencionDto atencionEditada = _mapper.Map<AtencionDto>(atencion);
+
             return Ok(new RespuestaAPI
             {
                 Ok = true,
                 StatusCode = HttpStatusCode.OK,
-                Message = $"Atención {atencionDto.AtencionId} actualizada correctamente",
-                Result = atencion,
+                Message = $"Atención {atencionEditada.Id} actualizada correctamente",
+                Result = atencionEditada,
             });
         }
 

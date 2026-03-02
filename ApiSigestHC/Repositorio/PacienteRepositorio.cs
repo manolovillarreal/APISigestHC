@@ -37,82 +37,83 @@ namespace ApiSigestHC.Repositorio
             return paciente;
         }
 
-        public async Task<Paciente> ObtenerUltimoPacienteIngresadoIdAsync()
+        public async Task<IngresoUrgencias> ObtenerUltimoPacienteIngresadoIdAsync()
         {
-            // Paso 1: Obtener pacientes ingresados recientemente
-            string query = $@"
-                SELECT P.*
-                FROM (
-                    SELECT TOP 20 P.*
-                    FROM INGRESO_URGENCIAS IU
-                    JOIN PACIENTES P ON P.NU_HIST_PAC = IU.NU_HIST_PAC_INUR
-                    ORDER BY IU.FE_FECH_INUR DESC 
-                ) P
-                WHERE NOT EXISTS (
-                    SELECT 1
-                    FROM SIG_ATENCION A
-                    WHERE A.PACIENTE_ID = P.NU_HIST_PAC
-                      AND A.ESTADOATENCION_ID <= 4
-                )";
+            var ingreso = await _db.IngresosUrgencias
+                .FromSqlRaw(getIngresosQuery(1))
+                .Include(i => i.Paciente)
+                .FirstOrDefaultAsync();
 
-            Paciente paciente = await _db.Pacientes.FromSqlRaw(query).FirstOrDefaultAsync();
-
-            if (paciente != null)
+            if (ingreso?.Paciente != null)
             {
-                paciente.Administradoras = (from rpe in _db.RelacionPacienteAdministradoras
+                ingreso.Paciente.Administradoras = (from rpe in _db.RelacionPacienteAdministradoras
                                             join eps in _db.Administradoras
                                             on rpe.NitEps equals eps.Nit
-                                            where rpe.PacienteId == paciente.Id && rpe.Activo == "S"
+                                            where rpe.PacienteId == ingreso.PacienteId && rpe.Activo == "S"
                                             select new Administradora
                                             {
                                                 Nit = eps.Nit,
                                                 Nombre = eps.Nombre
                                             }).ToList();
             }
-            return paciente;
+            return ingreso;
         }
         
-        public async Task<List<Paciente>> ObtenerUltimosPacientesIngresadosAsync(int limit)
+        public async Task<List<IngresoUrgencias>> ObtenerUltimosPacientesIngresadosAsync(int limit)
         {
-
-            // Paso 1: Obtener pacientes ingresados recientemente
-            string query = $@"
-                SELECT P.*
-                FROM (
-                    SELECT TOP {limit} P.*
-                    FROM INGRESO_URGENCIAS IU
-                    JOIN PACIENTES P ON P.NU_HIST_PAC = IU.NU_HIST_PAC_INUR
-                    ORDER BY IU.FE_FECH_INUR DESC
-                ) P
-                WHERE NOT EXISTS (
-                    SELECT 1
-                    FROM SIG_ATENCION A
-                    WHERE A.PACIENTE_ID = P.NU_HIST_PAC
-                      AND A.ESTADOATENCION_ID <= 4
-                      AND A.ESTAANULADA = 0
-                )";
-
-            var pacientes = await _db.Pacientes
-                .FromSqlRaw(query)
+            var ingresos = await _db.IngresosUrgencias
+                .FromSqlRaw(getIngresosQuery(20))
+                .Include(i => i.Paciente)
                 .AsNoTracking()
+                .OrderByDescending(i => i.FechaIngreso)
                 .ToListAsync();
 
-         
-            foreach (var paciente in pacientes)
+            foreach (var ingreso in ingresos)
             {
-                paciente.Administradoras = await (
-                    from rpe in _db.RelacionPacienteAdministradoras
-                    join eps in _db.Administradoras on rpe.NitEps equals eps.Nit
-                    where rpe.PacienteId == paciente.Id && rpe.Activo == "S"
-                    select new Administradora
-                    {
-                        Nit = eps.Nit,
-                        Nombre = eps.Nombre
-                    }).ToListAsync();
+                if (ingreso.Paciente != null)
+                {
+                    ingreso.Paciente.Administradoras = await (
+                        from rpe in _db.RelacionPacienteAdministradoras
+                        join eps in _db.Administradoras on rpe.NitEps equals eps.Nit
+                        where rpe.PacienteId == ingreso.PacienteId && rpe.Activo == "S"
+                        select new Administradora
+                        {
+                            Nit = eps.Nit,
+                            Nombre = eps.Nombre
+                        }).ToListAsync();
+                }
             }
 
-            return pacientes;
+            return ingresos;
         }
 
+        private string getIngresosQuery(int limit)
+        {
+            string ingresosQuery = @"
+            SELECT TOP "+limit+ @" 
+                   IU.NU_NUME_INUR,
+                   IU.TX_OBSER_INUR,
+                   DATEADD(SECOND, 
+                           DATEDIFF(SECOND, '00:00:00', CAST(IU.TX_HORA_INUR AS TIME)), 
+                           CAST(IU.FE_FECING_INUR AS DATETIME)
+                   ) AS FE_FECING_INUR, 
+                   DATEADD(SECOND, 
+                           DATEDIFF(SECOND, '00:00:00', CAST(IU.TX_HORA_INUR AS TIME)), 
+                           CAST(IU.FE_FECH_INUR AS DATETIME)
+                   ) AS FE_FECH_INUR,
+                   IU.NU_HIST_PAC_INUR
+            FROM INGRESO_URGENCIAS IU
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM SIG_ATENCION A
+                WHERE A.PACIENTE_ID = IU.NU_HIST_PAC_INUR
+                  AND A.ESTADOATENCION_ID <= 4
+            )
+            ORDER BY FE_FECING_INUR DESC";
+
+            return ingresosQuery;
+        }
     }
+
+        
 }

@@ -13,6 +13,6 @@ namespace ApiSigestHC.Repositorio.IRepositorio
         Task EliminarAtencionAsync(int id);
 
         Task<IEnumerable<UbicacionPacienteDto>> GetUltimaUbicacionPacientesAsync(string[] pacienteIds);
-        Task<ICollection<Atencion>> ObtenerAtencionesPorFiltroAsync(AtencionFiltroDto filtro);
+        Task<IEnumerable<Atencion>> ObtenerAtencionesPorFiltroAsync(AtencionFiltroDto filtro);
     }
 }

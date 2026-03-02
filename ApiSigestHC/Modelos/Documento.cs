@@ -22,6 +22,10 @@ namespace ApiSigestHC.Modelos
         public string? Observacion { get; set; }
         public DateTime Fecha { get; set; }
         public DateTime FechaCarga { get; set; }
+        public long TamanoBytes { get; set; }
+        public int NumeroPaginas { get; set; }
+        public DateTime? FechaEliminacion { get; set; }
+        public int? UsuarioEliminacion { get; set; }
 
         public TipoDocumento? TipoDocumento { get; set; }
         public Atencion? Atencion { get; set; }

@@ -68,9 +68,12 @@ namespace ApiSigestHC.Repositorio
         {
             return await _db.Documentos
                 .Include(d => d.TipoDocumento)
+                .Include(d => d.Usuario)
+                    .ThenInclude(u => u.Rol)
                 .Include(d=>d.Atencion)
                     .ThenInclude(a=>a.Paciente)
-                .Include(d => d.Usuario)
+                  .Include(d => d.SolicitudesCorreccion
+                    .Where(s => s.EstadoCorreccionId != 3)) // 🔥 solo trae las pendientes
                 .FirstOrDefaultAsync(d=> d.Id == id);
         }
 
