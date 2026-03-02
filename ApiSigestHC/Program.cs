@@ -24,7 +24,7 @@ builder.Services.AddEndpointsApiExplorer();
 
 //Repositorios
 builder.Services.AddScoped<IAtencionRepositorio, AtencionRepositorio>();
-builder.Services.AddScoped<IAnulacionAtencionRepositorio, AnulacionAtencionRepositorio>();
+builder.Services.AddScoped<IMotivoAnulacionAtencionRepositorio, MotivoAnulacionAtencionRepositorio>();
 builder.Services.AddScoped<ICambioEstadoRepositorio,CambioEstadoRepositorio>();
 builder.Services.AddScoped<IDocumentoRepositorio,DocumentoRepositorio>();
 builder.Services.AddScoped<IDocumentoRequeridoRepositorio,DocumentoRequeridoRepositorio>();

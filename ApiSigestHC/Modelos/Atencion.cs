@@ -32,12 +32,22 @@ namespace ApiSigestHC.Modelos
         [Column("tipoAtencion_id")]
         public int TipoAtencionId { get; set; }
 
-        [Column("estaAnulada")]
-        public bool EstaAnulada { get; set; }
+        [Column("motivoAnulacionAtencion_id")]
+        public int? MotivoAnulacionAtencionId { get; set; }
+
+        [Column("fechaAnulacion", TypeName = "datetime")]
+        public DateTime? FechaAnulacion { get; set; }
+
+        [Column("usuarioAnula_id")]
+        public int? UsuarioAnulaId { get; set; }
+
+        [Column("observacionAnulacion")]
+        public string? ObservacionAnulacion { get; set; }
 
         public Paciente? Paciente { get; set; }
         public Administradora? Administradora { get; set; }
         public EstadoAtencion? EstadoAtencion { get; set; }
+        public MotivoAnulacionAtencion? MotivoAnulacionAtencion { get; set; }
 
         public ICollection<Documento> Documentos { get; set; }
     }

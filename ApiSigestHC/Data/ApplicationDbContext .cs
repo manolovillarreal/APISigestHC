@@ -9,7 +9,6 @@ namespace ApiSigestHC.Data
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> opciones) : base(opciones) { }
 
         public DbSet<Administradora> Administradoras { get; set; }
-        public DbSet<AnulacionAtencion> AnulacionAtenciones { get; set; }
         public DbSet<Atencion> Atenciones { get; set; }
         public DbSet<CambioEstado> CambiosEstado { get; set; }
         public DbSet<Documento> Documentos { get; set; }
@@ -49,6 +48,12 @@ namespace ApiSigestHC.Data
                 .HasOne(a => a.Administradora)
                 .WithMany()
                 .HasForeignKey(a => a.TerceroId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Atencion>()
+                .HasOne(a => a.MotivoAnulacionAtencion)
+                .WithMany()
+                .HasForeignKey(a => a.MotivoAnulacionAtencionId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Atencion>()

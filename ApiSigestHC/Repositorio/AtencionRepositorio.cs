@@ -25,7 +25,7 @@ namespace ApiSigestHC.Repositorio
 
             // Obtiene solo los datos necesarios primero
             var atenciones = await _db.Atenciones
-                .Where(a => !a.EstaAnulada)
+                .Where(a => a.FechaAnulacion == null)
                 .Include(a => a.Paciente)
                 .Include(a => a.EstadoAtencion)
                 .Include(a=>a.Administradora)
@@ -128,7 +128,7 @@ namespace ApiSigestHC.Repositorio
                 query = query.Where(a => a.Fecha <= filtro.FechaFin.Value);
 
             if (!filtro.consultarAnuladas)
-                query = query.Where(a => !a.EstaAnulada);
+                query = query.Where(a => a.FechaAnulacion == null);
 
             var atenciones = await query
                 .Include(a => a.Paciente)

@@ -10,18 +10,19 @@ namespace ApiSigestHC.Servicios
     public class AnulacionAtencionService : IAnulacionAtencionService
     {
         private readonly IAtencionRepositorio _atencionRepo;
-        private readonly IAnulacionAtencionRepositorio _anulacionRepo;
+        private readonly IMotivoAnulacionAtencionRepositorio _motivoAnulacionRepo;
         private readonly IUsuarioContextService _usuarioContextService;
 
         public AnulacionAtencionService(
-        IAnulacionAtencionRepositorio anulacionRepo,
+        IMotivoAnulacionAtencionRepositorio motivoAnulacionRepo,
         IAtencionRepositorio atencionRepo,
         IUsuarioContextService usuarioContextService)
         {
-            _anulacionRepo = anulacionRepo;
+            _motivoAnulacionRepo = motivoAnulacionRepo;
             _atencionRepo = atencionRepo;
             _usuarioContextService = usuarioContextService;
         }
+        
         public async Task<RespuestaAPI> AnularAtencionAsync(AnulacionAtencionCrearDto dto)
         {
             var atencion = await _atencionRepo.ObtenerAtencionPorIdAsync(dto.AtencionId);
@@ -35,7 +36,18 @@ namespace ApiSigestHC.Servicios
                 };
             }
 
-            var motivoExiste = await _anulacionRepo.MotivoExisteAsync(dto.MotivoAnulacionAtencionId);
+            // Validar que no esté ya anulada
+            if (atencion.FechaAnulacion.HasValue)
+            {
+                return new RespuestaAPI
+                {
+                    Ok = false,
+                    StatusCode = HttpStatusCode.BadRequest,
+                    ErrorMessages = new List<string> { "La atención ya ha sido anulada." }
+                };
+            }
+
+            var motivoExiste = await _motivoAnulacionRepo.ExisteAsync(dto.MotivoAnulacionAtencionId);
             if (!motivoExiste)
             {
                 return new RespuestaAPI
@@ -59,21 +71,19 @@ namespace ApiSigestHC.Servicios
 
             var usuarioId = _usuarioContextService.ObtenerUsuarioId();
 
-            var anulacion = new AnulacionAtencion
-            {
-                AtencionId = dto.AtencionId,
-                MotivoAnulacionAtencionId = dto.MotivoAnulacionAtencionId,
-                UsuarioId = usuarioId,
-                Observacion = dto.Observacion,
-                Fecha = DateTime.Now
-            };
+            // Actualizar campos de anulación directamente en la atención
+            atencion.MotivoAnulacionAtencionId = dto.MotivoAnulacionAtencionId;
+            atencion.FechaAnulacion = DateTime.Now;
+            atencion.UsuarioAnulaId = usuarioId;
+            atencion.ObservacionAnulacion = dto.Observacion;
 
-            await _anulacionRepo.GuardarAsync(anulacion);
+            await _atencionRepo.EditarAtencionAsync(atencion);
 
             return new RespuestaAPI
             {
                 Ok = true,
-                StatusCode = HttpStatusCode.Created
+                StatusCode = HttpStatusCode.OK,
+                Message = "Atención anulada correctamente"
             };
         }
     }
