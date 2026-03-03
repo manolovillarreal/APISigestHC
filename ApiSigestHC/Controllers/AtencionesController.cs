@@ -210,9 +210,17 @@ namespace ApiSigestHC.Controllers
         }
 
 
-        [HttpDelete("{id}")]
-        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(RespuestaAPI))]
+        /// <summary>
+        /// Anula una atención en estado de Admisión
+        /// </summary>
+        /// <remarks>
+        /// Solo las atenciones en estado "Admisión" pueden ser anuladas y solo por el rol "Admisiones"
+        /// </remarks>
+        [HttpPost("anular")]
+        [Authorize(Roles = "Admisiones")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RespuestaAPI))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(RespuestaAPI))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(RespuestaAPI))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(RespuestaAPI))]
         public async Task<IActionResult> AnularAtencion([FromBody] AnulacionAtencionCrearDto dto)
