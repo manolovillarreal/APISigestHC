@@ -45,7 +45,7 @@ namespace ApiSigestHC.Tests.Servicios
             {
                 AtencionId = 1,
                 TipoDocumentoId = 2,
-                Archivo = CrearArchivoMock("documento.pdf", 500_000),
+                Archivo = CrearArchivoMock("documento.txt", 500_000), // Cambiado a .txt
                 NumeroRelacion = "REL-123"
             };
 
@@ -53,33 +53,19 @@ namespace ApiSigestHC.Tests.Servicios
             var tipoDoc = new TipoDocumento
             {
                 Id = 2,
-                ExtensionPermitida = "pdf",
+                ExtensionPermitida = "txt", // Cambiado a txt
                 PermiteMultiples = true,
                 RequiereNumeroRelacion = true
             };
 
-            var usuarioContextMock = new Mock<IUsuarioContextService>();
-            usuarioContextMock.Setup(u => u.ObtenerRolId()).Returns(1);
-            usuarioContextMock.Setup(u => u.ObtenerRolNombre()).Returns("Medico");
-
-            var atencionRepo = new Mock<IAtencionRepositorio>();
-            atencionRepo.Setup(r => r.ObtenerAtencionPorIdAsync(1)).ReturnsAsync(atencion);
-
-            var tipoDocRepo = new Mock<ITipoDocumentoRepositorio>();
-            tipoDocRepo.Setup(r => r.GetTipoDocumentoPorIdAsync(2)).ReturnsAsync(tipoDoc);
-
-            var documentoRepo = new Mock<IDocumentoRepositorio>();
-            documentoRepo.Setup(r => r.PuedeCargarDocumento(1, 2)).ReturnsAsync(true);
-
-            var permisoRolRepo = new Mock<IPermisoRolAtencionRepositorio>();
-            permisoRolRepo.Setup(p => p.TienePermisoAsync(1, 2)).ReturnsAsync(true);
-
-            var service = new ValidacionCargaDocumentoService(
-                atencionRepo.Object, tipoDocRepo.Object, documentoRepo.Object, usuarioContextMock.Object, permisoRolRepo.Object
-            );
+            _usuarioContextServiceMock.Setup(u => u.ObtenerRolId()).Returns(1);
+            _atencionRepoMock.Setup(r => r.ObtenerAtencionPorIdAsync(1)).ReturnsAsync(atencion);
+            _tipoDocumentoRepoMock.Setup(r => r.GetTipoDocumentoPorIdAsync(2)).ReturnsAsync(tipoDoc);
+            _documentoRepoMock.Setup(r => r.PuedeCargarDocumento(1, 2)).ReturnsAsync(true);
+            _permisoRolAtencionRepoMock.Setup(p => p.TienePermisoAsync(1, 2)).ReturnsAsync(true);
 
             // Act
-            var resultado = await service.ValidarCargaDocumentoAsync(dto);
+            var resultado = await _service.ValidarCargaDocumentoAsync(dto);
 
             // Assert
             Assert.True(resultado.Ok);
