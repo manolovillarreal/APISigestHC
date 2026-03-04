@@ -66,15 +66,17 @@ namespace ApiSigestHC.Tests.Servicios
                 new Documento { Id = 10, AtencionId = atencionId, TipoDocumentoId = 3 }
             };
 
-                    var documentosDto = new List<DocumentoDto>
+            var documentosDto = new List<DocumentoDto>
             {
                 new DocumentoDto { Id = 10, TipoDocumentoId = 3 }
             };
 
             _usuarioContextServiceMock.Setup(x => x.ObtenerRolId()).Returns(rolId);
-            _documentoRepoMock.Setup(x => x.ObtenerPermitidosParaCargar(atencionId, rolId))
+            _documentoRepoMock.Setup(x => x.ObtenerPermitidosParaVer(atencionId, rolId))
                               .ReturnsAsync(documentos);
             _mapperMock.Setup(x => x.Map<IEnumerable<DocumentoDto>>(documentos)).Returns(documentosDto);
+            _tipoDocumentoRolRepoMock.Setup(x => x.PuedeCargarTipoDocumento(rolId, 3))
+                                     .ReturnsAsync(true);
 
             // Act
             var resultado = await _documentoService.ObtenerDocumentosPorAtencionAsync(atencionId);
@@ -82,7 +84,10 @@ namespace ApiSigestHC.Tests.Servicios
             // Assert
             Assert.True(resultado.Ok);
             Assert.Equal(HttpStatusCode.OK, resultado.StatusCode);
-            Assert.Equal(documentosDto, resultado.Result);
+            Assert.NotNull(resultado.Result);
+            var resultadoDocs = Assert.IsAssignableFrom<IEnumerable<DocumentoDto>>(resultado.Result);
+            Assert.Single(resultadoDocs);
+            Assert.Equal(10, resultadoDocs.First().Id);
         }
 
         [Fact]
