@@ -113,12 +113,12 @@ namespace ApiSigestHC.Tests.Servicios
             if (File.Exists(fullPath)) File.Delete(fullPath);
         }
 
-        // 1) Sin múltiple, no asistencial, no relación → "COD.pdf"
+        // 1) Sin múltiple, no asistencial, no relación → "1_COD.txt"
         [Fact]
         public async Task GuardarArchivo_Nombre_SoloCodigo()
         {
             // Arrange
-            var dto = CrearDto(new DateTime(2025, 6, 17));
+            var dto = CrearDto(new DateTime(2025, 6, 17), extension: ".txt");
             var tipo = new TipoDocumento
             {
                 Id = 1,
@@ -135,15 +135,15 @@ namespace ApiSigestHC.Tests.Servicios
 
             // Assert
             Assert.NotNull(r);
-            Assert.Equal("1_COD.pdf", r.NombreArchivo);
+            Assert.Equal("1_COD.txt", r.NombreArchivo);
         }
 
-        // 2) Con múltiple, no asistencial, no relación → "COD_1.pdf"
+        // 2) Con múltiple, no asistencial, no relación → "1_COD_1.txt"
         [Fact]
         public async Task GuardarArchivo_Nombre_ConConsecutivo()
         {
             // Arrange
-            var dto = CrearDto(new DateTime(2025, 6, 17));
+            var dto = CrearDto(new DateTime(2025, 6, 17), extension: ".txt");
             var tipo = new TipoDocumento
             {
                 Id = 1,
@@ -160,15 +160,15 @@ namespace ApiSigestHC.Tests.Servicios
 
             // Assert
             Assert.NotNull(r);
-            Assert.Equal("1_COD_1.pdf", r.NombreArchivo);
+            Assert.Equal("1_COD_1.txt", r.NombreArchivo);
         }
 
-        // 3) Sin múltiple, asistencial, no relación → "COD_20250617.pdf"
+        // 3) Sin múltiple, asistencial, no relación → "1_COD_20250617.txt"
         [Fact]
         public async Task GuardarArchivo_Nombre_ConFecha()
         {
             // Arrange
-            var dto = CrearDto(new DateTime(2025, 6, 17));
+            var dto = CrearDto(new DateTime(2025, 6, 17), extension: ".txt");
             var tipo = new TipoDocumento
             {
                 Id = 1,
@@ -185,15 +185,15 @@ namespace ApiSigestHC.Tests.Servicios
 
             // Assert
             Assert.NotNull(r);
-            Assert.Equal("1_COD_20250617.pdf", r.NombreArchivo);
+            Assert.Equal("1_COD_20250617.txt", r.NombreArchivo);
         }
 
-        // 4) Múltiple + asistencial + no relación → "COD_1_20250617.pdf"
+        // 4) Múltiple + asistencial + no relación → "1_COD_1_20250617.txt"
         [Fact]
         public async Task GuardarArchivo_Nombre_ConConsecutivoYFecha()
         {
             // Arrange
-            var dto = CrearDto(new DateTime(2025, 6, 17));
+            var dto = CrearDto(new DateTime(2025, 6, 17), extension: ".txt");
             var tipo = new TipoDocumento
             {
                 Id = 1,
@@ -210,15 +210,15 @@ namespace ApiSigestHC.Tests.Servicios
 
             // Assert
             Assert.NotNull(r);
-            Assert.Equal("1_COD_1_20250617.pdf", r.NombreArchivo);
+            Assert.Equal("1_COD_1_20250617.txt", r.NombreArchivo);
         }
 
-        // 5) Relación tiene prioridad sobre fecha (sin múltiple) → "COD_REF123.pdf"
+        // 5) Relación tiene prioridad sobre fecha (sin múltiple) → "1_COD_REF123.txt"
         [Fact]
         public async Task GuardarArchivo_Nombre_ConNumeroRelacion_Prioritario()
         {
             // Arrange
-            var dto = CrearDto(new DateTime(2025, 6, 17), numeroRelacion: "REF123");
+            var dto = CrearDto(new DateTime(2025, 6, 17), numeroRelacion: "REF123", extension: ".txt");
             var tipo = new TipoDocumento
             {
                 Id = 1,
@@ -234,17 +234,16 @@ namespace ApiSigestHC.Tests.Servicios
             var r = await _service.GuardarArchivoAsync(dto, 1);
 
             // Assert
-
             Assert.NotNull(r);
-            Assert.Equal("1_COD_REF123.pdf", r.NombreArchivo);
+            Assert.Equal("1_COD_REF123.txt", r.NombreArchivo);
         }
 
-        // 6) Relación + múltiple → "COD_1_REF123.pdf"
+        // 6) Relación + múltiple → "1_COD_1_REL-456.txt"
         [Fact]
         public async Task GuardarArchivo_Nombre_ConConsecutivoYRelacion()
         {
             // Arrange
-            var dto = CrearDto(new DateTime(2025, 6, 17), numeroRelacion: "REL-456");
+            var dto = CrearDto(new DateTime(2025, 6, 17), numeroRelacion: "REL-456", extension: ".txt");
             var tipo = new TipoDocumento
             {
                 Id = 1,
@@ -261,7 +260,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             // Assert
             Assert.NotNull(r);
-            Assert.Equal("1_COD_1_REL-456.pdf", r.NombreArchivo);
+            Assert.Equal("1_COD_1_REL-456.txt", r.NombreArchivo);
         }
 
         #endregion
@@ -747,12 +746,12 @@ namespace ApiSigestHC.Tests.Servicios
             return fileMock.Object;
         }
 
-        private DocumentoCargarDto CrearDto(DateTime fecha, string numeroRelacion = null)
+        private DocumentoCargarDto CrearDto(DateTime fecha, string numeroRelacion = null, string extension = ".pdf")
         => new DocumentoCargarDto
         {
             AtencionId = 1,
             TipoDocumentoId = 1,
-            Archivo = CrearArchivoMock("dummy.pdf"),
+            Archivo = CrearArchivoMock($"dummy{extension}"),
             Fecha = fecha,
             NumeroRelacion = numeroRelacion
         };
