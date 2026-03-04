@@ -50,7 +50,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             _estadoAtencionRepoMock.Setup(r => r.ObtenerPorIdAsync(dto.EstadoAtencionId)).ReturnsAsync(estadoMock);
             _tipoDocumentoRepoMock.Setup(r => r.GetTipoDocumentoPorIdAsync(dto.TipoDocumentoId)).ReturnsAsync(tipoMock);
-            _documentoRequeridoRepoMock.Setup(r => r.ExisteAsync(dto.EstadoAtencionId, dto.TipoDocumentoId)).ReturnsAsync(false);
+            _documentoRequeridoRepoMock.Setup(r => r.ExistePorTipoAsync(dto.TipoDocumentoId)).ReturnsAsync(false);
             _mapperMock.Setup(m => m.Map<DocumentoRequerido>(dto)).Returns(entidad);
             _mapperMock.Setup(m => m.Map<DocumentoRequeridoCrearDto>(entidad)).Returns(dto);
 
@@ -81,29 +81,8 @@ namespace ApiSigestHC.Tests.Servicios
             Assert.Equal(HttpStatusCode.BadRequest, resultado.StatusCode);
             Assert.Contains("El estado de atención no existe.", resultado.ErrorMessages);
         }
-        //3. Estado tiene orden <= 1
-        [Fact]
-        public async Task CrearAsync_DeberiaRetornarBadRequest_SiEstadoTieneOrdenMenorIgualA1()
-        {
-            // Arrange
-            var dto = new DocumentoRequeridoCrearDto { EstadoAtencionId = 1 };
-
-            var estado = new EstadoAtencion { Id = 1, Orden = 1 };
-
-            _estadoAtencionRepoMock
-                .Setup(r => r.ObtenerPorIdAsync(dto.EstadoAtencionId))
-                .ReturnsAsync(estado);
-
-            // Act
-            var resultado = await _service.CrearAsync(dto);
-
-            // Assert
-            Assert.False(resultado.Ok);
-            Assert.Equal(HttpStatusCode.BadRequest, resultado.StatusCode);
-            Assert.Contains("No se pueden registrar documentos requeridos para el estado inicial.", resultado.ErrorMessages);
-        }
-
-        //4. Tipo de documento no existe
+        
+        //3. Tipo de documento no existe
         [Fact]
         public async Task CrearAsync_DeberiaRetornarBadRequest_SiTipoDocumentoNoExiste()
         {
@@ -128,7 +107,7 @@ namespace ApiSigestHC.Tests.Servicios
             Assert.Contains("El tipo de documento no existe.", resultado.ErrorMessages);
         }
 
-        // 5. Ya existe un registro con ese estado y tipo
+        // 4. Ya existe un documento requerido con ese tipo en otro estado
         [Fact]
         public async Task CrearAsync_DeberiaRetornarBadRequest_SiDocumentoYaExiste()
         {
@@ -146,7 +125,7 @@ namespace ApiSigestHC.Tests.Servicios
                 .ReturnsAsync(tipo);
 
             _documentoRequeridoRepoMock
-                .Setup(r => r.ExisteAsync(dto.EstadoAtencionId, dto.TipoDocumentoId))
+                .Setup(r => r.ExistePorTipoAsync(dto.TipoDocumentoId))
                 .ReturnsAsync(true);
 
             // Act
@@ -155,10 +134,10 @@ namespace ApiSigestHC.Tests.Servicios
             // Assert
             Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.BadRequest, resultado.StatusCode);
-            Assert.Contains("Este documento ya está registrado como requerido.", resultado.ErrorMessages);
+            Assert.Contains("Este documento ya está registrado como requerido en otro estado.", resultado.ErrorMessages);
         }
 
-        //6. Error inesperado
+        //5. Error inesperado
         [Fact]
         public async Task CrearAsync_DeberiaRetornarInternalServerError_SiOcurreUnaExcepcion()
         {
