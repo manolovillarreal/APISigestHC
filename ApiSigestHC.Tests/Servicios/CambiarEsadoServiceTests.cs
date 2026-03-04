@@ -120,13 +120,29 @@ namespace ApiSigestHC.Tests.Servicios
         public async Task CambiarEstadoAsync_DebeActualizarEstadoYRegistrarCambio_SiTodoEsValido()
         {
             // Arrange
-            var atencion = new Atencion { Id = 1, EstadoAtencionId = 1 };
+            var atencion = new Atencion 
+            { 
+                Id = 1, 
+                EstadoAtencionId = 1,
+                Documentos = new List<Documento>() // Inicializar colección vacía
+            };
+
+            var atencionDto = new AtencionDto
+            {
+                Id = 1,
+                EstadoAtencionId = 2
+            };
+
             _atencionRepoMock.Setup(r => r.ObtenerAtencionPorIdAsync(1))
                 .ReturnsAsync(atencion);
             _usuarioContextMock.Setup(u => u.ObtenerRolNombre()).Returns("Admisiones");
             _usuarioContextMock.Setup(u => u.ObtenerUsuarioId()).Returns(123);
             _validacionDocServiceMock.Setup(v => v.ValidarDocumentosObligatoriosAsync(atencion))
                 .ReturnsAsync(new ResultadoValidacionDto { EsValido = true });
+            _estadoAtencionRepositorio.Setup(e => e.ObtenerPorIdAsync(2))
+                .ReturnsAsync(new EstadoAtencion { Id = 2, Nombre = "Consulta" });
+            _mapperMock.Setup(m => m.Map<AtencionDto>(It.IsAny<Atencion>()))
+                .Returns(atencionDto);
 
             var dto = new AtencionCambioEstadoDto
             {
@@ -136,17 +152,20 @@ namespace ApiSigestHC.Tests.Servicios
 
             // Act
             var respuesta = await _service.CambiarEstadoAsync(dto);
-            atencion.EstadoAtencionId = 2; 
+
             // Assert
             Assert.True(respuesta.Ok);
             Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
-            Assert.Equal(atencion, respuesta.Result);
+            Assert.NotNull(respuesta.Result);
+            
+            var resultado = Assert.IsType<AtencionDto>(respuesta.Result);
+            Assert.Equal(1, resultado.Id);
 
             _cambioEstadoRepoMock.Verify(c => c.RegistrarCambioAsync(It.Is<CambioEstado>(
                 ce => ce.AtencionId == 1 && ce.EstadoNuevo == 2 && ce.UsuarioId == 123
             )), Times.Once);
 
-            _atencionRepoMock.Verify(a => a.EditarAtencionAsync(atencion), Times.Once);
+            _atencionRepoMock.Verify(a => a.EditarAtencionAsync(It.Is<Atencion>(at => at.EstadoAtencionId == 2)), Times.Once);
         }
 
 
