@@ -27,7 +27,13 @@ namespace ApiSigestHC.Tests.Servicios
         {
             _usuarioRepoMock = new Mock<IUsuarioRepositorio>();
             _usuarioContextServiceMock = new Mock<IUsuarioContextService>();
+            _configMock = new Mock<IConfiguration>();
             _mapperMock = new Mock<IMapper>();
+            
+            // Setup de configuración del secret para JWT
+            _configMock.Setup(c => c.GetSection("ApiSettings:Secret").Value)
+                       .Returns("este_es_un_secret_key_muy_largo_para_jwt_con_minimo_32_caracteres");
+            
             _service = new UsuarioService(_usuarioRepoMock.Object,_usuarioContextServiceMock.Object,_configMock.Object ,_mapperMock.Object);
         }
 
@@ -118,34 +124,48 @@ namespace ApiSigestHC.Tests.Servicios
         [Fact]
         public async Task LoginAsync_CredencialesValidas_DeberiaRetornarTokenYUsuario()
         {
+            // Arrange
             var dto = new UsuarioLoginDto { NombreUsuario = "admin", Password = "123" };
-            var usuario = new UsuarioDto { Id = 1 };
-            var respuestaLogin = new UsuarioLoginRespuestaDto { Usuario = usuario, Token = "abc123" };
-            var usuarioDto = new UsuarioDto { Id = 1 };
+            var usuario = new Usuario 
+            { 
+                Id = 1, 
+                NombreUsuario = "admin", 
+                RolId = 1,
+                Rol = new Rol { Id = 1, Nombre = "Admin" } // Mockear la relación
+            };
+            var usuarioDto = new UsuarioDto { Id = 1, NombreUsuario = "admin" };
 
-            //_usuarioRepoMock.Setup(r => r.ObtenerPorCredencialesAsync(dto.NombreUsuario,dto.Password)).ReturnsAsync(usuario);
+            _usuarioRepoMock.Setup(r => r.ObtenerPorCredencialesAsync(dto.NombreUsuario, dto.Password))
+                            .ReturnsAsync(usuario);
             _mapperMock.Setup(m => m.Map<UsuarioDto>(usuario)).Returns(usuarioDto);
 
+            // Act
             var resultado = await _service.LoginAsync(dto);
 
+            // Assert
             Assert.True(resultado.Ok);
             Assert.Equal(HttpStatusCode.OK, resultado.StatusCode);
+            Assert.NotNull(resultado.Result);
 
-            UsuarioLoginRespuestaDto resultObj = (UsuarioLoginRespuestaDto)resultado.Result!;
-            Assert.Equal("abc123", resultObj.Token);
+            var resultObj = Assert.IsType<UsuarioLoginRespuestaDto>(resultado.Result);
+            Assert.NotNull(resultObj.Token);
+            Assert.NotEmpty(resultObj.Token);
             Assert.Equal(usuarioDto.Id, resultObj.Usuario.Id);
         }
 
         [Fact]
         public async Task LoginAsync_CredencialesInvalidas_DeberiaRetornarBadRequest()
         {
+            // Arrange
             var dto = new UsuarioLoginDto { NombreUsuario = "admin", Password = "wrong" };
-            var respuestaLogin = new UsuarioLoginRespuestaDto { Usuario = null, Token = "" };
 
-            //_usuarioRepoMock.Setup(r => r.Login(dto)).ReturnsAsync(respuestaLogin);
+            _usuarioRepoMock.Setup(r => r.ObtenerPorCredencialesAsync(dto.NombreUsuario, dto.Password))
+                            .ReturnsAsync((Usuario)null);
 
+            // Act
             var resultado = await _service.LoginAsync(dto);
 
+            // Assert
             Assert.False(resultado.Ok);
             Assert.Equal(HttpStatusCode.BadRequest, resultado.StatusCode);
             Assert.Contains("incorrectos", resultado.ErrorMessages[0]);
