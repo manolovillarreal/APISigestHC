@@ -58,7 +58,7 @@ namespace ApiSigestHC.Tests.Servicios
             // Arrange
             var archivoMock = new Mock<IFormFile>();
             var content = "Contenido falso";
-            var fileName = "archivo.pdf";
+            var fileName = "archivo.txt"; // Cambiado a .txt
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(content));
 
             archivoMock.Setup(f => f.FileName).Returns(fileName);
@@ -98,7 +98,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             // Assert
             Assert.NotNull(resultado);
-            Assert.Equal("1_HC_1_20240510.pdf", resultado.NombreArchivo);
+            Assert.Equal("1_HC_1_20240510.txt", resultado.NombreArchivo); // Actualizado con .txt
 
             // Verificar ruta relativa
             var year = atencion.Fecha.Year.ToString();
@@ -274,7 +274,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             // Creamos la estructura de carpetas y el archivo original
             var rutaRelativa = Path.Combine("docs", "2025", "06", "000001", "1_20250614");
-            var nombreArchivo = "TD_1_20250614.pdf";
+            var nombreArchivo = "TD_1_20250614.txt"; // Cambiado a .txt
             var absDir = Path.Combine(_basePath, rutaRelativa);
             Directory.CreateDirectory(absDir);
             var absPath = Path.Combine(absDir, nombreArchivo);
@@ -288,9 +288,10 @@ namespace ApiSigestHC.Tests.Servicios
                 NombreArchivo = nombreArchivo
             };
 
-            // Simulamos el nuevo IFormFile
+            // Simulamos el nuevo IFormFile con extension .txt
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(newContent));
             var fileMock = new Mock<IFormFile>();
+            fileMock.Setup(f => f.FileName).Returns("nuevo.txt");
             fileMock.Setup(f => f.Length).Returns(ms.Length);
             fileMock.Setup(f => f.CopyToAsync(It.IsAny<Stream>(), default))
                     .Returns<Stream, CancellationToken>((stream, _) => ms.CopyToAsync(stream));
