@@ -29,6 +29,26 @@ namespace ApiSigestHC.Controllers
             _documentoRepo = documentoRepo;
         }
 
+        [HttpGet("papelera/{atencionId}")]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> ObtenerPapelera(int atencionId)
+        {
+            var respuesta = await _documentoService.ObtenerPapeleraAsync(atencionId);
+            return StatusCode((int)respuesta.StatusCode, respuesta);
+        }
+
+        [HttpPost("{documentoId}/restaurar")]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status409Conflict)]
+        public async Task<IActionResult> RestaurarDocumento(int documentoId)
+        {
+            var respuesta = await _documentoService.RestaurarDocumentoAsync(documentoId);
+            return StatusCode((int)respuesta.StatusCode, respuesta);
+        }
+
 
         [HttpGet("por-atencion/{atencionId}")]
         [ProducesResponseType(typeof(RespuestaAPI), StatusCodes.Status200OK)]
@@ -37,6 +57,16 @@ namespace ApiSigestHC.Controllers
         public async Task<IActionResult> ObtenerDocumentosPorAtencion(int atencionId)
         {
             var respuesta = await _documentoService.ObtenerDocumentosPorAtencionAsync(atencionId);
+            return StatusCode((int)respuesta.StatusCode, respuesta);
+        }
+
+        [HttpPost("importar-documento-identidad/{atencionId}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RespuestaAPI))]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ImportarDocumentoIdentidad(int atencionId)
+        {
+            var respuesta = await _documentoService.ImportarDocumentoIdentidadAsync(atencionId);
             return StatusCode((int)respuesta.StatusCode, respuesta);
         }
 

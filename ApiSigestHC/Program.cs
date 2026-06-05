@@ -1,14 +1,15 @@
 using ApiSigestHC.Data;
 using ApiSigestHC.Mappers;
-using ApiSigestHC.Repositorio.IRepositorio;
 using ApiSigestHC.Repositorio;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Microsoft.OpenApi.Models;
-using ApiSigestHC.Servicios.IServicios;
+using ApiSigestHC.Repositorio.IRepositorio;
 using ApiSigestHC.Servicios;
+using ApiSigestHC.Servicios.IServicios;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Text;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +24,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddEndpointsApiExplorer();
 
 //Repositorios
+builder.Services.AddScoped<IConfiguracionRepositorio, ConfiguracionRepositorio>();
 builder.Services.AddScoped<IAtencionRepositorio, AtencionRepositorio>();
 builder.Services.AddScoped<IMotivoAnulacionAtencionRepositorio, MotivoAnulacionAtencionRepositorio>();
 builder.Services.AddScoped<ICambioEstadoRepositorio,CambioEstadoRepositorio>();
@@ -38,6 +40,7 @@ builder.Services.AddScoped<ITipoDocumentoRolRepositorio,TipoDocumentoRolReposito
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 
 //Servicios
+builder.Services.AddScoped<IConfiguracionService, ConfiguracionService>();
 builder.Services.AddScoped<IAlmacenamientoArchivoService,AlmacenamientoArchivoService>();
 builder.Services.AddScoped<ICambioEstadoService,CambioEstadoService>();
 builder.Services.AddScoped<IDocumentoRequeridoService,DocumentoRequeridoService>();
@@ -69,7 +72,7 @@ builder.Services.AddCors(p => p.AddPolicy("PoliticaCors", build =>
 var key = builder.Configuration.GetValue<string>("ApiSettings:Secret");
 
 //Agregamos el AutoMapper
-builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
+builder.Services.AddAutoMapper(cfg => { }, typeof(AutoMapperProfile).Assembly);
 
 builder.Services.AddAuthentication(
         x =>
@@ -95,7 +98,7 @@ builder.Services.AddSwaggerGen(c =>
     // Otras configuraciones
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Mi API", Version = "v1" });
 
-    // Configuración para usar JWT Bearer Token
+    // Configuraciï¿½n para usar JWT Bearer Token
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",

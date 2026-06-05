@@ -5,6 +5,9 @@ using ApiSigestHC.Servicios.IServicios;
 using AutoMapper;
 using System.Net;
 using Microsoft.AspNetCore.Mvc;
+using System.IO;
+using System;
+using System.Linq;
 
 namespace ApiSigestHC.Servicios
 {
@@ -18,6 +21,8 @@ namespace ApiSigestHC.Servicios
         private readonly IValidacionCargaArchivoService _validacionCargaDocumentoService;
         private readonly IUsuarioContextService _usuarioContextService;
         private readonly IMapper _mapper;
+        private readonly IAtencionRepositorio _atencionRepo;
+        private readonly IUsuarioRepositorio _usuarioRepo;
 
         public DocumentoService(
         IAlmacenamientoArchivoService almacenamientoArchivoService,
@@ -26,6 +31,8 @@ namespace ApiSigestHC.Servicios
         IDocumentoRepositorio documentoRepo,
         ITipoDocumentoRolRepositorio tipoDocumentoRepo,
         IUsuarioContextService usuarioContextService,
+        IAtencionRepositorio atencionRepo,
+        IUsuarioRepositorio usuarioRepo,
         IMapper mapper)
         {
             _almacenamientoArchivoService = almacenamientoArchivoService;
@@ -34,7 +41,222 @@ namespace ApiSigestHC.Servicios
             _documentoRepo = documentoRepo;
             _tipoDocumentoRolRepo = tipoDocumentoRepo;
             _usuarioContextService = usuarioContextService;
+            _atencionRepo = atencionRepo;
+            _usuarioRepo = usuarioRepo;
             _mapper = mapper;
+        }
+
+        public async Task<RespuestaAPI> ImportarDocumentoIdentidadAsync(int atencionId)
+        {
+            try
+            {
+                // 1. Obtener atencion destino
+                var atencionDestino = await _atencionRepo.ObtenerAtencionPorIdAsync(atencionId);
+                if (atencionDestino == null)
+                    return new RespuestaAPI { Ok = false, StatusCode = HttpStatusCode.NotFound, ErrorMessages = new List<string> { "Atención destino no encontrada." } };
+
+                var pacienteId = atencionDestino.PacienteId;
+                if (string.IsNullOrEmpty(pacienteId))
+                    return new RespuestaAPI { Ok = false, StatusCode = HttpStatusCode.BadRequest, ErrorMessages = new List<string> { "La atención destino no tiene paciente asociado." } };
+
+                // 2. Obtener atenciones anteriores del paciente
+                var atencionesPrevias = await _atencionRepo.ObtenerAtencionesPorPacienteAsync(pacienteId, atencionId);
+                if (atencionesPrevias == null || !atencionesPrevias.Any())
+                    return new RespuestaAPI { Ok = false, StatusCode = HttpStatusCode.NoContent };
+
+                var atencionIds = atencionesPrevias.Select(a => a.Id).ToList();
+
+                // 3. Buscar documentos tipo ID en atenciones previas
+                var documentosPrevios = await _documentoRepo.ObtenerPorAtencionesAsync(atencionIds);
+                var documentoIdOrigen = documentosPrevios.FirstOrDefault(d => d.TipoDocumento != null && d.TipoDocumento.Codigo == "ID" && d.FechaEliminacion == null);
+
+                if (documentoIdOrigen == null)
+                {
+                    return new RespuestaAPI { Ok = false, StatusCode = HttpStatusCode.NoContent };
+                }
+
+                var origen = documentoIdOrigen;
+
+                // 4. Copiar archivo físico
+                var rutaOrigen = Path.Combine(origen.RutaBase, origen.RutaRelativa, origen.NombreArchivo);
+                if (!File.Exists(rutaOrigen))
+                {
+                    return new RespuestaAPI { Ok = false, StatusCode = HttpStatusCode.NotFound, ErrorMessages = new List<string> { "Archivo origen no encontrado." } };
+                }
+
+                // Crear carpeta destino siguiendo patrón de atencion destino
+                var fecha = atencionDestino.Fecha;
+                var year = fecha.Year.ToString();
+                var mes = fecha.Month.ToString("D2");
+                var nroDocumentoPaciente = atencionDestino.PacienteId ?? "000000";
+                var carpetaFinal = $"{atencionDestino.Id}_{fecha:yyyyMMdd}";
+                var rutaCarpetaRelativa = Path.Combine("documentos", year, mes, nroDocumentoPaciente, carpetaFinal);
+                var rutaBase = origen.RutaBase; // use same base as origen
+                var rutaCarpetaAbsoluta = Path.Combine(rutaBase, rutaCarpetaRelativa);
+                if (!Directory.Exists(rutaCarpetaAbsoluta))
+                    Directory.CreateDirectory(rutaCarpetaAbsoluta);
+
+                // Generar nuevo nombre único
+                var extension = Path.GetExtension(origen.NombreArchivo);
+                var nuevoNombre = $"{Guid.NewGuid()}{extension}";
+                var rutaDestino = Path.Combine(rutaCarpetaAbsoluta, nuevoNombre);
+
+                File.Copy(rutaOrigen, rutaDestino, overwrite: false);
+
+                // 5. Crear nuevo registro Documento en BD
+                var nuevo = new Documento
+                {
+                    AtencionId = atencionId,
+                    TipoDocumentoId = origen.TipoDocumentoId,
+                    NombreArchivo = nuevoNombre,
+                    RutaRelativa = rutaCarpetaRelativa.Replace("\\", "/"),
+                    RutaBase = rutaBase.Replace("\\", "/"),
+                    FechaCarga = DateTime.Now,
+                    UsuarioId = _usuarioContextService.ObtenerUsuarioId(),
+                    Fecha = origen.Fecha,
+                    TamanoBytes = new FileInfo(rutaDestino).Length,
+                    NumeroPaginas = origen.NumeroPaginas
+                };
+
+                await _documentoRepo.GuardarAsync(nuevo);
+
+                var documentoBd = await _documentoRepo.ObtenerPorIdAsync(nuevo.Id);
+                var dto = _mapper.Map<DocumentoDto>(documentoBd);
+
+                return new RespuestaAPI { Ok = true, StatusCode = HttpStatusCode.OK, Result = dto };
+            }
+            catch (Exception ex)
+            {
+                return new RespuestaAPI { Ok = false, StatusCode = HttpStatusCode.InternalServerError, ErrorMessages = new List<string> { "Error interno al importar documento.", ex.Message } };
+            }
+        }
+
+        public async Task<RespuestaAPI> ObtenerPapeleraAsync(int atencionId)
+        {
+            try
+            {
+                var documentos = await _documentoRepo.ObtenerEliminadosPorAtencionAsync(atencionId);
+                var atencion = await _atencionRepo.ObtenerAtencionPorIdAsync(atencionId);
+                var rolNombre = _usuarioContextService.ObtenerRolNombre();
+                var usuarioId = _usuarioContextService.ObtenerUsuarioId();
+
+                bool esAdministrador = !string.IsNullOrEmpty(rolNombre) && (
+                    rolNombre.Equals("Admin", StringComparison.OrdinalIgnoreCase) ||
+                    rolNombre.Equals("Administrador", StringComparison.OrdinalIgnoreCase) ||
+                    rolNombre.Equals("Auditoria", StringComparison.OrdinalIgnoreCase) ||
+                    rolNombre.Equals("Auditoría", StringComparison.OrdinalIgnoreCase)
+                );
+
+                var resultList = new List<object>();
+
+                foreach (var d in documentos)
+                {
+                    if (esAdministrador || (d.UsuarioEliminacion.HasValue && d.UsuarioEliminacion.Value == usuarioId && (atencion?.EstadoAtencionId ?? int.MaxValue) <= 4))
+                    {
+                        ApiSigestHC.Modelos.Usuario usuarioElim = null;
+                        if (d.UsuarioEliminacion.HasValue)
+                        {
+                            usuarioElim = await _usuarioRepo.GetUsuarioAsync(d.UsuarioEliminacion.Value);
+                        }
+
+                        resultList.Add(new
+                        {
+                            id = d.Id,
+                            nombreArchivo = d.NombreArchivo,
+                            tipoDocumentoId = d.TipoDocumentoId,
+                            tipoDocumento = d.TipoDocumento == null ? null : new {
+                                id = d.TipoDocumento.Id,
+                                nombre = d.TipoDocumento.Nombre,
+                                esAsistencial = d.TipoDocumento.EsAsistencial,
+                                extensionPermitida = d.TipoDocumento.ExtensionPermitida
+                            },
+                            atencion = d.Atencion == null ? null : new {
+                                id = d.Atencion.Id,
+                                paciente = d.Atencion.Paciente == null ? null : new {
+                                    nombre = (d.Atencion.Paciente.PrimerNombre ?? "") + " " + (d.Atencion.Paciente.SegundoNombre ?? ""),
+                                    apellidos = (d.Atencion.Paciente.PrimerApellido ?? "") + " " + (d.Atencion.Paciente.SegundoApellido ?? ""),
+                                    numeroDocumento = d.Atencion.Paciente.Id
+                                }
+                            },
+                            fecha = d.Fecha,
+                            fechaCarga = d.FechaCarga,
+                            rutaRelativa = d.RutaRelativa,
+                            usuario = d.Usuario == null ? null : new {
+                                nombre = d.Usuario.Nombre,
+                                apellidos = d.Usuario.Apellidos,
+                                nombreUsuario = d.Usuario.NombreUsuario
+                            },
+                            fechaEliminacion = d.FechaEliminacion,
+                            usuarioEliminacion = d.UsuarioEliminacion,
+                            usuarioEliminacionNombre = usuarioElim == null ? null : new {
+                                nombre = usuarioElim.Nombre,
+                                apellidos = usuarioElim.Apellidos,
+                                nombreUsuario = usuarioElim.NombreUsuario
+                            }
+                        });
+                    }
+                }
+
+                return new RespuestaAPI { Ok = true, StatusCode = HttpStatusCode.OK, Result = resultList };
+            }
+            catch (Exception ex)
+            {
+                return new RespuestaAPI { Ok = false, StatusCode = HttpStatusCode.InternalServerError, ErrorMessages = new List<string> { "Error interno al obtener la papelera.", ex.Message } };
+            }
+        }
+
+        public async Task<RespuestaAPI> RestaurarDocumentoAsync(int documentoId)
+        {
+            try
+            {
+                var documento = await _documentoRepo.ObtenerPorIdAsync(documentoId);
+                if (documento == null)
+                {
+                    return new RespuestaAPI { Ok = false, StatusCode = HttpStatusCode.NotFound, ErrorMessages = new List<string> { $"Documento con id {documentoId} no encontrado." } };
+                }
+
+                var atencion = await _atencionRepo.ObtenerAtencionPorIdAsync(documento.AtencionId);
+                var rolNombre = _usuarioContextService.ObtenerRolNombre();
+                var usuarioId = _usuarioContextService.ObtenerUsuarioId();
+
+                bool esAdministrador = !string.IsNullOrEmpty(rolNombre) && (
+                    rolNombre.Equals("Admin", StringComparison.OrdinalIgnoreCase) ||
+                    rolNombre.Equals("Administrador", StringComparison.OrdinalIgnoreCase) ||
+                    rolNombre.Equals("Auditoria", StringComparison.OrdinalIgnoreCase) ||
+                    rolNombre.Equals("Auditoría", StringComparison.OrdinalIgnoreCase)
+                );
+
+                if (!esAdministrador && !(documento.UsuarioEliminacion.HasValue && documento.UsuarioEliminacion.Value == usuarioId && (atencion?.EstadoAtencionId ?? int.MaxValue) <= 4))
+                {
+                    return new RespuestaAPI { Ok = false, StatusCode = HttpStatusCode.Forbidden, ErrorMessages = new List<string> { "No tiene permisos para restaurar este documento." } };
+                }
+
+                var tipoDoc = documento.TipoDocumento ?? new TipoDocumento();
+                if (!tipoDoc.PermiteMultiples)
+                {
+                    var existe = await _documentoRepo.ExisteDocumentoAsync(documento.AtencionId, documento.TipoDocumentoId);
+                    if (existe)
+                    {
+                        return new RespuestaAPI { Ok = false, StatusCode = HttpStatusCode.Conflict, ErrorMessages = new List<string> { "Ya existe un documento activo de este tipo en la atención." } };
+                    }
+                }
+
+                if (documento.SolicitudesCorreccion != null && documento.SolicitudesCorreccion.Any(s => s.EstadoCorreccionId != 3))
+                {
+                    return new RespuestaAPI { Ok = false, StatusCode = HttpStatusCode.BadRequest, ErrorMessages = new List<string> { "No se puede restaurar el documento porque tiene solicitudes de corrección pendientes." } };
+                }
+
+                documento.FechaEliminacion = null;
+                documento.UsuarioEliminacion = null;
+
+                await _documentoRepo.ActualizarAsync(documento);
+
+                return new RespuestaAPI { Ok = true, StatusCode = HttpStatusCode.OK, Result = "Documento restaurado correctamente" };
+            }
+            catch (Exception ex)
+            {
+                return new RespuestaAPI { Ok = false, StatusCode = HttpStatusCode.InternalServerError, ErrorMessages = new List<string> { "Error interno al restaurar documento.", ex.Message } };
+            }
         }
 
         public async Task<RespuestaAPI> ObtenerDocumentosPorAtencionAsync(int atencionId)
@@ -386,6 +608,14 @@ namespace ApiSigestHC.Servicios
                     respuesta.Ok = false;
                     respuesta.StatusCode = HttpStatusCode.BadRequest;
                     respuesta.ErrorMessages.Add($"El documento ya fue eliminado el {documento.FechaEliminacion:yyyy-MM-dd HH:mm}");
+                    return respuesta;
+                }
+                // Validar que no existan solicitudes de corrección pendientes o respondidas
+                if (documento.SolicitudesCorreccion != null && documento.SolicitudesCorreccion.Any(s => s.EstadoCorreccionId != 3))
+                {
+                    respuesta.Ok = false;
+                    respuesta.StatusCode = HttpStatusCode.BadRequest;
+                    respuesta.ErrorMessages.Add("No se puede eliminar un documento con solicitudes de corrección pendientes.");
                     return respuesta;
                 }
 

@@ -7,6 +7,7 @@ using ApiSigestHC.Servicios.IServicios;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -25,7 +26,7 @@ namespace ApiSigestHC.Repositorio
         public async Task<IEnumerable<Documento>> ObtenerPorAtencionIdAsync(int atencionId)
         {
             return await _db.Documentos
-                .Where(d => d.AtencionId == atencionId)
+                .Where(d => d.AtencionId == atencionId && d.FechaEliminacion == null)
                 .Include(d => d.Usuario)
                     .ThenInclude(u=>u.Rol)
                 .Include(d => d.SolicitudesCorreccion
@@ -55,6 +56,7 @@ namespace ApiSigestHC.Repositorio
                 .Include(d => d.Usuario)
                     .ThenInclude(u => u.Rol)
                 .Where(d => d.AtencionId == atencionId &&
+                            d.FechaEliminacion == null &&
                             _db.TipoDocumentoRoles.Any(tdr =>
                                 tdr.TipoDocumentoId == d.TipoDocumentoId &&
                                 tdr.RolId == rolId &&
@@ -116,9 +118,11 @@ namespace ApiSigestHC.Repositorio
         }
         public async Task<bool> ExisteDocumentoAsync(int atencionId, int tipoDocumentoId)
         {
+            // Consider only active (not deleted) documents
             return await _db.Documentos.AnyAsync(d =>
                 d.AtencionId == atencionId &&
-                d.TipoDocumentoId == tipoDocumentoId);
+                d.TipoDocumentoId == tipoDocumentoId &&
+                d.FechaEliminacion == null);
         }
         public async Task<bool> ExistenDelTipoAsync(int tipoDocumentoId)
         {
@@ -129,6 +133,28 @@ namespace ApiSigestHC.Repositorio
         {
             return await _db.Documentos
                 .CountAsync(d => d.AtencionId == atencionId && d.TipoDocumentoId == tipoDocumentoId);
+        }
+
+        public async Task<IEnumerable<Documento>> ObtenerPorAtencionesAsync(IEnumerable<int> atencionIds)
+        {
+            return await _db.Documentos
+                .Where(d => atencionIds.Contains(d.AtencionId) && d.FechaEliminacion == null)
+                .Include(d => d.TipoDocumento)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Documento>> ObtenerEliminadosPorAtencionAsync(int atencionId)
+        {
+            return await _db.Documentos
+                .Where(d => d.AtencionId == atencionId && d.FechaEliminacion != null)
+                .Include(d => d.Usuario)
+                    .ThenInclude(u => u.Rol)
+                .Include(d => d.Atencion)
+                    .ThenInclude(a => a.Paciente)
+                .Include(d => d.TipoDocumento)
+                .Include(d => d.SolicitudesCorreccion
+                    .Where(s => s.EstadoCorreccionId != 3)) // solo trae las pendientes
+                .ToListAsync();
         }
 
       

@@ -21,6 +21,10 @@ namespace ApiSigestHC.Tests.Controllers
         private readonly Mock<IDocumentoService> _documentoServiceMock;
         private readonly Mock<IThumbnailPdfService> _thumbnailPdfServiceMock;
         private readonly Mock<IDocumentoRepositorio> _documentoRepoMock;
+        private readonly Mock<IAtencionRepositorio> _atencionRepoMock;
+        private readonly Mock<IUsuarioContextService> _usuarioContextMock;
+        private readonly Mock<IUsuarioRepositorio> _usuarioRepoMock;
+        private readonly Mock<IMapper> _mapperMock;
         private readonly Mock<IFormFile> _formFileMock;
 
         private readonly DocumentosController _controller;
@@ -30,6 +34,10 @@ namespace ApiSigestHC.Tests.Controllers
             _documentoServiceMock = new Mock<IDocumentoService>();
             _thumbnailPdfServiceMock = new Mock<IThumbnailPdfService>();
             _documentoRepoMock = new Mock<IDocumentoRepositorio>();
+            _atencionRepoMock = new Mock<IAtencionRepositorio>();
+            _usuarioContextMock = new Mock<IUsuarioContextService>();
+            _usuarioRepoMock = new Mock<IUsuarioRepositorio>();
+            _mapperMock = new Mock<IMapper>();
             _formFileMock = new Mock<IFormFile>();
 
             _controller = new DocumentosController(

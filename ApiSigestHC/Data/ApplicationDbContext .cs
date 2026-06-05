@@ -24,6 +24,7 @@ namespace ApiSigestHC.Data
         public DbSet<Usuario> Usuarios { get; set; }
         public DbSet<PermisoRolEstadoAtencion> PermisosRolAtencion { get; set; }
         public DbSet<IngresoUrgencias> IngresosUrgencias { get; set; }
+        public DbSet<Configuracion> Configuraciones { get; set; }
 
         public DbSet<UbicacionPacienteDto> UltimasUbicaciones { get; set; }
 

@@ -4,6 +4,7 @@ using ApiSigestHC.Modelos.Dtos;
 using ApiSigestHC.Repositorio.IRepositorio;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
+using System.Linq;
 
 namespace ApiSigestHC.Repositorio
 {
@@ -142,6 +143,20 @@ namespace ApiSigestHC.Repositorio
                 return atenciones.Where(a => filtro.EstadosPermitidos.Contains(a.EstadoAtencionId));
             }         
         
+
+        public async Task<IEnumerable<Atencion>> ObtenerAtencionesPorPacienteAsync(string pacienteId, int excluirAtencionId)
+        {
+            if (string.IsNullOrEmpty(pacienteId))
+                return Enumerable.Empty<Atencion>();
+
+            return await _db.Atenciones
+                .Where(a => a.PacienteId == pacienteId && a.Id != excluirAtencionId && a.FechaAnulacion == null)
+                .Include(a => a.Paciente)
+                .Include(a => a.Documentos)
+                    .ThenInclude(d => d.TipoDocumento)
+                .OrderByDescending(a => a.Fecha)
+                .ToListAsync();
+        }
 
     }
 }

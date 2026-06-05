@@ -23,13 +23,15 @@ namespace ApiSigestHC.Servicios
         private readonly ITipoDocumentoRepositorio _tipoDocumentoRepo;
         private readonly IUsuarioRepositorio _usuarioRepo;
         private readonly IUsuarioContextService _usuarioContext;
+        private readonly IConfiguracionService _configuracionService;
 
-        public AlmacenamientoArchivoService(IWebHostEnvironment env, 
+        public AlmacenamientoArchivoService(IWebHostEnvironment env,
                                             IDocumentoRepositorio documentoRepo,
                                             ITipoDocumentoRepositorio tipoDocumentoRepositorio,
                                             IAtencionRepositorio atencionRepo,
                                             IUsuarioRepositorio usuarioRepo,
-                                            IUsuarioContextService usuarioContext   )
+                                            IUsuarioContextService usuarioContext,
+                                            IConfiguracionService configuracionService)
         {
             _env = env;
             _documentoRepo = documentoRepo;
@@ -37,6 +39,7 @@ namespace ApiSigestHC.Servicios
             _tipoDocumentoRepo = tipoDocumentoRepositorio;
             _usuarioRepo = usuarioRepo;
             _usuarioContext = usuarioContext;
+            _configuracionService = configuracionService;
         }
 
         public async Task<ResultadoGuardadoArchivo> GuardarArchivoAsync(DocumentoCargarDto dto, int documentoId)
@@ -64,8 +67,9 @@ namespace ApiSigestHC.Servicios
                 var nroDocumentoPaciente = atencion.PacienteId ?? "000000";
                 var carpetaFinal = $"{atencion.Id}_{fecha:yyyyMMdd}";
                 var rutaCarpetaRelativa = Path.Combine("documentos", year, mes, nroDocumentoPaciente, carpetaFinal);
-                var rutaBase = _env.ContentRootPath;
-                var rutaCarpetaAbsoluta = Path.Combine(_env.ContentRootPath, rutaCarpetaRelativa);
+                var rutaBase = await _configuracionService.ObtenerValorAsync("ruta_base_documentos")
+                    ?? _env.ContentRootPath;
+                var rutaCarpetaAbsoluta = Path.Combine(rutaBase, rutaCarpetaRelativa);
 
                 if (!Directory.Exists(rutaCarpetaAbsoluta))
                     Directory.CreateDirectory(rutaCarpetaAbsoluta);

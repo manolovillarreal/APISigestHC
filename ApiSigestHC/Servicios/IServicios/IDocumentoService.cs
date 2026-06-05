@@ -7,6 +7,8 @@ namespace ApiSigestHC.Servicios.IServicios
     public interface IDocumentoService
     {
         Task<RespuestaAPI> ObtenerDocumentosPorAtencionAsync(int atencionId);
+        Task<RespuestaAPI> ObtenerPapeleraAsync(int atencionId);
+        Task<RespuestaAPI> RestaurarDocumentoAsync(int documentoId);
         Task<RespuestaAPI> CargarDocumentoAsync(DocumentoCargarDto dto);
         Task<RespuestaAPI> EditarDocumentoAsync(DocumentoEditarDto dto);
         Task<RespuestaAPI> ReemplazarDocumentoPorFirma(DocumentoReemplazarDto dto , int documentoId);
@@ -15,6 +17,7 @@ namespace ApiSigestHC.Servicios.IServicios
         Task<RespuestaAPI> EliminarDocumentoAsync(int documentoId);
         Task<IActionResult> DescargarDocumentoAsync(int documentoId);
         Task<IActionResult> VerDocumentoAsync(int documentoId);
+        Task<RespuestaAPI> ImportarDocumentoIdentidadAsync(int atencionId);
 
 
 

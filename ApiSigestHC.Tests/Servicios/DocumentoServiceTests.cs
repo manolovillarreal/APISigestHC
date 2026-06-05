@@ -2,6 +2,7 @@
 using Moq;
 using System.Net;
 using System.Threading.Tasks;
+using System.Linq;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using System.Collections.Generic;
@@ -27,6 +28,8 @@ namespace ApiSigestHC.Tests.Servicios
         private readonly Mock<IFormFile> _formFileMock;
 
         private readonly Mock<IMapper> _mapperMock;
+        private readonly Mock<IAtencionRepositorio> _atencionRepoMock;
+        private readonly Mock<IUsuarioRepositorio> _usuarioRepoMock;
 
         private readonly DocumentoService _documentoService;
 
@@ -38,6 +41,8 @@ namespace ApiSigestHC.Tests.Servicios
             _documentoRepoMock = new Mock<IDocumentoRepositorio>();
             _tipoDocumentoRolRepoMock = new Mock<ITipoDocumentoRolRepositorio>();
             _usuarioContextServiceMock = new Mock<IUsuarioContextService>();
+            _atencionRepoMock = new Mock<IAtencionRepositorio>();
+            _usuarioRepoMock = new Mock<IUsuarioRepositorio>();
             _formFileMock = new Mock<IFormFile>();
             _mapperMock = new Mock<IMapper>();
 
@@ -48,6 +53,8 @@ namespace ApiSigestHC.Tests.Servicios
                 _documentoRepoMock.Object,
                 _tipoDocumentoRolRepoMock.Object,
                 _usuarioContextServiceMock.Object,
+                _atencionRepoMock.Object,
+                _usuarioRepoMock.Object,
                 _mapperMock.Object
             );
 
@@ -107,6 +114,169 @@ namespace ApiSigestHC.Tests.Servicios
             Assert.Contains("Fallo interno", resultado.ErrorMessages.Last());
         }
 
+
+        #endregion
+
+        #region Papelera y Restaurar
+
+        [Fact]
+        public async Task ObtenerPapeleraAsync_AdminVeTodosLosEliminados()
+        {
+            // Arrange
+            int atencionId = 1;
+            var doc1 = new Documento { Id = 1, AtencionId = atencionId, NombreArchivo = "a.pdf", FechaEliminacion = DateTime.UtcNow, UsuarioEliminacion = 10, TipoDocumentoId = 2, TipoDocumento = new TipoDocumento { Id = 2, Nombre = "T1", EsAsistencial = false, ExtensionPermitida = "pdf" }, Usuario = new Usuario { Nombre = "Juan", Apellidos = "Perez", NombreUsuario = "jp" }, Fecha = DateTime.UtcNow, FechaCarga = DateTime.UtcNow };
+            var doc2 = new Documento { Id = 2, AtencionId = atencionId, NombreArchivo = "b.pdf", FechaEliminacion = DateTime.UtcNow, UsuarioEliminacion = 11, TipoDocumentoId = 3, TipoDocumento = new TipoDocumento { Id = 3, Nombre = "T2", EsAsistencial = true, ExtensionPermitida = "pdf" }, Usuario = new Usuario { Nombre = "Ana", Apellidos = "Gomez", NombreUsuario = "ag" }, Fecha = DateTime.UtcNow, FechaCarga = DateTime.UtcNow };
+
+            _documentoRepoMock.Setup(r => r.ObtenerEliminadosPorAtencionAsync(atencionId)).ReturnsAsync(new List<Documento> { doc1, doc2 });
+            _atencionRepoMock.Setup(r => r.ObtenerAtencionPorIdAsync(atencionId)).ReturnsAsync(new Atencion { Id = atencionId, EstadoAtencionId = 2 });
+            _usuarioContextServiceMock.Setup(u => u.ObtenerRolNombre()).Returns("Admin");
+            _usuarioRepoMock.Setup(u => u.GetUsuarioAsync(10)).ReturnsAsync(new Usuario { Nombre = "Elim", Apellidos = "Uno", NombreUsuario = "elim1" });
+            _usuarioRepoMock.Setup(u => u.GetUsuarioAsync(11)).ReturnsAsync(new Usuario { Nombre = "Elim", Apellidos = "Dos", NombreUsuario = "elim2" });
+
+            // Act
+            var resultado = await _documentoService.ObtenerPapeleraAsync(atencionId);
+
+            // Assert
+            Assert.True(resultado.Ok);
+            Assert.Equal(HttpStatusCode.OK, resultado.StatusCode);
+            var list = Assert.IsAssignableFrom<IEnumerable<object>>(resultado.Result);
+            Assert.Equal(2, list.Count());
+        }
+
+        [Fact]
+        public async Task ObtenerPapeleraAsync_UsuarioEliminadorVeSiEstadoMenorOIgual4()
+        {
+            int atencionId = 1;
+            var doc = new Documento { Id = 5, AtencionId = atencionId, NombreArchivo = "x.pdf", FechaEliminacion = DateTime.UtcNow, UsuarioEliminacion = 20, TipoDocumento = new TipoDocumento { Id = 5, Nombre = "T", EsAsistencial = false, ExtensionPermitida = "pdf" }, Usuario = new Usuario { Nombre = "Carg", Apellidos = "Uno", NombreUsuario = "c1" }, Fecha = DateTime.UtcNow, FechaCarga = DateTime.UtcNow };
+
+            _documentoRepoMock.Setup(r => r.ObtenerEliminadosPorAtencionAsync(atencionId)).ReturnsAsync(new List<Documento> { doc });
+            _atencionRepoMock.Setup(r => r.ObtenerAtencionPorIdAsync(atencionId)).ReturnsAsync(new Atencion { Id = atencionId, EstadoAtencionId = 3 });
+            _usuarioContextServiceMock.Setup(u => u.ObtenerRolNombre()).Returns("User");
+            _usuarioContextServiceMock.Setup(u => u.ObtenerUsuarioId()).Returns(20);
+            _usuarioRepoMock.Setup(u => u.GetUsuarioAsync(20)).ReturnsAsync(new Usuario { Nombre = "Elim", Apellidos = "Uno", NombreUsuario = "elim20" });
+
+            var resultado = await _documentoService.ObtenerPapeleraAsync(atencionId);
+
+            Assert.True(resultado.Ok);
+            var list = Assert.IsAssignableFrom<IEnumerable<object>>(resultado.Result);
+            Assert.Single(list);
+        }
+
+        [Fact]
+        public async Task ObtenerPapeleraAsync_UsuarioSinPermisosVeVacio()
+        {
+            int atencionId = 1;
+            var doc = new Documento { Id = 7, AtencionId = atencionId, NombreArchivo = "z.pdf", FechaEliminacion = DateTime.UtcNow, UsuarioEliminacion = 30 };
+
+            _documentoRepoMock.Setup(r => r.ObtenerEliminadosPorAtencionAsync(atencionId)).ReturnsAsync(new List<Documento> { doc });
+            _atencionRepoMock.Setup(r => r.ObtenerAtencionPorIdAsync(atencionId)).ReturnsAsync(new Atencion { Id = atencionId, EstadoAtencionId = 2 });
+            _usuarioContextServiceMock.Setup(u => u.ObtenerRolNombre()).Returns("User");
+            _usuarioContextServiceMock.Setup(u => u.ObtenerUsuarioId()).Returns(999); // different user
+
+            var resultado = await _documentoService.ObtenerPapeleraAsync(atencionId);
+
+            Assert.True(resultado.Ok);
+            var list = Assert.IsAssignableFrom<IEnumerable<object>>(resultado.Result);
+            Assert.Empty(list);
+        }
+
+        [Fact]
+        public async Task ObtenerPapeleraAsync_AtencionSinEliminados_RetornaVacio()
+        {
+            int atencionId = 2;
+            _documentoRepoMock.Setup(r => r.ObtenerEliminadosPorAtencionAsync(atencionId)).ReturnsAsync(new List<Documento>());
+            _atencionRepoMock.Setup(r => r.ObtenerAtencionPorIdAsync(atencionId)).ReturnsAsync(new Atencion { Id = atencionId, EstadoAtencionId = 1 });
+            _usuarioContextServiceMock.Setup(u => u.ObtenerRolNombre()).Returns("User");
+
+            var resultado = await _documentoService.ObtenerPapeleraAsync(atencionId);
+
+            Assert.True(resultado.Ok);
+            var list = Assert.IsAssignableFrom<IEnumerable<object>>(resultado.Result);
+            Assert.Empty(list);
+        }
+
+        [Fact]
+        public async Task RestaurarDocumentoAsync_Exito_LimpiaCampos()
+        {
+            int docId = 100;
+            var documento = new Documento { Id = docId, AtencionId = 1, FechaEliminacion = DateTime.UtcNow, UsuarioEliminacion = 50, TipoDocumentoId = 2, TipoDocumento = new TipoDocumento { Id = 2, PermiteMultiples = true }, SolicitudesCorreccion = new List<SolicitudCorreccion>() };
+
+            _documentoRepoMock.Setup(r => r.ObtenerPorIdAsync(docId)).ReturnsAsync(documento);
+            _atencionRepoMock.Setup(r => r.ObtenerAtencionPorIdAsync(documento.AtencionId)).ReturnsAsync(new Atencion { Id = documento.AtencionId, EstadoAtencionId = 2 });
+            _usuarioContextServiceMock.Setup(u => u.ObtenerRolNombre()).Returns("User");
+            _usuarioContextServiceMock.Setup(u => u.ObtenerUsuarioId()).Returns(50);
+            _documentoRepoMock.Setup(r => r.ActualizarAsync(documento)).Returns(Task.CompletedTask);
+
+            var resultado = await _documentoService.RestaurarDocumentoAsync(docId);
+
+            Assert.True(resultado.Ok);
+            Assert.Equal(HttpStatusCode.OK, resultado.StatusCode);
+            Assert.Null(documento.FechaEliminacion);
+            Assert.Null(documento.UsuarioEliminacion);
+        }
+
+        [Fact]
+        public async Task RestaurarDocumentoAsync_PermiteMultiplesFalse_YaExiste_Conflict()
+        {
+            int docId = 101;
+            var documento = new Documento { Id = docId, AtencionId = 1, FechaEliminacion = DateTime.UtcNow, UsuarioEliminacion = 60, TipoDocumentoId = 3, TipoDocumento = new TipoDocumento { Id = 3, PermiteMultiples = false }, SolicitudesCorreccion = new List<SolicitudCorreccion>() };
+
+            _documentoRepoMock.Setup(r => r.ObtenerPorIdAsync(docId)).ReturnsAsync(documento);
+            _atencionRepoMock.Setup(r => r.ObtenerAtencionPorIdAsync(documento.AtencionId)).ReturnsAsync(new Atencion { Id = documento.AtencionId, EstadoAtencionId = 2 });
+            _usuarioContextServiceMock.Setup(u => u.ObtenerRolNombre()).Returns("Admin");
+            _documentoRepoMock.Setup(r => r.ExisteDocumentoAsync(documento.AtencionId, documento.TipoDocumentoId)).ReturnsAsync(true);
+
+            var resultado = await _documentoService.RestaurarDocumentoAsync(docId);
+
+            Assert.False(resultado.Ok);
+            Assert.Equal(HttpStatusCode.Conflict, resultado.StatusCode);
+        }
+
+        [Fact]
+        public async Task RestaurarDocumentoAsync_SolicitudPendiente_BadRequest()
+        {
+            int docId = 102;
+            var correccion = new SolicitudCorreccion { Id = 1, DocumentoId = docId, EstadoCorreccionId = 1 };
+            var documento = new Documento { Id = docId, AtencionId = 1, FechaEliminacion = DateTime.UtcNow, UsuarioEliminacion = 70, TipoDocumento = new TipoDocumento { PermiteMultiples = true }, SolicitudesCorreccion = new List<SolicitudCorreccion> { correccion } };
+
+            _documentoRepoMock.Setup(r => r.ObtenerPorIdAsync(docId)).ReturnsAsync(documento);
+            _atencionRepoMock.Setup(r => r.ObtenerAtencionPorIdAsync(documento.AtencionId)).ReturnsAsync(new Atencion { Id = documento.AtencionId, EstadoAtencionId = 2 });
+            _usuarioContextServiceMock.Setup(u => u.ObtenerRolNombre()).Returns("Admin");
+
+            var resultado = await _documentoService.RestaurarDocumentoAsync(docId);
+
+            Assert.False(resultado.Ok);
+            Assert.Equal(HttpStatusCode.BadRequest, resultado.StatusCode);
+        }
+
+        [Fact]
+        public async Task RestaurarDocumentoAsync_UsuarioSinPermisos_Forbidden()
+        {
+            int docId = 103;
+            var documento = new Documento { Id = docId, AtencionId = 1, FechaEliminacion = DateTime.UtcNow, UsuarioEliminacion = 200, TipoDocumento = new TipoDocumento { PermiteMultiples = true }, SolicitudesCorreccion = new List<SolicitudCorreccion>() };
+
+            _documentoRepoMock.Setup(r => r.ObtenerPorIdAsync(docId)).ReturnsAsync(documento);
+            _atencionRepoMock.Setup(r => r.ObtenerAtencionPorIdAsync(documento.AtencionId)).ReturnsAsync(new Atencion { Id = documento.AtencionId, EstadoAtencionId = 2 });
+            _usuarioContextServiceMock.Setup(u => u.ObtenerRolNombre()).Returns("User");
+            _usuarioContextServiceMock.Setup(u => u.ObtenerUsuarioId()).Returns(999); // not the eliminator
+
+            var resultado = await _documentoService.RestaurarDocumentoAsync(docId);
+
+            Assert.False(resultado.Ok);
+            Assert.Equal(HttpStatusCode.Forbidden, resultado.StatusCode);
+        }
+
+        [Fact]
+        public async Task RestaurarDocumentoAsync_DocumentoNoEncontrado_NotFound()
+        {
+            int docId = 9999;
+            _documentoRepoMock.Setup(r => r.ObtenerPorIdAsync(docId)).ReturnsAsync((Documento)null);
+
+            var resultado = await _documentoService.RestaurarDocumentoAsync(docId);
+
+            Assert.False(resultado.Ok);
+            Assert.Equal(HttpStatusCode.NotFound, resultado.StatusCode);
+        }
 
         #endregion
 

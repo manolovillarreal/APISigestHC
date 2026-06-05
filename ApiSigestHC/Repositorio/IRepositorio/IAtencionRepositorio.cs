@@ -7,6 +7,7 @@ namespace ApiSigestHC.Repositorio.IRepositorio
     {
         Task<Atencion> ObtenerAtencionPorIdAsync(int id);
         Task<IEnumerable<Atencion>> GetAtencionesPorEstadoAsync(List<int> estados);
+        Task<IEnumerable<Atencion>> ObtenerAtencionesPorPacienteAsync(string pacienteId, int excluirAtencionId);
         
         Task CrearAtencionAsync(Atencion atencion);
         Task EditarAtencionAsync(Atencion atencion);
