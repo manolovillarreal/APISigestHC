@@ -62,6 +62,13 @@ namespace ApiSigestHC.Controllers
             return StatusCode((int)respuesta.StatusCode, respuesta);
         }
 
+        [HttpGet("enviadas-por-rol")]
+        public async Task<IActionResult> ObtenerEnviadasPorRol()
+        {
+            var respuesta = await _service.ObtenerEnviadasPorRolAsync();
+            return StatusCode((int)respuesta.StatusCode, respuesta);
+        }
+
         [HttpGet("{solicitudId}/visualizar")]
         public async Task<IActionResult> VerDocumentoCorreccion(int solicitudId)
         {

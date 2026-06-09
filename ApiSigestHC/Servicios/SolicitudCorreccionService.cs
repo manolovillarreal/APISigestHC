@@ -54,14 +54,14 @@ namespace ApiSigestHC.Servicios
             {
                 respuesta.Ok = false;
                 respuesta.StatusCode = HttpStatusCode.NotFound;
-                respuesta.ErrorMessages.Add("No se encontró la solicitud de corrección.");
+                respuesta.ErrorMessages.Add("No se encontrï¿½ la solicitud de correcciï¿½n.");
                 return respuesta;
             }
             if (solicitud.EstadoCorreccionId != 2)
             {
                 respuesta.Ok = false;
                 respuesta.StatusCode = HttpStatusCode.Conflict;
-                respuesta.ErrorMessages.Add("La solicitud no está en estado de aprobación.");
+                respuesta.ErrorMessages.Add("La solicitud no estï¿½ en estado de aprobaciï¿½n.");
                 return respuesta;
             }
 
@@ -71,7 +71,7 @@ namespace ApiSigestHC.Servicios
             {
                 respuesta.Ok = false;
                 respuesta.StatusCode = HttpStatusCode.NotFound;
-                respuesta.ErrorMessages.Add("No se encontró el archivo de corrección.");
+                respuesta.ErrorMessages.Add("No se encontrï¿½ el archivo de correcciï¿½n.");
                 return respuesta;
             }
             if (dto.ConservarDocumentoAnterior)
@@ -112,7 +112,7 @@ namespace ApiSigestHC.Servicios
             {
                 Ok = true,
                 StatusCode = HttpStatusCode.OK,
-                Message = "Solicitud de corrección aprobada y documento actualizado correctamente.",
+                Message = "Solicitud de correcciï¿½n aprobada y documento actualizado correctamente.",
                 Result= solicituDto
             };
         }
@@ -125,7 +125,7 @@ namespace ApiSigestHC.Servicios
             {
                 respuesta.Ok = false;
                 respuesta.StatusCode = HttpStatusCode.BadRequest;
-                respuesta.ErrorMessages.Add("Solicitud inválida.");
+                respuesta.ErrorMessages.Add("Solicitud invï¿½lida.");
                 return respuesta;
             }
 
@@ -133,7 +133,7 @@ namespace ApiSigestHC.Servicios
             {
                 respuesta.Ok = false;
                 respuesta.StatusCode = HttpStatusCode.BadRequest;
-                respuesta.ErrorMessages.Add("DocumentoId inválido.");
+                respuesta.ErrorMessages.Add("DocumentoId invï¿½lido.");
                 return respuesta;
             }
 
@@ -143,7 +143,7 @@ namespace ApiSigestHC.Servicios
             {
                 respuesta.Ok = false;
                 respuesta.StatusCode = HttpStatusCode.Conflict;
-                respuesta.ErrorMessages.Add("Ya existe una solicitud de corrección pendiente para este documento.");
+                respuesta.ErrorMessages.Add("Ya existe una solicitud de correcciï¿½n pendiente para este documento.");
                 return respuesta;
             }
 
@@ -166,7 +166,7 @@ namespace ApiSigestHC.Servicios
 
             respuesta.Ok = true;
             respuesta.StatusCode = HttpStatusCode.Created;
-            respuesta.Message = "Solicitud de corrección creada correctamente.";
+            respuesta.Message = "Solicitud de correcciï¿½n creada correctamente.";
             respuesta.Result = entidad;
             return respuesta;
         }
@@ -179,7 +179,7 @@ namespace ApiSigestHC.Servicios
             {
                 respuesta.Ok = false;
                 respuesta.StatusCode = HttpStatusCode.BadRequest;
-                respuesta.ErrorMessages.Add("DocumentoId inválido.");
+                respuesta.ErrorMessages.Add("DocumentoId invï¿½lido.");
                 return respuesta;
             }
 
@@ -204,7 +204,30 @@ namespace ApiSigestHC.Servicios
             {
                 respuesta.Ok = false;
                 respuesta.StatusCode = HttpStatusCode.NoContent;
-                respuesta.ErrorMessages.Add("No se encontraron solicitudes de corrección para el rol actual.");
+                respuesta.ErrorMessages.Add("No se encontraron solicitudes de correcciï¿½n para el rol actual.");
+                return respuesta;
+            }
+
+            var solicitudesDtos = _mapper.Map<IEnumerable<SolicitudCorreccionDto>>(solicitudes);
+            respuesta.Ok = true;
+            respuesta.StatusCode = HttpStatusCode.OK;
+            respuesta.Result = solicitudesDtos;
+
+            return respuesta;
+        }
+
+        public async Task<RespuestaAPI> ObtenerEnviadasPorRolAsync()
+        {
+            var respuesta = new RespuestaAPI();
+            var rolId = _usuarioContextService.ObtenerRolId();
+
+            var solicitudes = await _solicitudRepo.ObtenerSolicitudesEnviadasPorRolAsync(rolId);
+
+            if (solicitudes == null || !solicitudes.Any())
+            {
+                respuesta.Ok = false;
+                respuesta.StatusCode = HttpStatusCode.NoContent;
+                respuesta.ErrorMessages.Add("No se encontraron solicitudes enviadas para el rol actual.");
                 return respuesta;
             }
 
@@ -233,14 +256,14 @@ namespace ApiSigestHC.Servicios
             {
                 respuesta.Ok = false;
                 respuesta.StatusCode = HttpStatusCode.NotFound;
-                respuesta.ErrorMessages.Add("No se encontró la solicitud de corrección.");
+                respuesta.ErrorMessages.Add("No se encontrï¿½ la solicitud de correcciï¿½n.");
                 return respuesta;
             }
             if (solicitud.EstadoCorreccionId != 2)
             {
                 respuesta.Ok = false;
                 respuesta.StatusCode = HttpStatusCode.Conflict;
-                respuesta.ErrorMessages.Add("La solicitud no está en estado de aprobación.");
+                respuesta.ErrorMessages.Add("La solicitud no estï¿½ en estado de aprobaciï¿½n.");
                 return respuesta;
             }
            
@@ -258,7 +281,7 @@ namespace ApiSigestHC.Servicios
             {
                 Ok = true,
                 StatusCode = HttpStatusCode.OK,
-                Message = "Solicitud de corrección aprobada y documento actualizado correctamente.",
+                Message = "Solicitud de correcciï¿½n aprobada y documento actualizado correctamente.",
                 Result = solicituDto
             };
         }
@@ -282,16 +305,16 @@ namespace ApiSigestHC.Servicios
             {
                 respuesta.Ok = false;
                 respuesta.StatusCode = HttpStatusCode.NotFound;
-                respuesta.ErrorMessages.Add("No se encontró la solicitud de corrección.");
+                respuesta.ErrorMessages.Add("No se encontrï¿½ la solicitud de correcciï¿½n.");
                 return respuesta;
             }
 
-            // Validar que esté pendiente
+            // Validar que estï¿½ pendiente
             if (solicitud.EstadoCorreccionId == 2 || solicitud.EstadoCorreccionId == 3)
             {
                 respuesta.Ok = false;
                 respuesta.StatusCode = HttpStatusCode.Conflict;
-                respuesta.ErrorMessages.Add("La solicitud no está pendiente de respuesta.");
+                respuesta.ErrorMessages.Add("La solicitud no estï¿½ pendiente de respuesta.");
                 return respuesta;
             }
             // Validar el archivo con el servicio
@@ -314,7 +337,7 @@ namespace ApiSigestHC.Servicios
 
                 respuesta.Ok = true;
                 respuesta.StatusCode = HttpStatusCode.OK;
-                respuesta.Message = "Solicitud de corrección respondida correctamente.";
+                respuesta.Message = "Solicitud de correcciï¿½n respondida correctamente.";
                 respuesta.Result = new
                 {
                 };
@@ -374,7 +397,7 @@ namespace ApiSigestHC.Servicios
                     {
                         Ok = false,
                         StatusCode = HttpStatusCode.NotFound,
-                        ErrorMessages = new List<string> { "El archivo físico no fue encontrado." }
+                        ErrorMessages = new List<string> { "El archivo fï¿½sico no fue encontrado." }
                     });
                 }
 

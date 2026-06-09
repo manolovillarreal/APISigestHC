@@ -76,6 +76,27 @@ namespace ApiSigestHC.Repositorio
                     .ThenInclude(d => d.Usuario)
                 .ToListAsync();
         }
+        public async Task<IEnumerable<SolicitudCorreccion>> ObtenerSolicitudesEnviadasPorRolAsync(int rolId)
+        {
+            return await _db.SolicitudCorrecciones
+                .Where(sc => sc.EstadoCorreccionId != 3)
+                .Where(sc => _db.Usuarios
+                    .Any(u => u.Id == sc.UsuarioSolicitaId && u.RolId == rolId))
+                .Include(sc => sc.EstadoCorreccion)
+                .Include(sc => sc.UsuarioSolicita)
+                .Include(sc => sc.UsuarioCorrige)
+                .Include(sc => sc.Documento)
+                    .ThenInclude(d => d.Atencion)
+                        .ThenInclude(a => a.Paciente)
+                .Include(sc => sc.Documento)
+                    .ThenInclude(d => d.Atencion)
+                        .ThenInclude(a => a.Administradora)
+                .Include(sc => sc.Documento)
+                    .ThenInclude(d => d.TipoDocumento)
+                .Include(sc => sc.Documento)
+                    .ThenInclude(d => d.Usuario)
+                .ToListAsync();
+        }
     }
 
 }

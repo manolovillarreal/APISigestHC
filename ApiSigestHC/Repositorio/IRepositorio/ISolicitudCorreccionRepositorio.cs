@@ -12,6 +12,7 @@ namespace ApiSigestHC.Repositorio.IRepositorio
 
         Task<SolicitudCorreccion> ObtenerPorIdAsync(int id);
         Task<IEnumerable<SolicitudCorreccion>> ObtenerSolicitudesPorRolAsync(int rolId);
+        Task<IEnumerable<SolicitudCorreccion>> ObtenerSolicitudesEnviadasPorRolAsync(int rolId);
     }
 
 }
