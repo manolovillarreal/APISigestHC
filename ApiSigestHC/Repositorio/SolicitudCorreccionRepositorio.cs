@@ -109,10 +109,40 @@ namespace ApiSigestHC.Repositorio
         }
         public async Task<IEnumerable<SolicitudCorreccion>> ObtenerSolicitudesEnviadasPorRolAsync(int rolId)
         {
-            return await _db.SolicitudCorrecciones
-                .Where(sc => sc.EstadoCorreccionId != 3)
-                .Where(sc => _db.Usuarios
-                    .Any(u => u.Id == sc.UsuarioSolicitaId && u.RolId == rolId))
+            var rol = await _db.Roles.FindAsync(rolId);
+            var nombreRol = rol?.Nombre ?? "";
+
+            IQueryable<SolicitudCorreccion> query = _db.SolicitudCorrecciones
+                .Where(sc => sc.EstadoCorreccionId != 3);
+
+            if (nombreRol == "Auditoria")
+            {
+                // Auditoría ve todas las enviadas por Auditoría y Admisiones
+                var rolesPermitidos = await _db.Roles
+                    .Where(r => r.Nombre == "Auditoria" || r.Nombre == "Admisiones")
+                    .Select(r => r.Id)
+                    .ToListAsync();
+
+                query = query.Where(sc =>
+                    _db.Usuarios.Any(u =>
+                        u.Id == sc.UsuarioSolicitaId &&
+                        rolesPermitidos.Contains(u.RolId)));
+            }
+            else if (nombreRol == "Admisiones")
+            {
+                // Admisiones solo ve las suyas propias
+                query = query.Where(sc =>
+                    _db.Usuarios.Any(u =>
+                        u.Id == sc.UsuarioSolicitaId &&
+                        u.RolId == rolId));
+            }
+            else
+            {
+                // Otros roles no ven enviadas
+                return Enumerable.Empty<SolicitudCorreccion>();
+            }
+
+            return await query
                 .Include(sc => sc.EstadoCorreccion)
                 .Include(sc => sc.UsuarioSolicita)
                 .Include(sc => sc.UsuarioCorrige)
