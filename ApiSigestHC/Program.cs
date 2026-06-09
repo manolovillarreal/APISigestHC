@@ -34,6 +34,7 @@ builder.Services.AddScoped<IEstadoAtencionRepositorio, EstadoAtencionRepositorio
 builder.Services.AddScoped<IPacienteRepositorio, PacienteRepositorio>();
 builder.Services.AddScoped<IPermisoRolAtencionRepositorio, PermisoRolAtencionRepositorio>();
 builder.Services.AddScoped<ISolicitudCorreccionRepositorio,SolicitudCorreccionRepositorio>();
+builder.Services.AddScoped<IDashboardRepositorio, DashboardRepositorio>();
 builder.Services.AddScoped<IRolRepositorio,RolRepositorio>();
 builder.Services.AddScoped<ITipoDocumentoRepositorio, TipoDocumentoRepositorio>();
 builder.Services.AddScoped<ITipoDocumentoRolRepositorio,TipoDocumentoRolRepositorio>();
@@ -41,6 +42,7 @@ builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 
 //Servicios
 builder.Services.AddScoped<IConfiguracionService, ConfiguracionService>();
+builder.Services.AddSingleton<IFileSystemService, FileSystemService>();
 builder.Services.AddScoped<IAlmacenamientoArchivoService,AlmacenamientoArchivoService>();
 builder.Services.AddScoped<ICambioEstadoService,CambioEstadoService>();
 builder.Services.AddScoped<IDocumentoRequeridoService,DocumentoRequeridoService>();
@@ -56,6 +58,7 @@ builder.Services.AddScoped<IVisualizacionEstadoService, VisualizacionEstadoServi
 builder.Services.AddScoped<IAtencionesService, AtencionesService>();
 builder.Services.AddScoped<IThumbnailPdfService, ThumbnailPdfService>();
 builder.Services.AddScoped<ISolicitudCorreccionService, SolicitudCorreccionService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 
 builder.Services.AddSwaggerGen();
