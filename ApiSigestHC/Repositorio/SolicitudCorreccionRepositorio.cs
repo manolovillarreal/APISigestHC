@@ -91,6 +91,11 @@ namespace ApiSigestHC.Repositorio
                 query = query.Where(sc =>
                     sc.UsuarioSolicitaId == filtro.UsuarioSolicitaId.Value);
 
+            if (!string.IsNullOrEmpty(filtro.NumeroRelacion))
+                query = query.Where(sc =>
+                    sc.Documento.NumeroRelacion != null &&
+                    sc.Documento.NumeroRelacion.Contains(filtro.NumeroRelacion));
+
             return await query
                 .Include(sc => sc.EstadoCorreccion)
                 .Include(sc => sc.UsuarioSolicita)

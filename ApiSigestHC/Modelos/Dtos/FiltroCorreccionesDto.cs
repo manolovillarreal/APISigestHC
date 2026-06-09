@@ -14,5 +14,7 @@ namespace ApiSigestHC.Modelos.Dtos
         public int? TipoDocumentoId { get; set; }
 
         public int? UsuarioSolicitaId { get; set; }
+
+        public string? NumeroRelacion { get; set; }
     }
 }
