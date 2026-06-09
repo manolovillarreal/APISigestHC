@@ -1,4 +1,5 @@
 ﻿using ApiSigestHC.Modelos;
+using ApiSigestHC.Modelos.Dtos;
 
 namespace ApiSigestHC.Repositorio.IRepositorio
 {
@@ -11,7 +12,7 @@ namespace ApiSigestHC.Repositorio.IRepositorio
         Task ActualizarAsync(SolicitudCorreccion solicitud);
 
         Task<SolicitudCorreccion> ObtenerPorIdAsync(int id);
-        Task<IEnumerable<SolicitudCorreccion>> ObtenerSolicitudesPorRolAsync(int rolId);
+        Task<IEnumerable<SolicitudCorreccion>> ObtenerSolicitudesPorRolAsync(int rolId, FiltroCorreccionesDto filtro);
         Task<IEnumerable<SolicitudCorreccion>> ObtenerSolicitudesEnviadasPorRolAsync(int rolId);
     }
 

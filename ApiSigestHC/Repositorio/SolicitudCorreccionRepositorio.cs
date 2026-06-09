@@ -1,5 +1,6 @@
 ﻿using ApiSigestHC.Data;
 using ApiSigestHC.Modelos;
+using ApiSigestHC.Modelos.Dtos;
 using ApiSigestHC.Repositorio.IRepositorio;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -53,15 +54,45 @@ namespace ApiSigestHC.Repositorio
             await _db.SaveChangesAsync();
         }
 
-        public async Task<IEnumerable<SolicitudCorreccion>> ObtenerSolicitudesPorRolAsync(int rolId)
+        public async Task<IEnumerable<SolicitudCorreccion>> ObtenerSolicitudesPorRolAsync(
+            int rolId, FiltroCorreccionesDto filtro)
         {
-            return await _db.SolicitudCorrecciones
-                .Where(sc=>sc.EstadoCorreccionId!=3)
-                .Where(sc => _db.Documentos                
-                    .Any(d => d.Id == sc.DocumentoId && _db.Usuarios
-                        .Any(u => u.Id == d.UsuarioId && u.RolId == rolId)))
+            // Filtro base: excluir aprobadas + solo tipos de documento que el rol puede cargar
+            IQueryable<SolicitudCorreccion> query = _db.SolicitudCorrecciones
+                .Where(sc => sc.EstadoCorreccionId != 3)
+                .Where(sc => _db.Documentos
+                    .Any(d => d.Id == sc.DocumentoId &&
+                        _db.TipoDocumentoRoles
+                            .Any(tdr => tdr.TipoDocumentoId == d.TipoDocumentoId
+                                     && tdr.RolId == rolId)));
 
-                .Include(sc=>sc.EstadoCorreccion)
+            // Filtros opcionales
+            if (!string.IsNullOrEmpty(filtro.PacienteId))
+                query = query.Where(sc =>
+                    sc.Documento.Atencion.PacienteId.Contains(filtro.PacienteId));
+
+            if (filtro.EstadoCorreccionId.HasValue)
+                query = query.Where(sc =>
+                    sc.EstadoCorreccionId == filtro.EstadoCorreccionId.Value);
+
+            if (filtro.FechaInicial.HasValue)
+                query = query.Where(sc =>
+                    sc.FechaSolicitud >= filtro.FechaInicial.Value);
+
+            if (filtro.FechaFinal.HasValue)
+                query = query.Where(sc =>
+                    sc.FechaSolicitud <= filtro.FechaFinal.Value.AddDays(1));
+
+            if (filtro.TipoDocumentoId.HasValue)
+                query = query.Where(sc =>
+                    sc.Documento.TipoDocumentoId == filtro.TipoDocumentoId.Value);
+
+            if (filtro.UsuarioSolicitaId.HasValue)
+                query = query.Where(sc =>
+                    sc.UsuarioSolicitaId == filtro.UsuarioSolicitaId.Value);
+
+            return await query
+                .Include(sc => sc.EstadoCorreccion)
                 .Include(sc => sc.UsuarioSolicita)
                 .Include(sc => sc.UsuarioCorrige)
                 .Include(sc => sc.Documento)

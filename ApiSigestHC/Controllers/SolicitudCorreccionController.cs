@@ -34,11 +34,11 @@ namespace ApiSigestHC.Controllers
             return StatusCode((int)respuesta.StatusCode, respuesta);
         }
 
-        // Obtener solicitudes de corrección según el rol del usuario autenticado
+        // Obtener solicitudes de corrección según el rol del usuario autenticado (con filtros opcionales)
         [HttpGet("por-rol")]
-        public async Task<IActionResult> ObtenerPorRolUsuario()
+        public async Task<IActionResult> ObtenerPorRolUsuario([FromQuery] FiltroCorreccionesDto filtro)
         {
-            var respuesta = await _service.ObtenerPorRolUsuarioAsync();
+            var respuesta = await _service.ObtenerPorRolUsuarioAsync(filtro);
             return StatusCode((int)respuesta.StatusCode, respuesta);
         }
 

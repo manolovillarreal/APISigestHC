@@ -192,13 +192,13 @@ namespace ApiSigestHC.Servicios
             return respuesta;
         }
 
-        public async Task<RespuestaAPI> ObtenerPorRolUsuarioAsync()
+        public async Task<RespuestaAPI> ObtenerPorRolUsuarioAsync(FiltroCorreccionesDto filtro)
         {
             var respuesta = new RespuestaAPI();
             var rolId = _usuarioContextService.ObtenerRolId();
 
-            // Consulta usando LINQ para filtrar por rol
-            var solicitudes = await _solicitudRepo.ObtenerSolicitudesPorRolAsync(rolId);
+            // Consulta usando LINQ para filtrar por rol y filtros opcionales
+            var solicitudes = await _solicitudRepo.ObtenerSolicitudesPorRolAsync(rolId, filtro);
 
             if( solicitudes == null || !solicitudes.Any())
             {
