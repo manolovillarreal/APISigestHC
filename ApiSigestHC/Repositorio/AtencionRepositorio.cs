@@ -131,17 +131,19 @@ namespace ApiSigestHC.Repositorio
             if (!filtro.consultarAnuladas)
                 query = query.Where(a => a.FechaAnulacion == null);
 
+            // Se devuelve el conjunto completo ya ordenado y filtrado por la visibilidad
+            // del rol. La paginación se aplica en el servicio (sobre el total real), porque
+            // el filtro de EstadosPermitidos se evalúa en memoria y debe ocurrir ANTES de
+            // recortar la página para que el "total" sea correcto.
             var atenciones = await query
                 .Include(a => a.Paciente)
                 .Include(a => a.EstadoAtencion)
                 .Include(a => a.Administradora)
                 .OrderByDescending(a => a.Fecha)
-                .Skip((filtro.Page - 1) * filtro.PageSize)
-                .Take(filtro.PageSize)
                 .ToListAsync();
 
                 return atenciones.Where(a => filtro.EstadosPermitidos.Contains(a.EstadoAtencionId));
-            }         
+            }
         
 
         public async Task<IEnumerable<Atencion>> ObtenerAtencionesPorPacienteAsync(string pacienteId, int excluirAtencionId)

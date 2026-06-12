@@ -16,5 +16,8 @@ namespace ApiSigestHC.Modelos.Dtos
         public int? UsuarioSolicitaId { get; set; }
 
         public string? NumeroRelacion { get; set; }
+
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 50;
     }
 }

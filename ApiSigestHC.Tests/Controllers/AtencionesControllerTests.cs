@@ -78,7 +78,12 @@ namespace ApiSigestHC.Tests.Controllers
             var response = Assert.IsType<RespuestaAPI>(okResult.Value);
             Assert.True(response.Ok);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.Equal(atencionesDto, response.Result);
+
+            // El endpoint ahora devuelve una página: { data, page, pageSize, total, totalPages }
+            var pagina = Assert.IsType<ResultadoPaginadoDto<AtencionDto>>(response.Result);
+            Assert.Equal(atencionesDto, pagina.Data);
+            Assert.Equal(2, pagina.Total);
+            Assert.Equal(1, pagina.Page);
         }
 
         //[Fact]

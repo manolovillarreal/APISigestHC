@@ -48,20 +48,16 @@ namespace ApiSigestHC.Servicios
 
             filtro.EstadosPermitidos = _visualizacionEstadoService.ObtenerEstadosPermitidosPorRol();
 
+            // El repositorio devuelve el conjunto completo (ya filtrado por visibilidad del rol);
+            // aquÃ­ se recorta la pÃ¡gina y se calcula el total real.
             var atenciones = await _atencionRepo.ObtenerAtencionesPorFiltroAsync(filtro);
-            var total = atenciones.Count();
+            var pagina = Helpers.Paginacion.Paginar(atenciones, filtro.Page, filtro.PageSize);
 
             return new RespuestaAPI
             {
                 Ok = true,
                 StatusCode = HttpStatusCode.OK,
-                Result = new
-                {
-                    Total = total,
-                    Page = filtro.Page,
-                    PageSize = filtro.PageSize,
-                    Data = atenciones
-                }
+                Result = pagina
             };
         }
 
@@ -74,7 +70,7 @@ namespace ApiSigestHC.Servicios
                 {
                     Ok = false,
                     StatusCode = HttpStatusCode.NotFound,
-                    ErrorMessages = new List<string> { "La atención no existe." }
+                    ErrorMessages = new List<string> { "La atenciï¿½n no existe." }
                 };
             }
 
@@ -85,18 +81,18 @@ namespace ApiSigestHC.Servicios
                 {
                     Ok = false,
                     StatusCode = HttpStatusCode.BadRequest,
-                    ErrorMessages = new List<string> { "Solo se pueden anular atenciones en estado 'Admisión'." }
+                    ErrorMessages = new List<string> { "Solo se pueden anular atenciones en estado 'Admisiï¿½n'." }
                 };
             }
 
-            // Validar que no esté ya anulada
+            // Validar que no estï¿½ ya anulada
             if (atencion.FechaAnulacion.HasValue)
             {
                 return new RespuestaAPI
                 {
                     Ok = false,
                     StatusCode = HttpStatusCode.BadRequest,
-                    ErrorMessages = new List<string> { "La atención ya ha sido anulada." }
+                    ErrorMessages = new List<string> { "La atenciï¿½n ya ha sido anulada." }
                 };
             }
 
@@ -107,13 +103,13 @@ namespace ApiSigestHC.Servicios
                 {
                     Ok = false,
                     StatusCode = HttpStatusCode.BadRequest,
-                    ErrorMessages = new List<string> { "Motivo de anulación inválido." }
+                    ErrorMessages = new List<string> { "Motivo de anulaciï¿½n invï¿½lido." }
                 };
             }
 
             var usuarioId = _usuarioContextService.ObtenerUsuarioId();
 
-            // Actualizar campos de anulación directamente en la atención
+            // Actualizar campos de anulaciï¿½n directamente en la atenciï¿½n
             atencion.MotivoAnulacionAtencionId = dto.MotivoAnulacionAtencionId;
             atencion.FechaAnulacion = DateTime.Now;
             atencion.UsuarioAnulaId = usuarioId;
@@ -125,7 +121,7 @@ namespace ApiSigestHC.Servicios
             {
                 Ok = true,
                 StatusCode = HttpStatusCode.OK,
-                Message = "Atención anulada correctamente"
+                Message = "Atenciï¿½n anulada correctamente"
             };
         }
     }

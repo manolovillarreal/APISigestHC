@@ -200,18 +200,16 @@ namespace ApiSigestHC.Servicios
             // Consulta usando LINQ para filtrar por rol y filtros opcionales
             var solicitudes = await _solicitudRepo.ObtenerSolicitudesPorRolAsync(rolId, filtro);
 
-            if( solicitudes == null || !solicitudes.Any())
-            {
-                respuesta.Ok = false;
-                respuesta.StatusCode = HttpStatusCode.NoContent;
-                respuesta.ErrorMessages.Add("No se encontraron solicitudes de correcci�n para el rol actual.");
-                return respuesta;
-            }
+            var solicitudesDtos = _mapper.Map<IEnumerable<SolicitudCorreccionDto>>(
+                solicitudes ?? Enumerable.Empty<SolicitudCorreccion>());
 
-            var solicitudesDtos = _mapper.Map<IEnumerable<SolicitudCorreccionDto>>(solicitudes);
+            // Se devuelve siempre una página (aunque esté vacía) para que el frontend
+            // pueda mostrar el control de paginación y el indicador "X-Y de Z".
+            var pagina = Helpers.Paginacion.Paginar(solicitudesDtos, filtro.Page, filtro.PageSize);
+
             respuesta.Ok = true;
             respuesta.StatusCode = HttpStatusCode.OK;
-            respuesta.Result = solicitudesDtos;
+            respuesta.Result = pagina;
 
             return respuesta;
         }

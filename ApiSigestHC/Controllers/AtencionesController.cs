@@ -50,37 +50,41 @@ namespace ApiSigestHC.Controllers
     
 
         [HttpGet("visibles")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<AtencionDto>))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RespuestaAPI))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetAtencionesVisibles()
+        public async Task<IActionResult> GetAtencionesVisibles([FromQuery] int page = 1, [FromQuery] int pageSize = 0)
         {
             var estados = _visualizacionEstadoService.ObtenerEstadosVisiblesPorRol();
 
             var atenciones = await _atencionRepo.GetAtencionesPorEstadoAsync(estados);
 
-            var atencionesDto = _mapper.Map<IEnumerable<AtencionDto>>(atenciones);
-            
-            
-            string[] idsPacientesEstadoIngreso = atencionesDto
+            // Orden estable para que la paginación sea consistente entre páginas:
+            // por estado y, dentro de cada estado, las más recientes primero.
+            var atencionesDto = _mapper.Map<IEnumerable<AtencionDto>>(atenciones)
+                .OrderBy(a => a.EstadoAtencionId)
+                .ThenByDescending(a => a.Fecha);
+
+            var pagina = Helpers.Paginacion.Paginar(atencionesDto, page, pageSize);
+
+            // La ubicación solo se consulta para los pacientes de la página actual.
+            string[] idsPacientesEstadoIngreso = pagina.Data
                 .Where(a => a.EstadoAtencionId == 3)
                 .Select(a => a.PacienteId)
                 .ToArray();
 
             var ubicaciones = await _atencionRepo.GetUltimaUbicacionPacientesAsync(idsPacientesEstadoIngreso);
 
-        
-            foreach (var at in atencionesDto.Where(a => a.EstadoAtencionId == 3))
+            foreach (var at in pagina.Data.Where(a => a.EstadoAtencionId == 3))
             {
                 at.UbicacionPaciente = ubicaciones.FirstOrDefault(u => u.PacienteId == at.PacienteId);
             }
-
 
             return Ok(new RespuestaAPI
             {
                 Ok = true,
                 StatusCode = HttpStatusCode.OK,
-                Result = atencionesDto
+                Result = pagina
             });
         }
 
