@@ -60,10 +60,13 @@ namespace ApiSigestHC.Repositorio
         // ─────────────────────────────────────────────
         public async Task<DashboardAdmisionesDto> ObtenerMetricasAdmisionesAsync()
         {
-            var hoy = DateTime.Today;
+            // CambioEstado.Fecha se guarda en UTC (ver CambioEstadoService),
+            // por eso el día de corte para los tiempos también debe ser UTC.
+            var hoyUtc = DateTime.UtcNow.Date;
 
             var sinIdentidad = await _db.Atenciones
                 .Where(a => a.EstadoAtencionId != 8
+                    && a.FechaAnulacion == null
                     && !_db.Documentos.Any(d =>
                         d.AtencionId == a.Id
                         && d.TipoDocumento.Codigo == "ID"
@@ -72,6 +75,7 @@ namespace ApiSigestHC.Repositorio
 
             var sinAutorizacion = await _db.Atenciones
                 .Where(a => a.EstadoAtencionId != 8
+                    && a.FechaAnulacion == null
                     && !_db.Documentos.Any(d =>
                         d.AtencionId == a.Id
                         && d.TipoDocumento.Codigo == "AUT"
@@ -79,10 +83,10 @@ namespace ApiSigestHC.Repositorio
                 .CountAsync();
 
             // Tiempo promedio Admision(1)→Consulta(2) para cambios ocurridos hoy
-            var tiempoEspera = await TiempoPromedioMinutosAsync(hoy, estadoInicial: 1, estadoNuevo: 2);
+            var tiempoEspera = await TiempoPromedioMinutosAsync(hoyUtc, estadoInicial: 1, estadoNuevo: 2);
 
             // Tiempo promedio Consulta(2)→Ingreso(3) para cambios ocurridos hoy
-            var tiempoConsulta = await TiempoPromedioMinutosAsync(hoy, estadoInicial: 2, estadoNuevo: 3);
+            var tiempoConsulta = await TiempoPromedioMinutosAsync(hoyUtc, estadoInicial: 2, estadoNuevo: 3);
 
             return new DashboardAdmisionesDto
             {
@@ -98,14 +102,14 @@ namespace ApiSigestHC.Repositorio
         // ─────────────────────────────────────────────
         public async Task<DashboardMedicoDto> ObtenerMetricasMedicoAsync()
         {
-            var hoy = DateTime.Today;
+            var hoyUtc = DateTime.UtcNow.Date;
 
             var enAdmision = await _db.Atenciones
-                .Where(a => a.EstadoAtencionId == 1)
+                .Where(a => a.EstadoAtencionId == 1 && a.FechaAnulacion == null)
                 .CountAsync();
 
-            var tiempoEspera = await TiempoPromedioMinutosAsync(hoy, estadoInicial: 1, estadoNuevo: 2);
-            var tiempoConsulta = await TiempoPromedioMinutosAsync(hoy, estadoInicial: 2, estadoNuevo: 3);
+            var tiempoEspera = await TiempoPromedioMinutosAsync(hoyUtc, estadoInicial: 1, estadoNuevo: 2);
+            var tiempoConsulta = await TiempoPromedioMinutosAsync(hoyUtc, estadoInicial: 2, estadoNuevo: 3);
 
             return new DashboardMedicoDto
             {
@@ -121,7 +125,7 @@ namespace ApiSigestHC.Repositorio
         public async Task<DashboardEnfermeriaDto> ObtenerMetricasEnfermeriaAsync()
         {
             var enIngreso = await _db.Atenciones
-                .Where(a => a.EstadoAtencionId == 3)
+                .Where(a => a.EstadoAtencionId == 3 && a.FechaAnulacion == null)
                 .CountAsync();
 
             return new DashboardEnfermeriaDto
@@ -135,10 +139,10 @@ namespace ApiSigestHC.Repositorio
         // ─────────────────────────────────────────────
         public async Task<DashboardAuditoriaDto> ObtenerMetricasAuditoriaAsync()
         {
-            var hoy = DateTime.Today;
+            var hoyUtc = DateTime.UtcNow.Date;
 
             var pendientesRevision = await _db.Atenciones
-                .Where(a => a.EstadoAtencionId == 5)
+                .Where(a => a.EstadoAtencionId == 5 && a.FechaAnulacion == null)
                 .CountAsync();
 
             var correcciones = await _db.SolicitudCorrecciones
@@ -146,7 +150,7 @@ namespace ApiSigestHC.Repositorio
                 .CountAsync();
 
             // Tiempo promedio Auditoria(5)→Facturacion(6) para cambios ocurridos hoy
-            var tiempoRevision = await TiempoPromedioMinutosAsync(hoy, estadoInicial: 5, estadoNuevo: 6);
+            var tiempoRevision = await TiempoPromedioMinutosAsync(hoyUtc, estadoInicial: 5, estadoNuevo: 6);
 
             return new DashboardAuditoriaDto
             {
@@ -162,19 +166,24 @@ namespace ApiSigestHC.Repositorio
         public async Task<DashboardFacturacionDto> ObtenerMetricasFacturacionAsync()
         {
             var pendientes = await _db.Atenciones
-                .Where(a => a.EstadoAtencionId == 6)
+                .Where(a => a.EstadoAtencionId == 6 && a.FechaAnulacion == null)
                 .CountAsync();
 
-            // Atenciones en riesgo: entraron a Radicacion(7) hace >22 días
-            // y aún no han pasado a Archivado(8)
+            // Atenciones en riesgo: pendientes de facturar/radicar (estados 6 y 7,
+            // sin archivar ni anular) cuya antigüedad supera los 22 días.
+            // Referencia = fecha de radicación (entrada al estado 7); si la
+            // atención aún no ha sido radicada, se usa su FechaCreacion (Atencion.Fecha).
             var limite = DateTime.UtcNow.AddDays(-22);
-            var enRiesgo = await _db.CambiosEstado
-                .Where(ce => ce.EstadoNuevo == 7 && ce.Fecha <= limite
-                    && !_db.CambiosEstado.Any(ce2 =>
-                        ce2.AtencionId == ce.AtencionId && ce2.EstadoNuevo == 8))
-                .Select(ce => ce.AtencionId)
-                .Distinct()
-                .CountAsync();
+            var enRiesgo = await _db.Atenciones
+                .Where(a => (a.EstadoAtencionId == 6 || a.EstadoAtencionId == 7)
+                    && a.FechaAnulacion == null)
+                .Select(a => new
+                {
+                    Referencia = _db.CambiosEstado
+                        .Where(ce => ce.AtencionId == a.Id && ce.EstadoNuevo == 7)
+                        .Max(ce => (DateTime?)ce.Fecha) ?? a.Fecha
+                })
+                .CountAsync(x => x.Referencia <= limite);
 
             return new DashboardFacturacionDto
             {
@@ -189,7 +198,7 @@ namespace ApiSigestHC.Repositorio
         public async Task<DashboardAdminDto> ObtenerMetricasAdminAsync()
         {
             var porEstado = await _db.Atenciones
-                .Where(a => a.EstadoAtencionId != 8)
+                .Where(a => a.EstadoAtencionId != 8 && a.FechaAnulacion == null)
                 .GroupBy(a => a.EstadoAtencion.Nombre)
                 .Select(g => new { Estado = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.Estado, x => x.Count);

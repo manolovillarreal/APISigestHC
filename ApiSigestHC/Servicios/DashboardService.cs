@@ -26,10 +26,15 @@ namespace ApiSigestHC.Servicios
              *   "Admisiones", "Medico", "Enfermeria",
              *   "Auditoria", "Facturacion", "Administrador"
              */
+            // El nombre del rol llega del claim del token y, según el origen de los
+            // datos, puede venir con o sin tilde ("Auditoría") o como alias del
+            // administrador ("Admin"). Lo normalizamos a una clave canónica para que
+            // el switch sea robusto (mismo criterio que DocumentoService).
             var rolNombre = _usuarioContextService.ObtenerRolNombre();
+            var rolCanonico = NormalizarRol(rolNombre);
             var global = await _dashboardRepo.ObtenerMetricasGlobalesAsync();
 
-            object porRol = rolNombre switch
+            object porRol = rolCanonico switch
             {
                 "Admisiones"    => await _dashboardRepo.ObtenerMetricasAdmisionesAsync(),
                 "Medico"        => await _dashboardRepo.ObtenerMetricasMedicoAsync(),
@@ -40,7 +45,7 @@ namespace ApiSigestHC.Servicios
                 _               => null
             };
 
-            var dto = new DashboardDto { Global = global, PorRol = porRol };
+            var dto = new DashboardDto { Rol = rolCanonico, Global = global, PorRol = porRol };
 
             return new RespuestaAPI
             {
@@ -48,6 +53,25 @@ namespace ApiSigestHC.Servicios
                 StatusCode = HttpStatusCode.OK,
                 Result = dto
             };
+        }
+
+        private static string NormalizarRol(string rol)
+        {
+            if (string.IsNullOrWhiteSpace(rol))
+                return string.Empty;
+
+            var r = rol.Trim();
+
+            bool Es(string objetivo) => r.Equals(objetivo, StringComparison.OrdinalIgnoreCase);
+
+            if (Es("Admin") || Es("Administrador")) return "Administrador";
+            if (Es("Auditoria") || Es("Auditoría")) return "Auditoria";
+            if (Es("Admisiones") || Es("Admision") || Es("Admisión")) return "Admisiones";
+            if (Es("Medico") || Es("Médico")) return "Medico";
+            if (Es("Enfermeria") || Es("Enfermería")) return "Enfermeria";
+            if (Es("Facturacion") || Es("Facturación")) return "Facturacion";
+
+            return r;
         }
     }
 }
