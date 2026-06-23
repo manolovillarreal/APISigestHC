@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 
 namespace ApiSigestHC.Modelos
@@ -13,19 +13,22 @@ namespace ApiSigestHC.Modelos
         public int AtencionId { get; set; }
 
         [Column("estadoInicial")]
-        public int EstadoInicial { get; set; }
+        public int? EstadoInicial { get; set; }
 
         [Column("estadoNuevo")]
-        public int EstadoNuevo { get; set; }
+        public int? EstadoNuevo { get; set; }
 
         [Column("fecha")]
-        public DateTime Fecha { get; set; }
+        public DateTime? Fecha { get; set; }
 
         [Column("usuario_id")]
-        public int UsuarioId { get; set; }
+        public int? UsuarioId { get; set; }
 
         [Column("observacion")]
-        public string Observacion { get; set; }
+        public string? Observacion { get; set; }
+
+        [ForeignKey("UsuarioId")]
+        public Usuario? Usuario { get; set; }
     }
 
 }

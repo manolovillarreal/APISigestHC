@@ -7,5 +7,7 @@ namespace ApiSigestHC.Servicios.IServicios
         Task<string?> ObtenerValorAsync(string clave);
         Task<RespuestaAPI> ObtenerTodasAsync();
         Task<RespuestaAPI> ActualizarAsync(string clave, string valor);
+        Task<string> ObtenerRutaBaseDocumentosAsync();
+        Task<RespuestaAPI> ActualizarRutaBaseDocumentosAsync(string valor);
     }
 }

@@ -1,4 +1,4 @@
-﻿using ApiSigestHC.Mappers;
+using ApiSigestHC.Mappers;
 using ApiSigestHC.Modelos;
 using ApiSigestHC.Modelos.Dtos;
 using ApiSigestHC.Repositorio.IRepositorio;
@@ -171,7 +171,7 @@ namespace ApiSigestHC.Servicios
             var transiciones = new Dictionary<(int, string), int>
                 {
                     // (estadoActual, rol) => estadoNuevo
-                    {(1, "Admisiones"), 2}, //Admisiones pasa a Consulta
+                    {(1, "Medico"), 2},     //Medico pasa a Consulta
                     {(2, "Medico"), 3},     //Medico pasa a Ingreso
                     {(3, "Enfermeria"), 4}, //Enfermeria pasas a Salida
                     {(4, "Admisiones"), 5}, //Admisiones pasa a Auditoria

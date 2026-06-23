@@ -144,8 +144,32 @@ namespace ApiSigestHC.Servicios
             if (!Directory.Exists(directorio))
                 Directory.CreateDirectory(directorio);
 
+            // Forzar liberación de recursos antes de sobreescribir
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            if (File.Exists(rutaAbsoluta))
+            {
+                try
+                {
+                    // Verificar que el archivo no esté bloqueado
+                    using (var test = File.Open(rutaAbsoluta, FileMode.Open,
+                           FileAccess.ReadWrite, FileShare.None))
+                    { }
+                }
+                catch (IOException ex)
+                {
+                    return new ResultadoGuardadoArchivo
+                    {
+                        IsSuccess = false,
+                        Message = $"El archivo está en uso por otro proceso: {ex.Message}"
+                    };
+                }
+            }
+
             // Guardar nuevo archivo, sobreescribiendo si ya existe
-            using (var stream = new FileStream(rutaAbsoluta, FileMode.Create)) // Create sobrescribe si ya existe
+            using (var stream = new FileStream(rutaAbsoluta, FileMode.Create,
+                   FileAccess.Write, FileShare.None))
             {
                 await archivo.CopyToAsync(stream);
             }

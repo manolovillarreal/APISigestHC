@@ -23,6 +23,7 @@ namespace ApiSigestHC.Tests.Servicios
         private readonly Mock<ITipoDocumentoRepositorio> _tipoDocumentoRepoMock;
         private readonly Mock<IUsuarioRepositorio> _usuarioRepoMock;
         private readonly Mock<IUsuarioContextService> _usuarioContextMock;
+        private readonly Mock<IConfiguracionService> _configuracionServiceMock;
         private readonly AlmacenamientoArchivoService _service;
         private readonly string _basePath;
 
@@ -34,12 +35,15 @@ namespace ApiSigestHC.Tests.Servicios
             _tipoDocumentoRepoMock = new Mock<ITipoDocumentoRepositorio>();
             _usuarioRepoMock = new Mock<IUsuarioRepositorio>();
             _usuarioContextMock = new Mock<IUsuarioContextService>();
+            _configuracionServiceMock = new Mock<IConfiguracionService>();
 
             // Usamos un directorio temporal único por test
             _basePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             Directory.CreateDirectory(_basePath);
 
             _envMock.Setup(e => e.ContentRootPath).Returns(_basePath);
+            // null triggers the fallback to _env.ContentRootPath in GuardarArchivoAsync
+            _configuracionServiceMock.Setup(c => c.ObtenerValorAsync("ruta_base_documentos")).ReturnsAsync((string?)null);
 
             _service = new AlmacenamientoArchivoService(
                 _envMock.Object,
@@ -47,7 +51,8 @@ namespace ApiSigestHC.Tests.Servicios
                 _tipoDocumentoRepoMock.Object,
                 _atencionRepoMock.Object,
                 _usuarioRepoMock.Object,
-                _usuarioContextMock.Object
+                _usuarioContextMock.Object,
+                _configuracionServiceMock.Object
             );
         }
 

@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using ApiSigestHC.Modelos;
 using ApiSigestHC.Modelos.Dtos;
 
@@ -11,7 +11,12 @@ namespace ApiSigestHC.Mappers
             CreateMap<Atencion, AtencionDto>()
              .ForMember(atencionDto => atencionDto.TieneCorreccionesPendientes,
                  opt => opt.MapFrom(atencion => 
-                     atencion.Documentos.Any(d => d.SolicitudesCorreccion.Any(c => c.EstadoCorreccionId !=3))));
+                     atencion.Documentos.Any(d => d.SolicitudesCorreccion.Any(c => c.EstadoCorreccionId !=3))))
+             .ForMember(atencionDto => atencionDto.NombreMedicoConsulta,
+                 opt => opt.MapFrom(atencion =>
+                     atencion.CambiosEstado != null 
+                     ? atencion.CambiosEstado.Where(c => c.EstadoNuevo == 2).OrderByDescending(c => c.Fecha).Select(c => c.Usuario != null ? c.Usuario.Nombre + " " + c.Usuario.Apellidos : null).FirstOrDefault()
+                     : null));
 
             CreateMap<Atencion,AtencionCrearDto>().ReverseMap();
 

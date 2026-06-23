@@ -225,7 +225,7 @@ namespace ApiSigestHC.Repositorio
             // buscar cuándo salió de estadoInicial y calcular la diferencia.
             var llegadas = await _db.CambiosEstado
                 .Where(ce => ce.EstadoNuevo == estadoNuevo
-                          && ce.Fecha.Date == dia)
+                          && ce.Fecha != null && ce.Fecha.Value.Date == dia)
                 .ToListAsync();
 
             if (!llegadas.Any()) return 0;
@@ -235,8 +235,9 @@ namespace ApiSigestHC.Repositorio
             // Obtener el momento en que cada atención entró al estadoInicial
             var salidas = await _db.CambiosEstado
                 .Where(ce => ce.EstadoNuevo == estadoInicial
-                          && atencionIds.Contains(ce.AtencionId))
+                          && ce.Fecha != null)
                 .ToListAsync();
+            salidas = salidas.Where(ce => atencionIds.Contains(ce.AtencionId)).ToList();
 
             var tiempos = new List<double>();
             foreach (var llegada in llegadas)
@@ -246,8 +247,8 @@ namespace ApiSigestHC.Repositorio
                     .OrderByDescending(s => s.Fecha)
                     .FirstOrDefault();
 
-                if (salida != null)
-                    tiempos.Add((llegada.Fecha - salida.Fecha).TotalMinutes);
+                if (salida != null && llegada.Fecha.HasValue && salida.Fecha.HasValue)
+                    tiempos.Add((llegada.Fecha.Value - salida.Fecha.Value).TotalMinutes);
             }
 
             return tiempos.Any() ? Math.Round(tiempos.Average(), 1) : 0;

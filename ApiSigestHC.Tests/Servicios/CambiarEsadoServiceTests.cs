@@ -1,4 +1,4 @@
-﻿using ApiSigestHC.Modelos;
+using ApiSigestHC.Modelos;
 using ApiSigestHC.Modelos.Dtos;
 using ApiSigestHC.Repositorio;
 using ApiSigestHC.Repositorio.IRepositorio;
@@ -135,7 +135,7 @@ namespace ApiSigestHC.Tests.Servicios
 
             _atencionRepoMock.Setup(r => r.ObtenerAtencionPorIdAsync(1))
                 .ReturnsAsync(atencion);
-            _usuarioContextMock.Setup(u => u.ObtenerRolNombre()).Returns("Admisiones");
+            _usuarioContextMock.Setup(u => u.ObtenerRolNombre()).Returns("Medico");
             _usuarioContextMock.Setup(u => u.ObtenerUsuarioId()).Returns(123);
             _validacionDocServiceMock.Setup(v => v.ValidarDocumentosObligatoriosAsync(atencion))
                 .ReturnsAsync(new ResultadoValidacionDto { EsValido = true });

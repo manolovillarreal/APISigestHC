@@ -9,6 +9,7 @@
         public EstadoCorreccion EstadoCorreccion { get; set; }
         public Usuario UsuarioSolicita { get; set; }
         public Usuario? UsuarioCorrige { get; set; }
+        public DateTime? FechaCorrige { get; set; }
 
     }
 }

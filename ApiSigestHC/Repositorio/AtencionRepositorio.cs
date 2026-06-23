@@ -1,4 +1,4 @@
-﻿using ApiSigestHC.Data;
+using ApiSigestHC.Data;
 using ApiSigestHC.Modelos;
 using ApiSigestHC.Modelos.Dtos;
 using ApiSigestHC.Repositorio.IRepositorio;
@@ -32,6 +32,8 @@ namespace ApiSigestHC.Repositorio
                 .Include(a=>a.Administradora)
                 .Include(a => a.Documentos)
                     .ThenInclude(d => d.SolicitudesCorreccion)
+                .Include(a => a.CambiosEstado)
+                    .ThenInclude(c => c.Usuario)
                 .ToListAsync(); // Fuerza ejecución sin OPENJSON
 
             return atenciones.Where(a => estados.Contains(a.EstadoAtencionId));
@@ -139,6 +141,8 @@ namespace ApiSigestHC.Repositorio
                 .Include(a => a.Paciente)
                 .Include(a => a.EstadoAtencion)
                 .Include(a => a.Administradora)
+                .Include(a => a.CambiosEstado)
+                    .ThenInclude(c => c.Usuario)
                 .OrderByDescending(a => a.Fecha)
                 .ToListAsync();
 

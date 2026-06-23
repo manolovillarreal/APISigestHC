@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ApiSigestHC.Modelos
 {
@@ -50,5 +50,6 @@ namespace ApiSigestHC.Modelos
         public MotivoAnulacionAtencion? MotivoAnulacionAtencion { get; set; }
 
         public ICollection<Documento> Documentos { get; set; }
+        public ICollection<CambioEstado>? CambiosEstado { get; set; }
     }
 }

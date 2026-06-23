@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ApiSigestHC.Modelos.Dtos
 {
@@ -23,6 +23,8 @@ namespace ApiSigestHC.Modelos.Dtos
 
         [NotMapped]
         public bool TieneCorreccionesPendientes { get; set; }        
+
+        public string? NombreMedicoConsulta { get; set; }
 
         public Paciente? Paciente { get; set; }
         public Administradora? Administradora { get; set; }

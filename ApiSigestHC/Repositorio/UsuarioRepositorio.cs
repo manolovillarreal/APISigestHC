@@ -1,4 +1,4 @@
-﻿using ApiSigestHC.Data;
+using ApiSigestHC.Data;
 using ApiSigestHC.Modelos;
 using ApiSigestHC.Modelos.Dtos;
 using ApiSigestHC.Repositorio.IRepositorio;
@@ -102,7 +102,7 @@ namespace ApiSigestHC.Repositorio
 
             if (!string.IsNullOrEmpty(dto.Contraseña))
             {
-                var passwordEcriptado = obtenerMD5(usuario.Contraseña);
+                var passwordEcriptado = obtenerMD5(dto.Contraseña);
                 usuario.Contraseña = passwordEcriptado;            
                 
             }
